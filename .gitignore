@@ -1,0 +1,22 @@
+# Documentación local (no se versiona)
+Documentacion/
+
+# Sistema
+.DS_Store
+
+# Python
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Base de datos y respaldos
+*.db
+backups/
+
+# Node
+node_modules/
+dist/
+
+# Entorno
+.env
