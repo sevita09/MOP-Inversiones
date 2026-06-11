@@ -37,6 +37,30 @@ body {
   letter-spacing: -0.3px;
 }
 
+.estado-backend {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #8b949e;
+}
+
+.punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #484f58;
+}
+
+.estado-conectado .punto {
+  background-color: #3fb950;
+}
+
+.estado-sin_conexion .punto {
+  background-color: #f85149;
+}
+
 .pantalla-principal {
   flex: 1;
   display: flex;
