@@ -4,10 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import inicializar_base
+from app.servicios.respaldos import respaldar_base
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Respaldar antes de tocar la base: si un arranque la corrompe, hay vuelta atrás
+    respaldar_base()
     inicializar_base()
     yield
 
