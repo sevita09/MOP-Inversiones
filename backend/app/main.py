@@ -1,7 +1,18 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="MOP Inversiones")
+from app.db import inicializar_base
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    inicializar_base()
+    yield
+
+
+app = FastAPI(title="MOP Inversiones", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
