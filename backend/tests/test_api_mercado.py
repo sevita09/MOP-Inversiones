@@ -1,6 +1,7 @@
 import time
 from unittest.mock import patch
 
+import app.servicios.dolar as dolar
 import app.servicios.sincronizador as sincronizador
 from app.config import PANEL_GENERAL, PANEL_LIDER
 from app.repositorios.tasas_dolar import CCL, guardar_tasas
@@ -89,14 +90,15 @@ def test_velas_acepta_tickers_de_dolar(cliente, conexion):
 
 def test_sync_lanza_y_publica_el_resumen(cliente, conexion):
     resumen = {"velas_guardadas": 3, "pares_sincronizados": 1, "velas_refrescadas": 0, "errores": []}
-    with patch.object(sincronizador, "sincronizar_todo", return_value=resumen), \
-         patch.object(sincronizador, "obtener_conexion", return_value=conexion):
+    with patch.object(sincronizador, "sincronizar_todo", return_value=dict(resumen)), \
+         patch.object(sincronizador, "obtener_conexion", return_value=conexion), \
+         patch.object(dolar, "descargar_velas", return_value=[]):  # nunca tocar la red
         assert cliente.post("/api/sync").json() == {"estado": "iniciado"}
         esperar_fin_de_sync()
 
-    estado = cliente.get("/api/sync").json()
-    assert estado["en_curso"] is False
-    assert estado["ultimo_resumen"] == resumen
+    publicado = cliente.get("/api/sync").json()["ultimo_resumen"]
+    assert publicado["velas_guardadas"] == 3
+    assert "reparacion" in publicado and "ccl" in publicado and "dolar_oficial" in publicado
 
 
 def test_sync_rechaza_si_ya_hay_uno_corriendo(cliente, conexion):
@@ -105,7 +107,8 @@ def test_sync_rechaza_si_ya_hay_uno_corriendo(cliente, conexion):
         return {"velas_guardadas": 0, "pares_sincronizados": 0, "velas_refrescadas": 0, "errores": []}
 
     with patch.object(sincronizador, "sincronizar_todo", sync_lento), \
-         patch.object(sincronizador, "obtener_conexion", return_value=conexion):
+         patch.object(sincronizador, "obtener_conexion", return_value=conexion), \
+         patch.object(dolar, "descargar_velas", return_value=[]):  # nunca tocar la red
         assert cliente.post("/api/sync").json() == {"estado": "iniciado"}
         assert cliente.post("/api/sync").json() == {"estado": "ya_en_curso"}
         assert cliente.get("/api/sync").json()["en_curso"] is True

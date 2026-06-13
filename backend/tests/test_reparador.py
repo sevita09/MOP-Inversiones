@@ -280,15 +280,20 @@ def test_endpoint_reparar_corre_el_pipeline(cliente, conexion):
 def test_el_sync_en_background_engancha_la_reparacion(conexion):
     import time
 
+    import app.servicios.dolar as dolar
     import app.servicios.sincronizador as sincronizador
 
     resumen_sync = {"velas_guardadas": 0, "pares_sincronizados": 0, "velas_refrescadas": 0, "errores": []}
     with patch.object(sincronizador, "sincronizar_todo", return_value=dict(resumen_sync)), \
          patch.object(sincronizador, "obtener_conexion", return_value=conexion), \
-         patch.object(reparador, "descargar_velas", return_value=[]):
+         patch.object(reparador, "descargar_velas", return_value=[]), \
+         patch.object(dolar, "descargar_velas", return_value=[]):  # nunca tocar la red
         assert sincronizador.sincronizar_en_background()
         limite = time.time() + 2
         while sincronizador.hay_sync_en_curso() and time.time() < limite:
             time.sleep(0.01)
 
-    assert "reparacion" in sincronizador.ultimo_resumen()
+    resumen = sincronizador.ultimo_resumen()
+    assert "reparacion" in resumen
+    assert "ccl" in resumen
+    assert "dolar_oficial" in resumen
