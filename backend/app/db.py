@@ -27,6 +27,13 @@ CREATE TABLE IF NOT EXISTS registro_sync (
     ultima_sync  TEXT NOT NULL,
     PRIMARY KEY (ticker, temporalidad)
 );
+
+CREATE TABLE IF NOT EXISTS tasas_dolar (
+    fecha    TEXT NOT NULL,   -- AAAA-MM-DD
+    tipo     TEXT NOT NULL,   -- "CCL" u "OFICIAL"
+    valor    REAL NOT NULL,   -- ARS por USD
+    PRIMARY KEY (fecha, tipo)
+);
 """
 
 RutaBase = Union[Path, str]
