@@ -10,10 +10,18 @@ from app.config import (
     PANEL_GENERAL,
     PANEL_LIDER,
     TEMPORALIDADES,
+    TICKERS_DOLAR,
     todos_los_tickers,
 )
 from app.db import conexion_api
 from app.repositorios.velas import obtener_velas
+from app.servicios.dolar import convertir_velas_a_usd
+
+MONEDAS = ("ARS", "USD")
+
+
+def _tickers_validos() -> set:
+    return set(todos_los_tickers()) | set(TICKERS_DOLAR)
 
 router = APIRouter(prefix="/api")
 
@@ -31,16 +39,23 @@ def tickers():
 def velas(
     ticker: str,
     temporalidad: str = "D",
+    moneda: str = "ARS",
     desde: Optional[int] = None,
     hasta: Optional[int] = None,
     conexion: sqlite3.Connection = Depends(conexion_api),
 ):
     if temporalidad not in TEMPORALIDADES:
         raise HTTPException(422, f"Temporalidad inválida: {temporalidad} (usar H, D, S o M)")
-    if ticker not in todos_los_tickers():
+    if moneda not in MONEDAS:
+        raise HTTPException(422, f"Moneda inválida: {moneda} (usar ARS o USD)")
+    if ticker not in _tickers_validos():
         raise HTTPException(404, f"Ticker desconocido: {ticker}")
+    velas = obtener_velas(conexion, ticker, temporalidad, desde, hasta)
+    if moneda == "USD":
+        velas = convertir_velas_a_usd(conexion, ticker, velas)
     return {
         "ticker": ticker,
         "temporalidad": temporalidad,
-        "velas": obtener_velas(conexion, ticker, temporalidad, desde, hasta),
+        "moneda": moneda,
+        "velas": velas,
     }

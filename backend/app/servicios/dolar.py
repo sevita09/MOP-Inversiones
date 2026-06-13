@@ -8,9 +8,10 @@ ADR en NYSE (USD). Cada ADR equivale a 10 acciones locales.
 from __future__ import annotations
 
 import sqlite3
+from bisect import bisect_right
 from datetime import datetime, timezone
 
-from app.config import TICKER_CCL_BASE
+from app.config import TICKER_CCL_BASE, tickers_byma
 from app.repositorios.tasas_dolar import CCL, OFICIAL, guardar_tasas, obtener_tasas
 from app.repositorios.velas import guardar_velas, obtener_velas
 from app.servicios.descarga import descargar_velas
@@ -115,3 +116,43 @@ def sincronizar_dolar_oficial(conexion: sqlite3.Connection) -> int:
     ]
     guardar_tasas(conexion, tasas)
     return len(velas)
+
+
+def se_convierte_a_usd(ticker: str) -> bool:
+    """Solo los papeles BYMA se convierten; AAPL y los dólares ya están en su moneda."""
+    return ticker in tickers_byma()
+
+
+def convertir_velas_a_usd(
+    conexion: sqlite3.Connection, ticker: str, velas: list[dict]
+) -> list[dict]:
+    """Divide OHLC por la tasa CCL de cada fecha (la del día o la del hábil anterior).
+
+    Carga las tasas una sola vez y resuelve cada vela con búsqueda binaria en
+    memoria. Las velas anteriores a la primera tasa conocida se descartan.
+    """
+    if not se_convierte_a_usd(ticker) or not velas:
+        return velas
+    tasas = obtener_tasas(conexion, CCL)
+    if not tasas:
+        return []
+    fechas = [t["fecha"] for t in tasas]
+    valores = [t["valor"] for t in tasas]
+
+    convertidas = []
+    for vela in velas:
+        fecha = datetime.fromtimestamp(vela["ts"], tz=timezone.utc).strftime("%Y-%m-%d")
+        posicion = bisect_right(fechas, fecha)
+        if posicion == 0:
+            continue  # sin tasa vigente para esa fecha
+        tasa = valores[posicion - 1]
+        convertidas.append(
+            dict(
+                vela,
+                apertura=round(vela["apertura"] / tasa, 4),
+                maximo=round(vela["maximo"] / tasa, 4),
+                minimo=round(vela["minimo"] / tasa, 4),
+                cierre=round(vela["cierre"] / tasa, 4),
+            )
+        )
+    return convertidas
