@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import app.servicios.sincronizador as sincronizador
 from app.config import PANEL_GENERAL, PANEL_LIDER
+from app.repositorios.tasas_dolar import CCL, guardar_tasas
 from app.repositorios.velas import guardar_velas
 
 UN_DIA = 86400
@@ -58,6 +59,32 @@ def test_velas_rechaza_temporalidad_invalida(cliente):
 def test_velas_rechaza_ticker_desconocido(cliente):
     respuesta = cliente.get("/api/velas", params={"ticker": "NOEXISTE"})
     assert respuesta.status_code == 404
+
+
+def test_velas_en_usd_divide_por_el_ccl(cliente, conexion):
+    guardar_tasas(conexion, [{"fecha": "1970-01-02", "tipo": CCL, "valor": 1000.0}])
+    guardar_velas(conexion, [vela(UN_DIA, cierre=8000.0)])
+    datos = cliente.get("/api/velas", params={"ticker": "GGAL", "moneda": "USD"}).json()
+    assert datos["moneda"] == "USD"
+    assert datos["velas"][0]["cierre"] == 8.0
+
+
+def test_velas_ars_es_el_default(cliente, conexion):
+    guardar_velas(conexion, [vela(UN_DIA, cierre=8000.0)])
+    datos = cliente.get("/api/velas", params={"ticker": "GGAL"}).json()
+    assert datos["moneda"] == "ARS"
+    assert datos["velas"][0]["cierre"] == 8000.0
+
+
+def test_velas_rechaza_moneda_invalida(cliente):
+    respuesta = cliente.get("/api/velas", params={"ticker": "GGAL", "moneda": "EUR"})
+    assert respuesta.status_code == 422
+
+
+def test_velas_acepta_tickers_de_dolar(cliente, conexion):
+    guardar_velas(conexion, [dict(vela(UN_DIA, cierre=1450.0), ticker="DOLARCCL")])
+    datos = cliente.get("/api/velas", params={"ticker": "DOLARCCL"}).json()
+    assert datos["velas"][0]["cierre"] == 1450.0
 
 
 def test_sync_lanza_y_publica_el_resumen(cliente, conexion):

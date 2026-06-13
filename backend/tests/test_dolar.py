@@ -5,8 +5,14 @@ from app.repositorios.tasas_dolar import (
     obtener_tasa_en_fecha,
     obtener_tasas,
 )
-from app.repositorios.velas import guardar_velas
-from app.servicios.dolar import calcular_ccl_diario, sincronizar_ccl
+from app.repositorios.velas import guardar_velas, obtener_velas
+from app.servicios.dolar import (
+    calcular_ccl_diario,
+    convertir_velas_a_usd,
+    generar_velas_ccl,
+    se_convierte_a_usd,
+    sincronizar_ccl,
+)
 
 UN_DIA = 86400
 
@@ -133,3 +139,81 @@ def test_sincronizar_ccl_persiste_desde_las_velas(conexion):
 
 def test_sincronizar_ccl_sin_datos_devuelve_cero(conexion):
     assert sincronizar_ccl(conexion) == 0
+
+
+# --- velas sintéticas DOLARCCL ---
+
+
+def test_genera_velas_ccl_desde_las_tasas(conexion):
+    guardar_tasas(
+        conexion,
+        [
+            {"fecha": "2026-06-10", "tipo": CCL, "valor": 1488.4},
+            {"fecha": "2026-06-11", "tipo": CCL, "valor": 1495.0},
+        ],
+    )
+    assert generar_velas_ccl(conexion) == 2
+    velas = obtener_velas(conexion, "DOLARCCL", "D")
+    primera = velas[0]
+    assert primera["apertura"] == primera["maximo"] == primera["minimo"] == primera["cierre"] == 1488.4
+
+
+# --- conversión a USD ---
+
+
+def vela_precio(ticker, ts, cierre):
+    return {
+        "ticker": ticker,
+        "temporalidad": "D",
+        "ts": ts,
+        "apertura": cierre,
+        "maximo": cierre + 50,
+        "minimo": cierre - 50,
+        "cierre": cierre,
+        "volumen": 100.0,
+    }
+
+
+def test_se_convierte_solo_byma():
+    assert se_convierte_a_usd("GGAL")
+    assert not se_convierte_a_usd("AAPL")
+    assert not se_convierte_a_usd("DOLARCCL")
+
+
+def test_convierte_dividiendo_por_la_tasa_del_dia(conexion):
+    guardar_tasas(conexion, [{"fecha": "1970-01-02", "tipo": CCL, "valor": 1000.0}])
+    velas = [vela_precio("GGAL", UN_DIA, 8000.0)]
+    usd = convertir_velas_a_usd(conexion, "GGAL", velas)
+    assert usd[0]["cierre"] == 8.0
+    assert usd[0]["maximo"] == round(8050.0 / 1000, 4)
+
+
+def test_convierte_usa_la_tasa_vigente_en_feriado(conexion):
+    guardar_tasas(
+        conexion,
+        [
+            {"fecha": "1970-01-02", "tipo": CCL, "valor": 1000.0},
+            {"fecha": "1970-01-05", "tipo": CCL, "valor": 1100.0},
+        ],
+    )
+    # ts del 1970-01-04 (feriado): usa la tasa del 02
+    velas = [vela_precio("GGAL", 3 * UN_DIA, 8000.0)]
+    usd = convertir_velas_a_usd(conexion, "GGAL", velas)
+    assert usd[0]["cierre"] == 8.0
+
+
+def test_no_convierte_tickers_que_ya_estan_en_usd(conexion):
+    guardar_tasas(conexion, [{"fecha": "1970-01-02", "tipo": CCL, "valor": 1000.0}])
+    velas = [vela_precio("AAPL", UN_DIA, 200.0)]
+    assert convertir_velas_a_usd(conexion, "AAPL", velas) == velas
+
+
+def test_descarta_velas_anteriores_a_la_primera_tasa(conexion):
+    guardar_tasas(conexion, [{"fecha": "2020-01-01", "tipo": CCL, "valor": 1000.0}])
+    velas = [vela_precio("GGAL", UN_DIA, 8000.0)]  # 1970, mucho antes
+    assert convertir_velas_a_usd(conexion, "GGAL", velas) == []
+
+
+def test_convierte_sin_tasas_devuelve_vacio(conexion):
+    velas = [vela_precio("GGAL", UN_DIA, 8000.0)]
+    assert convertir_velas_a_usd(conexion, "GGAL", velas) == []
