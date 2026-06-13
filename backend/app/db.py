@@ -41,3 +41,12 @@ def obtener_conexion(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> sqlite3.Connection:
 def inicializar_base(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> None:
     with obtener_conexion(ruta) as conexion:
         conexion.executescript(ESQUEMA)
+
+
+def conexion_api():
+    """Dependencia de FastAPI: una conexión por request, cerrada al terminar."""
+    conexion = obtener_conexion()
+    try:
+        yield conexion
+    finally:
+        conexion.close()

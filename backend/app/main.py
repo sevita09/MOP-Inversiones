@@ -4,7 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import inicializar_base
+from app.routers import mercado, sincronizacion
 from app.servicios.respaldos import respaldar_base
+from app.servicios.sincronizador import sincronizar_en_background
 
 
 @asynccontextmanager
@@ -12,10 +14,13 @@ async def lifespan(_app: FastAPI):
     # Respaldar antes de tocar la base: si un arranque la corrompe, hay vuelta atrás
     respaldar_base()
     inicializar_base()
+    sincronizar_en_background()
     yield
 
 
 app = FastAPI(title="MOP Inversiones", lifespan=lifespan)
+app.include_router(mercado.router)
+app.include_router(sincronizacion.router)
 
 app.add_middleware(
     CORSMiddleware,
