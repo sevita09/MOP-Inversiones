@@ -15,8 +15,13 @@ from app.repositorios.velas import (
     guardar_velas,
     marcar_velas_en_cero,
     obtener_calendario,
+    obtener_ts_faltantes,
     obtener_velas,
 )
+from app.servicios.descarga import descargar_velas
+
+# Duración de una vela por temporalidad, para cerrar el rango de redescarga
+PASO_POR_TEMPORALIDAD = {"H": 3600, "D": 86400, "S": 7 * 86400, "M": 31 * 86400}
 
 
 def marcar_corruptas(conexion: sqlite3.Connection) -> int:
@@ -51,6 +56,30 @@ def detectar_huecos(
         velas[-1]["ts"],
     )
     return [ts for ts in calendario if ts not in existentes]
+
+
+def redescargar_faltantes(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str
+) -> int:
+    """Reintenta bajar de yfinance exactamente el período de las velas faltantes.
+
+    Las velas que llegan con datos reales pisan el placeholder y limpian el flag
+    (guardar_velas las inserta con es_faltante=0). Devuelve cuántas recuperó.
+    """
+    faltantes = obtener_ts_faltantes(conexion, ticker, temporalidad)
+    if not faltantes:
+        return 0
+    velas = descargar_velas(
+        ticker,
+        temporalidad,
+        desde=faltantes[0],
+        hasta=faltantes[-1] + PASO_POR_TEMPORALIDAD[temporalidad],
+    )
+    pendientes = set(faltantes)
+    recuperadas = [vela for vela in velas if vela["ts"] in pendientes]
+    if recuperadas:
+        guardar_velas(conexion, recuperadas)
+    return len(recuperadas)
 
 
 def crear_placeholders(

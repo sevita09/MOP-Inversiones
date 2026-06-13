@@ -66,6 +66,17 @@ def obtener_calendario(
     return [fila["ts"] for fila in filas]
 
 
+def obtener_ts_faltantes(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str
+) -> list:
+    """Timestamps de las velas marcadas como faltantes, ordenados."""
+    filas = conexion.execute(
+        "SELECT ts FROM velas WHERE ticker = ? AND temporalidad = ? AND es_faltante = 1 ORDER BY ts",
+        (ticker, temporalidad),
+    ).fetchall()
+    return [fila["ts"] for fila in filas]
+
+
 def marcar_velas_en_cero(conexion: sqlite3.Connection) -> int:
     """Marca como faltantes las velas con algún precio en cero o negativo."""
     cursor = conexion.execute(
