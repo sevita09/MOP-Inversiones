@@ -1,8 +1,13 @@
+from unittest.mock import patch
+
+import app.servicios.reparador as reparador
 from app.repositorios.velas import guardar_velas, obtener_velas
 from app.servicios.reparador import (
     crear_placeholders,
     detectar_huecos,
+    interpolar_faltantes,
     marcar_corruptas,
+    redescargar_faltantes,
 )
 
 UN_DIA = 86400
@@ -119,3 +124,129 @@ def test_crear_placeholders_es_idempotente(conexion):
     guardar_velas(conexion, [vela("GGAL", d * UN_DIA) for d in (1, 3)])
     assert crear_placeholders(conexion, "GGAL", "D") == 1
     assert crear_placeholders(conexion, "GGAL", "D") == 0
+
+
+# --- redescarga dirigida ---
+
+
+def faltante(ticker, ts):
+    return vela(ticker, ts, apertura=0.0, maximo=0.0, minimo=0.0, cierre=0.0, volumen=0.0, es_faltante=1)
+
+
+def test_redescarga_pide_el_rango_exacto_de_los_faltantes(conexion):
+    guardar_velas(
+        conexion,
+        [vela("GGAL", 1 * UN_DIA), faltante("GGAL", 2 * UN_DIA), faltante("GGAL", 5 * UN_DIA), vela("GGAL", 6 * UN_DIA)],
+    )
+    with patch.object(reparador, "descargar_velas", return_value=[]) as descarga:
+        redescargar_faltantes(conexion, "GGAL", "D")
+    assert descarga.call_args.kwargs["desde"] == 2 * UN_DIA
+    assert descarga.call_args.kwargs["hasta"] == 5 * UN_DIA + UN_DIA
+
+
+def test_redescarga_limpia_el_flag_de_las_recuperadas(conexion):
+    guardar_velas(conexion, [vela("GGAL", 1 * UN_DIA), faltante("GGAL", 2 * UN_DIA)])
+    with patch.object(
+        reparador, "descargar_velas", return_value=[vela("GGAL", 2 * UN_DIA, cierre=102.0)]
+    ):
+        assert redescargar_faltantes(conexion, "GGAL", "D") == 1
+    reparada = [v for v in obtener_velas(conexion, "GGAL", "D") if v["ts"] == 2 * UN_DIA][0]
+    assert reparada["es_faltante"] == 0
+    assert reparada["cierre"] == 102.0
+
+
+def test_redescarga_mantiene_el_flag_si_yfinance_no_lo_tiene(conexion):
+    guardar_velas(conexion, [faltante("GGAL", 2 * UN_DIA), faltante("GGAL", 3 * UN_DIA)])
+    with patch.object(
+        reparador, "descargar_velas", return_value=[vela("GGAL", 2 * UN_DIA, cierre=102.0)]
+    ):
+        assert redescargar_faltantes(conexion, "GGAL", "D") == 1
+    velas = {v["ts"]: v for v in obtener_velas(conexion, "GGAL", "D")}
+    assert velas[2 * UN_DIA]["es_faltante"] == 0
+    assert velas[3 * UN_DIA]["es_faltante"] == 1
+
+
+def test_redescarga_sin_faltantes_no_llama_a_yfinance(conexion):
+    guardar_velas(conexion, [vela("GGAL", UN_DIA)])
+    with patch.object(reparador, "descargar_velas") as descarga:
+        assert redescargar_faltantes(conexion, "GGAL", "D") == 0
+    descarga.assert_not_called()
+
+
+def test_redescarga_ignora_velas_que_no_estaban_faltantes(conexion):
+    guardar_velas(conexion, [vela("GGAL", 1 * UN_DIA, cierre=100.0), faltante("GGAL", 2 * UN_DIA)])
+    with patch.object(
+        reparador,
+        "descargar_velas",
+        return_value=[vela("GGAL", 1 * UN_DIA, cierre=999.0), vela("GGAL", 2 * UN_DIA, cierre=102.0)],
+    ):
+        assert redescargar_faltantes(conexion, "GGAL", "D") == 1
+    velas = {v["ts"]: v for v in obtener_velas(conexion, "GGAL", "D")}
+    assert velas[1 * UN_DIA]["cierre"] == 100.0  # la vela sana no se pisa acá
+
+
+# --- interpolación ---
+
+
+def test_interpola_con_los_pesos_de_los_vecinos(conexion):
+    guardar_velas(
+        conexion,
+        [
+            vela("GGAL", 1 * UN_DIA, cierre=90.0, apertura=90.0, maximo=90.0, minimo=90.0),
+            vela("GGAL", 2 * UN_DIA, cierre=100.0, apertura=100.0, maximo=100.0, minimo=100.0),
+            faltante("GGAL", 3 * UN_DIA),
+            vela("GGAL", 4 * UN_DIA, cierre=110.0, apertura=110.0, maximo=110.0, minimo=110.0),
+            vela("GGAL", 5 * UN_DIA, cierre=120.0, apertura=120.0, maximo=120.0, minimo=120.0),
+        ],
+    )
+    assert interpolar_faltantes(conexion, "GGAL", "D") == 1
+    interpolada = [v for v in obtener_velas(conexion, "GGAL", "D") if v["ts"] == 3 * UN_DIA][0]
+    # 0.1*90 + 0.4*100 + 0.4*110 + 0.1*120 = 105
+    assert interpolada["cierre"] == 105.0
+    assert interpolada["apertura"] == 105.0
+
+
+def test_interpolada_conserva_el_flag_y_volumen_cero(conexion):
+    guardar_velas(conexion, [vela("GGAL", 1 * UN_DIA), faltante("GGAL", 2 * UN_DIA), vela("GGAL", 3 * UN_DIA)])
+    interpolar_faltantes(conexion, "GGAL", "D")
+    interpolada = [v for v in obtener_velas(conexion, "GGAL", "D") if v["ts"] == 2 * UN_DIA][0]
+    assert interpolada["es_faltante"] == 1
+    assert interpolada["volumen"] == 0.0
+    assert interpolada["cierre"] > 0
+
+
+def test_interpola_en_el_borde_renormalizando(conexion):
+    guardar_velas(
+        conexion,
+        [
+            faltante("GGAL", 1 * UN_DIA),
+            vela("GGAL", 2 * UN_DIA, cierre=100.0, apertura=100.0, maximo=100.0, minimo=100.0),
+            vela("GGAL", 3 * UN_DIA, cierre=110.0, apertura=110.0, maximo=110.0, minimo=110.0),
+        ],
+    )
+    interpolar_faltantes(conexion, "GGAL", "D")
+    borde = obtener_velas(conexion, "GGAL", "D")[0]
+    # (0.4*100 + 0.1*110) / 0.5 = 102
+    assert borde["cierre"] == 102.0
+
+
+def test_faltantes_consecutivos_no_se_usan_entre_si(conexion):
+    guardar_velas(
+        conexion,
+        [
+            vela("GGAL", 1 * UN_DIA, cierre=100.0, apertura=100.0, maximo=100.0, minimo=100.0),
+            faltante("GGAL", 2 * UN_DIA),
+            faltante("GGAL", 3 * UN_DIA),
+            vela("GGAL", 4 * UN_DIA, cierre=110.0, apertura=110.0, maximo=110.0, minimo=110.0),
+        ],
+    )
+    assert interpolar_faltantes(conexion, "GGAL", "D") == 2
+    velas = obtener_velas(conexion, "GGAL", "D")
+    assert velas[1]["cierre"] == 102.0  # (0.4*100 + 0.1*110) / 0.5
+    assert velas[2]["cierre"] == 108.0  # (0.1*100 + 0.4*110) / 0.5
+
+
+def test_sin_vecinas_reales_no_interpola(conexion):
+    guardar_velas(conexion, [faltante("GGAL", 1 * UN_DIA), faltante("GGAL", 2 * UN_DIA)])
+    assert interpolar_faltantes(conexion, "GGAL", "D") == 0
+    assert all(v["cierre"] == 0.0 for v in obtener_velas(conexion, "GGAL", "D"))
