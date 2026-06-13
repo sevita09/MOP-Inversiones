@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import threading
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -12,7 +13,13 @@ from app.repositorios.velas import (
     obtener_ultimo_ts,
     obtener_velas,
 )
+from app.db import obtener_conexion
 from app.servicios.descarga import descargar_velas
+
+# Un solo sync a la vez: SQLite no banca escrituras concurrentes y
+# el arranque y el endpoint manual pueden dispararlo al mismo tiempo
+_lock_sync = threading.Lock()
+_ultimo_resumen: Optional[dict] = None
 
 # Cuánto puede envejecer el dato antes de volver a sincronizar (segundos)
 VIGENCIA_POR_TEMPORALIDAD = {
@@ -134,3 +141,34 @@ def sincronizar_todo(
                 resumen["pares_sincronizados"] += 1
         resumen["velas_refrescadas"] += refrescar_velas_en_curso(conexion, ticker)
     return resumen
+
+
+def hay_sync_en_curso() -> bool:
+    return _lock_sync.locked()
+
+
+def ultimo_resumen() -> Optional[dict]:
+    return _ultimo_resumen
+
+
+def sincronizar_en_background() -> bool:
+    """Lanza sincronizar_todo en un thread aparte.
+
+    Devuelve False sin hacer nada si ya hay un sync corriendo.
+    """
+    if not _lock_sync.acquire(blocking=False):
+        return False
+
+    def _correr():
+        global _ultimo_resumen
+        try:
+            conexion = obtener_conexion()  # cada thread necesita su conexión
+            try:
+                _ultimo_resumen = sincronizar_todo(conexion)
+            finally:
+                conexion.close()
+        finally:
+            _lock_sync.release()
+
+    threading.Thread(target=_correr, name="sync-mop", daemon=True).start()
+    return True
