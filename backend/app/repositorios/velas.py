@@ -43,6 +43,19 @@ def obtener_ultimo_ts(
     return fila["ultimo"]
 
 
+def marcar_velas_en_cero(conexion: sqlite3.Connection) -> int:
+    """Marca como faltantes las velas con algún precio en cero o negativo."""
+    cursor = conexion.execute(
+        """
+        UPDATE velas SET es_faltante = 1
+        WHERE es_faltante = 0
+          AND (apertura <= 0 OR maximo <= 0 OR minimo <= 0 OR cierre <= 0)
+        """
+    )
+    conexion.commit()
+    return cursor.rowcount
+
+
 def obtener_ultima_vela(
     conexion: sqlite3.Connection, ticker: str, temporalidad: str
 ) -> Optional[dict]:
