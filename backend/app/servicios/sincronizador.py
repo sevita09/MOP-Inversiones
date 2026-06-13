@@ -161,7 +161,12 @@ def sincronizar_en_background() -> bool:
 
     def _correr():
         global _ultimo_resumen
-        # Import acá para no acoplar el módulo al reparador en los usos directos
+        # Import acá para no acoplar el módulo al reparador ni al dólar en usos directos
+        from app.servicios.dolar import (
+            generar_velas_ccl,
+            sincronizar_ccl,
+            sincronizar_dolar_oficial,
+        )
         from app.servicios.reparador import reparar_todo
 
         try:
@@ -169,6 +174,10 @@ def sincronizar_en_background() -> bool:
             try:
                 resumen = sincronizar_todo(conexion)
                 resumen["reparacion"] = reparar_todo(conexion)
+                # El dólar depende de las velas ya sincronizadas y reparadas
+                resumen["ccl"] = sincronizar_ccl(conexion)
+                generar_velas_ccl(conexion)
+                resumen["dolar_oficial"] = sincronizar_dolar_oficial(conexion)
                 _ultimo_resumen = resumen
             finally:
                 conexion.close()

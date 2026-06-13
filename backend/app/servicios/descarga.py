@@ -13,6 +13,9 @@ from app.config import (
     tickers_byma,
 )
 
+# Dólar oficial mayorista en Yahoo Finance
+SIMBOLO_DOLAR_OFICIAL = "USDARS=X"
+
 
 def simbolo_yahoo(ticker: str) -> str:
     """Convierte el ticker propio al símbolo de Yahoo Finance.
@@ -21,6 +24,8 @@ def simbolo_yahoo(ticker: str) -> str:
     """
     if ticker == TICKER_CCL_BASE:
         return "GGAL"
+    if ticker == "DOLAROF":
+        return SIMBOLO_DOLAR_OFICIAL
     if ticker in tickers_byma():
         return f"{ticker}.BA"
     return ticker
