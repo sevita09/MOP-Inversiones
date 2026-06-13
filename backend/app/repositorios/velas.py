@@ -43,6 +43,29 @@ def obtener_ultimo_ts(
     return fila["ultimo"]
 
 
+def obtener_calendario(
+    conexion: sqlite3.Connection,
+    tickers: list,
+    temporalidad: str,
+    desde: int,
+    hasta: int,
+) -> list:
+    """Timestamps donde al menos uno de los tickers tiene vela real, ordenados."""
+    if not tickers:
+        return []
+    marcadores = ",".join("?" * len(tickers))
+    filas = conexion.execute(
+        f"""
+        SELECT DISTINCT ts FROM velas
+        WHERE temporalidad = ? AND ts BETWEEN ? AND ?
+          AND es_faltante = 0 AND ticker IN ({marcadores})
+        ORDER BY ts
+        """,
+        [temporalidad, desde, hasta, *tickers],
+    ).fetchall()
+    return [fila["ts"] for fila in filas]
+
+
 def marcar_velas_en_cero(conexion: sqlite3.Connection) -> int:
     """Marca como faltantes las velas con algún precio en cero o negativo."""
     cursor = conexion.execute(
