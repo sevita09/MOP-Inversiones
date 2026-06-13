@@ -24,3 +24,14 @@ export interface RespuestaVelas {
   moneda: Moneda
   velas: Vela[]
 }
+
+export interface Tasa {
+  fecha: string
+  tipo: string
+  valor: number
+}
+
+export interface RespuestaDolar {
+  ccl: Tasa | null
+  oficial: Tasa | null
+}

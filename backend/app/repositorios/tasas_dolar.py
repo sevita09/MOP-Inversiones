@@ -30,6 +30,17 @@ def obtener_tasas(
     return [dict(fila) for fila in filas]
 
 
+def obtener_ultima_tasa(
+    conexion: sqlite3.Connection, tipo: str = CCL
+) -> Optional[dict]:
+    """La tasa más reciente de un tipo, o None si no hay ninguna."""
+    fila = conexion.execute(
+        "SELECT fecha, tipo, valor FROM tasas_dolar WHERE tipo = ? ORDER BY fecha DESC LIMIT 1",
+        (tipo,),
+    ).fetchone()
+    return dict(fila) if fila else None
+
+
 def obtener_tasa_en_fecha(
     conexion: sqlite3.Connection, fecha: str, tipo: str = CCL
 ) -> Optional[float]:
