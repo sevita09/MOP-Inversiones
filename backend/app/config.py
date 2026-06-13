@@ -14,7 +14,7 @@ PANEL_GENERAL = [
 
 CEDEARS = ["AAPL"]
 
-# GDR de GGAL en NYSE: solo se usa para calcular la tasa CCL, no se muestra en la UI
+# ADR de GGAL en NYSE: solo se usa para calcular la tasa CCL, no se muestra en la UI
 TICKER_CCL_BASE = "GGALD"
 
 # Tickers sintéticos de dólar (se generan en v0.5)
