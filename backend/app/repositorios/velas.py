@@ -32,6 +32,28 @@ def guardar_velas(conexion: sqlite3.Connection, velas: Iterable[dict]) -> int:
     return len(filas)
 
 
+def obtener_ultimo_ts(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str
+) -> Optional[int]:
+    """Timestamp de la vela más reciente guardada, o None si no hay ninguna."""
+    fila = conexion.execute(
+        "SELECT MAX(ts) AS ultimo FROM velas WHERE ticker = ? AND temporalidad = ?",
+        (ticker, temporalidad),
+    ).fetchone()
+    return fila["ultimo"]
+
+
+def obtener_ultima_vela(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str
+) -> Optional[dict]:
+    """La vela más reciente completa, o None si no hay ninguna."""
+    fila = conexion.execute(
+        "SELECT * FROM velas WHERE ticker = ? AND temporalidad = ? ORDER BY ts DESC LIMIT 1",
+        (ticker, temporalidad),
+    ).fetchone()
+    return dict(fila) if fila else None
+
+
 def obtener_velas(
     conexion: sqlite3.Connection,
     ticker: str,
