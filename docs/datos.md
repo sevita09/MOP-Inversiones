@@ -59,6 +59,24 @@ arranque de la app (lifespan)          POST /api/sync
 El resumen del último sync (velas guardadas, pares sincronizados, velas
 refrescadas, errores por ticker) queda disponible en `GET /api/sync`.
 
+## Reparación de datos
+
+Corre automáticamente al final de cada sync en background (y a demanda con
+`POST /api/reparar`). Pipeline:
+
+1. **Marcar corruptas** — velas con algún precio ≤ 0 pasan a `es_faltante=1`.
+2. **Detectar huecos** — el calendario "real" se deriva de los demás tickers del
+   mismo mercado (BYMA por un lado, CEDEARs/ADR por otro): si el mercado operó
+   y el ticker no tiene vela, es un hueco. Un feriado (no operó nadie) no lo es.
+   Solo entre la primera y la última vela del ticker — no se inventa historia
+   anterior a su listado. Los huecos se llenan con placeholders en cero.
+3. **Redescarga dirigida** — se pide a yfinance exactamente el rango de los
+   faltantes; lo que llega con datos reales limpia el flag.
+4. **Interpolación** — lo que sigue faltando se estima con las vecinas reales
+   (pesos T-1=0.4, T-2=0.1, T+1=0.4, T+2=0.1, renormalizados si falta alguna).
+   La interpolada **conserva `es_faltante=1`**: es una estimación, se reintenta
+   en el próximo arranque y se re-interpola si una vecina mejora.
+
 ## Endpoints
 
 | Método | Ruta | Descripción |
@@ -66,7 +84,9 @@ refrescadas, errores por ticker) queda disponible en `GET /api/sync`.
 | GET | `/api/tickers` | Universo agrupado: panel líder, panel general, CEDEARs |
 | GET | `/api/velas?ticker=GGAL&temporalidad=D&desde=&hasta=` | Velas de la base (ts unix, orden ascendente) |
 | POST | `/api/sync` | Lanza el sync en background (`iniciado` / `ya_en_curso`) |
-| GET | `/api/sync` | Estado: `en_curso` + `ultimo_resumen` |
+| GET | `/api/sync` | Estado: `en_curso` + `ultimo_resumen` (incluye `reparacion`) |
+| GET | `/api/faltantes` | Total y detalle de velas faltantes por ticker/temporalidad |
+| POST | `/api/reparar` | Corre el pipeline de reparación y devuelve el resumen |
 
 ## Reglas
 
