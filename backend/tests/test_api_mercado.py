@@ -88,6 +88,57 @@ def test_velas_acepta_tickers_de_dolar(cliente, conexion):
     assert datos["velas"][0]["cierre"] == 1450.0
 
 
+# --- formato de velas para el gráfico (contrato que consume el frontend) ---
+
+
+def vela_ohlcv(ts, apertura, maximo, minimo, cierre, volumen):
+    return {
+        "ticker": "GGAL",
+        "temporalidad": "D",
+        "ts": ts,
+        "apertura": apertura,
+        "maximo": maximo,
+        "minimo": minimo,
+        "cierre": cierre,
+        "volumen": volumen,
+    }
+
+
+def test_velas_traen_los_campos_que_pide_el_grafico(cliente, conexion):
+    guardar_velas(conexion, [vela_ohlcv(UN_DIA, 100.0, 110.0, 95.0, 105.0, 5000.0)])
+    una = cliente.get("/api/velas", params={"ticker": "GGAL"}).json()["velas"][0]
+    assert set(una) >= {"ts", "apertura", "maximo", "minimo", "cierre", "volumen", "es_faltante"}
+    assert isinstance(una["ts"], int)  # lightweight-charts pide segundos unix enteros
+    for campo in ("apertura", "maximo", "minimo", "cierre", "volumen"):
+        assert isinstance(una[campo], (int, float))
+
+
+def test_velas_coherentes_high_mayor_que_low(cliente, conexion):
+    guardar_velas(conexion, [vela_ohlcv(UN_DIA, 100.0, 110.0, 95.0, 105.0, 5000.0)])
+    una = cliente.get("/api/velas", params={"ticker": "GGAL"}).json()["velas"][0]
+    assert una["maximo"] >= una["apertura"] >= una["minimo"]
+    assert una["maximo"] >= una["cierre"] >= una["minimo"]
+
+
+def test_velas_ordenadas_ascendente_para_el_grafico(cliente, conexion):
+    # lightweight-charts exige tiempos estrictamente crecientes
+    guardar_velas(conexion, [vela(3 * UN_DIA), vela(UN_DIA), vela(2 * UN_DIA)])
+    tiempos = [v["ts"] for v in cliente.get("/api/velas", params={"ticker": "GGAL"}).json()["velas"]]
+    assert tiempos == sorted(tiempos)
+    assert len(tiempos) == len(set(tiempos))  # sin duplicados
+
+
+def test_variacion_close_a_close_desde_el_endpoint(cliente, conexion):
+    # El frontend calcula la variación contra el cierre anterior; el endpoint
+    # debe entregar los cierres que permiten reproducirla.
+    guardar_velas(conexion, [vela(UN_DIA, cierre=100.0), vela(2 * UN_DIA, cierre=110.0)])
+    velas = cliente.get("/api/velas", params={"ticker": "GGAL"}).json()["velas"]
+    cambio = velas[1]["cierre"] - velas[0]["cierre"]
+    cambio_pct = cambio / velas[0]["cierre"] * 100
+    assert cambio == 10.0
+    assert cambio_pct == 10.0
+
+
 def test_sync_lanza_y_publica_el_resumen(cliente, conexion):
     resumen = {"velas_guardadas": 3, "pares_sincronizados": 1, "velas_refrescadas": 0, "errores": []}
     with patch.object(sincronizador, "sincronizar_todo", return_value=dict(resumen)), \

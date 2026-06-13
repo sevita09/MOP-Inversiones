@@ -1,7 +1,11 @@
 import EstadoBackend from './componentes/EstadoBackend'
 import InterruptorMoneda from './componentes/InterruptorMoneda'
+import PanelPrecio from './componentes/grafico/PanelPrecio'
+import { usarMoneda } from './contextos/MonedaContext'
 
 function App() {
+  const { moneda } = usarMoneda()
+
   return (
     <div className="app">
       <header className="encabezado">
@@ -10,8 +14,8 @@ function App() {
         <EstadoBackend />
         <InterruptorMoneda />
       </header>
-      <main className="pantalla-principal">
-        <img src="/sv-logo.png" alt="" className="logo-fondo" />
+      <main className="pantalla-grafico">
+        <PanelPrecio ticker="GGAL" temporalidad="D" moneda={moneda} />
       </main>
     </div>
   )
