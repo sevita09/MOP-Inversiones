@@ -30,20 +30,24 @@ def descargar_velas(
     ticker: str,
     temporalidad: str,
     desde: Optional[int] = None,
+    hasta: Optional[int] = None,
 ) -> list[dict]:
     """Baja velas de yfinance y las devuelve listas para guardar_velas.
 
-    Con `desde` (ts unix) baja solo el delta; sin él, toda la historia configurada.
+    Con `desde` (ts unix) baja solo desde ahí (y hasta `hasta` si viene);
+    sin `desde`, toda la historia configurada.
     """
-    historia = yf.Ticker(simbolo_yahoo(ticker)).history(
-        interval=INTERVALO_YFINANCE[temporalidad],
-        auto_adjust=False,
-        **(
-            {"start": datetime.fromtimestamp(desde, tz=timezone.utc)}
-            if desde is not None
-            else {"period": HISTORIA_POR_TEMPORALIDAD[temporalidad]}
-        ),
-    )
+    parametros = {
+        "interval": INTERVALO_YFINANCE[temporalidad],
+        "auto_adjust": False,
+    }
+    if desde is None:
+        parametros["period"] = HISTORIA_POR_TEMPORALIDAD[temporalidad]
+    else:
+        parametros["start"] = datetime.fromtimestamp(desde, tz=timezone.utc)
+        if hasta is not None:
+            parametros["end"] = datetime.fromtimestamp(hasta, tz=timezone.utc)
+    historia = yf.Ticker(simbolo_yahoo(ticker)).history(**parametros)
     return convertir_historia(historia, ticker, temporalidad)
 
 

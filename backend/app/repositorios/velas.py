@@ -43,6 +43,66 @@ def obtener_ultimo_ts(
     return fila["ultimo"]
 
 
+def obtener_calendario(
+    conexion: sqlite3.Connection,
+    tickers: list,
+    temporalidad: str,
+    desde: int,
+    hasta: int,
+) -> list:
+    """Timestamps donde al menos uno de los tickers tiene vela real, ordenados."""
+    if not tickers:
+        return []
+    marcadores = ",".join("?" * len(tickers))
+    filas = conexion.execute(
+        f"""
+        SELECT DISTINCT ts FROM velas
+        WHERE temporalidad = ? AND ts BETWEEN ? AND ?
+          AND es_faltante = 0 AND ticker IN ({marcadores})
+        ORDER BY ts
+        """,
+        [temporalidad, desde, hasta, *tickers],
+    ).fetchall()
+    return [fila["ts"] for fila in filas]
+
+
+def obtener_ts_faltantes(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str
+) -> list:
+    """Timestamps de las velas marcadas como faltantes, ordenados."""
+    filas = conexion.execute(
+        "SELECT ts FROM velas WHERE ticker = ? AND temporalidad = ? AND es_faltante = 1 ORDER BY ts",
+        (ticker, temporalidad),
+    ).fetchall()
+    return [fila["ts"] for fila in filas]
+
+
+def contar_faltantes(conexion: sqlite3.Connection) -> list:
+    """Cantidad de velas faltantes por ticker y temporalidad."""
+    filas = conexion.execute(
+        """
+        SELECT ticker, temporalidad, COUNT(*) AS faltantes
+        FROM velas WHERE es_faltante = 1
+        GROUP BY ticker, temporalidad
+        ORDER BY ticker, temporalidad
+        """
+    ).fetchall()
+    return [dict(fila) for fila in filas]
+
+
+def marcar_velas_en_cero(conexion: sqlite3.Connection) -> int:
+    """Marca como faltantes las velas con algún precio en cero o negativo."""
+    cursor = conexion.execute(
+        """
+        UPDATE velas SET es_faltante = 1
+        WHERE es_faltante = 0
+          AND (apertura <= 0 OR maximo <= 0 OR minimo <= 0 OR cierre <= 0)
+        """
+    )
+    conexion.commit()
+    return cursor.rowcount
+
+
 def obtener_ultima_vela(
     conexion: sqlite3.Connection, ticker: str, temporalidad: str
 ) -> Optional[dict]:
