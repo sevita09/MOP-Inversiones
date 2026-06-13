@@ -10,7 +10,7 @@ body {
 }
 
 .app {
-  min-height: 100svh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
 }
@@ -101,4 +101,35 @@ body {
   opacity: 0.35;
   user-select: none;
   pointer-events: none;
+}
+
+.pantalla-grafico {
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-precio {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.grafico {
+  width: 100%;
+  height: 100%;
+}
+
+.grafico-aviso {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 13px;
+  color: #8b949e;
+  background: rgba(13, 17, 23, 0.8);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.grafico-error {
+  color: #f85149;
 }
