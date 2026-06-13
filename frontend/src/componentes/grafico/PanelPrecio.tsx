@@ -1,14 +1,16 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createChart } from 'lightweight-charts'
 import type {
   CandlestickData,
   IChartApi,
   ISeriesApi,
+  MouseEventParams,
   UTCTimestamp,
 } from 'lightweight-charts'
 import type { Moneda, Temporalidad, Vela } from '../../api/tipos'
 import { usarVelas } from '../../hooks/usarVelas'
 import { OPCIONES_GRAFICO, OPCIONES_VELAS } from './configGrafico'
+import LeyendaOHLC from './LeyendaOHLC'
 
 function aDatosVelas(velas: Vela[]): CandlestickData[] {
   return velas.map((vela) => ({
@@ -31,6 +33,17 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
   const grafico = useRef<IChartApi | null>(null)
   const serie = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
+  // Índice de la vela bajo el crosshair; null = ninguna (se muestra la última)
+  const [indiceActivo, setIndiceActivo] = useState<number | null>(null)
+
+  const indicePorTs = useMemo(() => {
+    const mapa = new Map<number, number>()
+    velas.forEach((vela, indice) => mapa.set(vela.ts, indice))
+    return mapa
+  }, [velas])
+  // El handler del crosshair se crea una sola vez; el ref le da siempre el mapa actual
+  const indicePorTsRef = useRef(indicePorTs)
+  indicePorTsRef.current = indicePorTs
 
   // Crear el gráfico una sola vez; autoSize lo mantiene del tamaño del contenedor
   useEffect(() => {
@@ -42,7 +55,14 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
     serie.current = chart.addCandlestickSeries(OPCIONES_VELAS)
     grafico.current = chart
 
+    const alMover = (parametros: MouseEventParams) => {
+      const ts = parametros.time as number | undefined
+      setIndiceActivo(ts != null ? indicePorTsRef.current.get(ts) ?? null : null)
+    }
+    chart.subscribeCrosshairMove(alMover)
+
     return () => {
+      chart.unsubscribeCrosshairMove(alMover)
       chart.remove()
       grafico.current = null
       serie.current = null
@@ -56,8 +76,15 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
     grafico.current?.timeScale().fitContent()
   }, [velas])
 
+  const indiceMostrado = indiceActivo ?? velas.length - 1
+  const velaMostrada = velas[indiceMostrado] ?? null
+  const velaPrevia = indiceMostrado > 0 ? velas[indiceMostrado - 1] : null
+
   return (
     <div className="panel-precio">
+      {velaMostrada && (
+        <LeyendaOHLC ticker={ticker} vela={velaMostrada} velaPrevia={velaPrevia} />
+      )}
       <div ref={contenedor} className="grafico" />
       {cargando && <div className="grafico-aviso">Cargando…</div>}
       {error && <div className="grafico-aviso grafico-error">{error}</div>}
