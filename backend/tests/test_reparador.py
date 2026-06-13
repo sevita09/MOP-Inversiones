@@ -250,3 +250,45 @@ def test_sin_vecinas_reales_no_interpola(conexion):
     guardar_velas(conexion, [faltante("GGAL", 1 * UN_DIA), faltante("GGAL", 2 * UN_DIA)])
     assert interpolar_faltantes(conexion, "GGAL", "D") == 0
     assert all(v["cierre"] == 0.0 for v in obtener_velas(conexion, "GGAL", "D"))
+
+
+# --- endpoints y enganche al sync ---
+
+
+def test_endpoint_faltantes_resume_por_ticker(cliente, conexion):
+    guardar_velas(
+        conexion,
+        [vela("GGAL", UN_DIA), faltante("GGAL", 2 * UN_DIA), faltante("YPFD", UN_DIA)],
+    )
+    datos = cliente.get("/api/faltantes").json()
+    assert datos["total"] == 2
+    assert {"ticker": "GGAL", "temporalidad": "D", "faltantes": 1} in datos["detalle"]
+
+
+def test_endpoint_reparar_corre_el_pipeline(cliente, conexion):
+    cargar_calendario(conexion, ["YPFD", "PAMP"], [1, 2, 3])
+    guardar_velas(conexion, [vela("GGAL", d * UN_DIA) for d in (1, 3)])
+
+    with patch.object(reparador, "descargar_velas", return_value=[]):
+        resumen = cliente.post("/api/reparar").json()
+
+    assert resumen["placeholders_creados"] == 1
+    assert resumen["interpoladas"] == 1
+    assert cliente.get("/api/faltantes").json()["total"] == 1  # interpolada: flag intacto
+
+
+def test_el_sync_en_background_engancha_la_reparacion(conexion):
+    import time
+
+    import app.servicios.sincronizador as sincronizador
+
+    resumen_sync = {"velas_guardadas": 0, "pares_sincronizados": 0, "velas_refrescadas": 0, "errores": []}
+    with patch.object(sincronizador, "sincronizar_todo", return_value=dict(resumen_sync)), \
+         patch.object(sincronizador, "obtener_conexion", return_value=conexion), \
+         patch.object(reparador, "descargar_velas", return_value=[]):
+        assert sincronizador.sincronizar_en_background()
+        limite = time.time() + 2
+        while sincronizador.hay_sync_en_curso() and time.time() < limite:
+            time.sleep(0.01)
+
+    assert "reparacion" in sincronizador.ultimo_resumen()

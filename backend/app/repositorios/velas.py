@@ -77,6 +77,19 @@ def obtener_ts_faltantes(
     return [fila["ts"] for fila in filas]
 
 
+def contar_faltantes(conexion: sqlite3.Connection) -> list:
+    """Cantidad de velas faltantes por ticker y temporalidad."""
+    filas = conexion.execute(
+        """
+        SELECT ticker, temporalidad, COUNT(*) AS faltantes
+        FROM velas WHERE es_faltante = 1
+        GROUP BY ticker, temporalidad
+        ORDER BY ticker, temporalidad
+        """
+    ).fetchall()
+    return [dict(fila) for fila in filas]
+
+
 def marcar_velas_en_cero(conexion: sqlite3.Connection) -> int:
     """Marca como faltantes las velas con algún precio en cero o negativo."""
     cursor = conexion.execute(

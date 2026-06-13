@@ -161,10 +161,15 @@ def sincronizar_en_background() -> bool:
 
     def _correr():
         global _ultimo_resumen
+        # Import acá para no acoplar el módulo al reparador en los usos directos
+        from app.servicios.reparador import reparar_todo
+
         try:
             conexion = obtener_conexion()  # cada thread necesita su conexión
             try:
-                _ultimo_resumen = sincronizar_todo(conexion)
+                resumen = sincronizar_todo(conexion)
+                resumen["reparacion"] = reparar_todo(conexion)
+                _ultimo_resumen = resumen
             finally:
                 conexion.close()
         finally:

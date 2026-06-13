@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from app.config import tickers_byma, todos_los_tickers
+from app.config import TEMPORALIDADES, tickers_byma, todos_los_tickers
 from app.repositorios.velas import (
     guardar_velas,
     marcar_velas_en_cero,
@@ -147,3 +147,23 @@ def crear_placeholders(
     if placeholders:
         guardar_velas(conexion, placeholders)
     return len(placeholders)
+
+
+def reparar_todo(conexion: sqlite3.Connection) -> dict:
+    """Corre el pipeline completo de reparación sobre todos los tickers."""
+    resumen = {
+        "corruptas_marcadas": marcar_corruptas(conexion),
+        "placeholders_creados": 0,
+        "recuperadas": 0,
+        "interpoladas": 0,
+        "errores": [],
+    }
+    for ticker in todos_los_tickers():
+        for temporalidad in TEMPORALIDADES:
+            try:
+                resumen["placeholders_creados"] += crear_placeholders(conexion, ticker, temporalidad)
+                resumen["recuperadas"] += redescargar_faltantes(conexion, ticker, temporalidad)
+                resumen["interpoladas"] += interpolar_faltantes(conexion, ticker, temporalidad)
+            except Exception as error:
+                resumen["errores"].append(f"{ticker}/{temporalidad}: {error}")
+    return resumen
