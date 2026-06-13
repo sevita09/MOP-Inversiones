@@ -1,4 +1,5 @@
 import EstadoBackend from './componentes/EstadoBackend'
+import InterruptorMoneda from './componentes/InterruptorMoneda'
 
 function App() {
   return (
@@ -7,6 +8,7 @@ function App() {
         <img src="/logo.png" alt="MOP Inversiones" className="logo-encabezado" />
         <span className="titulo-encabezado">MOP - Inversiones</span>
         <EstadoBackend />
+        <InterruptorMoneda />
       </header>
       <main className="pantalla-principal">
         <img src="/sv-logo.png" alt="" className="logo-fondo" />

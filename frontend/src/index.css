@@ -61,6 +61,34 @@ body {
   background-color: #f85149;
 }
 
+.interruptor-moneda {
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #8b949e;
+  background-color: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.interruptor-moneda:hover {
+  border-color: #484f58;
+}
+
+.interruptor-moneda .moneda-activa {
+  color: #e6edf3;
+  font-weight: 600;
+}
+
+.separador-moneda {
+  color: #484f58;
+}
+
 .pantalla-principal {
   flex: 1;
   display: flex;
