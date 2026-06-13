@@ -69,12 +69,20 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
     }
   }, [])
 
-  // Volcar las velas cuando cambian
+  // Volcar las velas cuando cambian. El precio autoescala solo (autoScale por
+  // defecto); el rango temporal solo se reencuadra al cambiar de ticker o
+  // temporalidad, no al togglear moneda ni al refrescar el mismo papel —
+  // así no se pierde el zoom o el desplazamiento del usuario.
+  const claveVista = `${ticker}-${temporalidad}`
+  const claveAnterior = useRef('')
   useEffect(() => {
     if (!serie.current) return
     serie.current.setData(aDatosVelas(velas))
-    grafico.current?.timeScale().fitContent()
-  }, [velas])
+    if (velas.length > 0 && claveAnterior.current !== claveVista) {
+      grafico.current?.timeScale().fitContent()
+      claveAnterior.current = claveVista
+    }
+  }, [velas, claveVista])
 
   const indiceMostrado = indiceActivo ?? velas.length - 1
   const velaMostrada = velas[indiceMostrado] ?? null
