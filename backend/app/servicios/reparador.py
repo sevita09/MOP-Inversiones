@@ -23,6 +23,9 @@ from app.servicios.descarga import descargar_velas
 # Duración de una vela por temporalidad, para cerrar el rango de redescarga
 PASO_POR_TEMPORALIDAD = {"H": 3600, "D": 86400, "S": 7 * 86400, "M": 31 * 86400}
 
+# Pesos de los vecinos para interpolar (se renormalizan si alguno falta)
+PESOS_VECINOS = ((-1, 0.4), (-2, 0.1), (1, 0.4), (2, 0.1))
+
 
 def marcar_corruptas(conexion: sqlite3.Connection) -> int:
     """Marca con es_faltante=1 las velas con precios inválidos. Devuelve cuántas."""
@@ -80,6 +83,47 @@ def redescargar_faltantes(
     if recuperadas:
         guardar_velas(conexion, recuperadas)
     return len(recuperadas)
+
+
+def interpolar_faltantes(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str
+) -> int:
+    """Estima las velas faltantes con el promedio ponderado de sus vecinas reales.
+
+    La vela interpolada CONSERVA es_faltante=1: es un valor estimado, y el flag
+    hace que la redescarga la reintente en el próximo arranque. Devuelve cuántas
+    interpoló (re-interpola las ya estimadas por si una vecina se reparó).
+    """
+    velas = obtener_velas(conexion, ticker, temporalidad)
+    interpoladas = []
+    for indice, vela in enumerate(velas):
+        if not vela["es_faltante"]:
+            continue
+        acumulado = {"apertura": 0.0, "maximo": 0.0, "minimo": 0.0, "cierre": 0.0}
+        suma_pesos = 0.0
+        for desplazamiento, peso in PESOS_VECINOS:
+            vecino_indice = indice + desplazamiento
+            if not 0 <= vecino_indice < len(velas):
+                continue
+            vecina = velas[vecino_indice]
+            if vecina["es_faltante"]:
+                continue
+            for campo in acumulado:
+                acumulado[campo] += peso * vecina[campo]
+            suma_pesos += peso
+        if suma_pesos == 0:
+            continue  # sin vecinas reales: queda el placeholder en cero
+        interpoladas.append(
+            dict(
+                vela,
+                **{campo: round(valor / suma_pesos, 4) for campo, valor in acumulado.items()},
+                volumen=0.0,
+                es_faltante=1,
+            )
+        )
+    if interpoladas:
+        guardar_velas(conexion, interpoladas)
+    return len(interpoladas)
 
 
 def crear_placeholders(
