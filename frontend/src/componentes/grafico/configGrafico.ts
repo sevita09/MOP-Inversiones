@@ -20,6 +20,7 @@ export const OPCIONES_GRAFICO: DeepPartial<ChartOptions> = {
     background: { type: ColorType.Solid, color: COLORES.fondo },
     textColor: COLORES.texto,
     fontFamily: 'system-ui, -apple-system, sans-serif',
+    attributionLogo: false,
   },
   grid: {
     vertLines: { color: COLORES.grilla },

@@ -37,10 +37,58 @@ body {
   letter-spacing: -0.3px;
 }
 
+.navegacion {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+}
+
+.tab-navegacion {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #8b949e;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.tab-navegacion:hover {
+  color: #e6edf3;
+  background: #1c2128;
+}
+
+.tab-navegacion.activo {
+  color: #e6edf3;
+  background: #1c2128;
+}
+
+.pagina-grafico {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.barra-grafico {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #30363d;
+}
+
+.pagina-vacia {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #8b949e;
+}
+
 .selector-temporalidad {
   display: flex;
   gap: 2px;
-  margin-left: 16px;
 }
 
 .boton-temporalidad {
@@ -122,6 +170,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
 }
 
 .cotizacion-ccl {
