@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import BuscadorTickers from './componentes/BuscadorTickers'
 import EstadoBackend from './componentes/EstadoBackend'
 import Navegacion from './componentes/Navegacion'
 import Sidebar from './componentes/Sidebar'
@@ -25,6 +26,7 @@ function App() {
         </div>
         <Sidebar />
       </div>
+      <BuscadorTickers />
     </div>
   )
 }

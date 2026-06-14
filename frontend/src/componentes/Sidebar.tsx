@@ -30,8 +30,18 @@ function Sidebar() {
   const precios = usarPrecios()
   const { ticker: activo, elegirTicker } = usarTicker()
 
+  const abrirBuscador = () => {
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'k', metaKey: true }),
+    )
+  }
+
   return (
     <aside className="sidebar">
+      <button type="button" className="boton-buscar" onClick={abrirBuscador}>
+        <span>Buscar</span>
+        <kbd>⌘K</kbd>
+      </button>
       {paneles &&
         GRUPOS.map(({ clave, titulo }) => (
           <section key={clave} className="grupo-tickers">
