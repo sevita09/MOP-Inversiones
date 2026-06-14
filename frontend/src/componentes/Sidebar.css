@@ -1,0 +1,43 @@
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-left: 1px solid #30363d;
+  padding: 8px 0;
+}
+
+.grupo-tickers {
+  margin-bottom: 12px;
+}
+
+.grupo-titulo {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #484f58;
+}
+
+.fila-ticker {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #e6edf3;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+
+.fila-ticker:hover {
+  background: #161b22;
+}
+
+.fila-ticker.activo {
+  background: #1c2128;
+  border-left-color: #388bfd;
+}

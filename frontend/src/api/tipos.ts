@@ -25,6 +25,13 @@ export interface RespuestaVelas {
   velas: Vela[]
 }
 
+export interface Paneles {
+  panel_lider: string[]
+  panel_general: string[]
+  cedears: string[]
+  dolar: string[]
+}
+
 export interface Tasa {
   fecha: string
   tipo: string

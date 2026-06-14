@@ -3,10 +3,12 @@ import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import PanelPrecio from '../componentes/grafico/PanelPrecio'
 import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import { usarMoneda } from '../contextos/MonedaContext'
+import { usarTicker } from '../contextos/TickerContext'
 import type { Temporalidad } from '../api/tipos'
 
 function PaginaGrafico() {
   const { moneda } = usarMoneda()
+  const { ticker } = usarTicker()
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('D')
 
   return (
@@ -16,7 +18,7 @@ function PaginaGrafico() {
         <InterruptorMoneda />
       </div>
       <div className="pantalla-grafico">
-        <PanelPrecio ticker="GGAL" temporalidad={temporalidad} moneda={moneda} />
+        <PanelPrecio ticker={ticker} temporalidad={temporalidad} moneda={moneda} />
       </div>
     </div>
   )

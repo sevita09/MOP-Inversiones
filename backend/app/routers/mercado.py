@@ -32,6 +32,7 @@ def tickers():
         "panel_lider": PANEL_LIDER,
         "panel_general": PANEL_GENERAL,
         "cedears": CEDEARS,
+        "dolar": TICKERS_DOLAR,
     }
 
 
