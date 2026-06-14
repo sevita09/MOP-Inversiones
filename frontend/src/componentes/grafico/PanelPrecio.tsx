@@ -18,10 +18,13 @@ import type {
 } from '../../api/tipos'
 import { usarVelas } from '../../hooks/usarVelas'
 import {
+  MARGENES_VOLUMEN,
   OPCIONES_AREA,
   OPCIONES_GRAFICO,
   OPCIONES_LINEA,
   OPCIONES_VELAS,
+  VOLUMEN_ROJO,
+  VOLUMEN_VERDE,
 } from './configGrafico'
 import LeyendaOHLC from './LeyendaOHLC'
 import './PanelPrecio.css'
@@ -50,18 +53,28 @@ function volcarDatos(serie: ISeriesApi<SeriesType>, tipo: TipoGrafico, velas: Ve
   serie.setData(tipo === 'velas' ? datosVelas(velas) : datosLinea(velas))
 }
 
+function datosVolumen(velas: Vela[]) {
+  return velas.map((vela) => ({
+    time: vela.ts as UTCTimestamp,
+    value: vela.volumen,
+    color: vela.cierre >= vela.apertura ? VOLUMEN_VERDE : VOLUMEN_ROJO,
+  }))
+}
+
 interface Props {
   ticker: string
   temporalidad: Temporalidad
   moneda: Moneda
   tipo: TipoGrafico
   escala: EscalaPrecio
+  mostrarVolumen: boolean
 }
 
-function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala }: Props) {
+function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala, mostrarVolumen }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
   const grafico = useRef<IChartApi | null>(null)
   const serie = useRef<ISeriesApi<SeriesType> | null>(null)
+  const serieVolumen = useRef<ISeriesApi<'Histogram'> | null>(null)
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
   // Índice de la vela bajo el crosshair; null = ninguna (se muestra la última)
   const [indiceActivo, setIndiceActivo] = useState<number | null>(null)
@@ -122,13 +135,34 @@ function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala }: Props) {
     }
   }, [tipo])
 
+  // Serie de volumen (histograma overlay anclado al fondo del panel)
+  useEffect(() => {
+    const chart = grafico.current
+    if (!chart || !mostrarVolumen) return
+    const v = chart.addHistogramSeries({
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+    })
+    v.priceScale().applyOptions({ scaleMargins: MARGENES_VOLUMEN })
+    v.setData(datosVolumen(velasRef.current))
+    serieVolumen.current = v
+    return () => {
+      try {
+        chart.removeSeries(v)
+      } catch {
+        /* chart disposed */
+      }
+      serieVolumen.current = null
+    }
+  }, [mostrarVolumen])
+
   // Volcar las velas cuando cambian. El rango temporal solo se reencuadra al
   // cambiar de ticker o temporalidad, no al togglear moneda ni refrescar.
   const claveVista = `${ticker}-${temporalidad}`
   const claveAnterior = useRef('')
   useEffect(() => {
-    if (!serie.current) return
-    volcarDatos(serie.current, tipo, velas)
+    if (serie.current) volcarDatos(serie.current, tipo, velas)
+    serieVolumen.current?.setData(datosVolumen(velas))
     if (velas.length > 0 && claveAnterior.current !== claveVista) {
       grafico.current?.timeScale().fitContent()
       claveAnterior.current = claveVista

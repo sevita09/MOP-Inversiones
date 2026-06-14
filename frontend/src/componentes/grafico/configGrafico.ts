@@ -54,3 +54,10 @@ export const OPCIONES_AREA: AreaSeriesPartialOptions = {
   bottomColor: 'rgba(56, 139, 253, 0.02)',
   lineWidth: 2,
 }
+
+// Colores semitransparentes del histograma de volumen
+export const VOLUMEN_VERDE = 'rgba(63, 185, 80, 0.45)'
+export const VOLUMEN_ROJO = 'rgba(248, 81, 73, 0.45)'
+
+// El volumen ocupa el 18% inferior del panel, sin escala visible propia
+export const MARGENES_VOLUMEN = { top: 0.82, bottom: 0 }

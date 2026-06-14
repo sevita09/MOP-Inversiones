@@ -5,6 +5,7 @@ import PanelPrecio from '../componentes/grafico/PanelPrecio'
 import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
 import SelectorEscala from '../componentes/grafico/SelectorEscala'
+import SelectorVolumen from '../componentes/grafico/SelectorVolumen'
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarTicker } from '../contextos/TickerContext'
 import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
@@ -16,6 +17,7 @@ function PaginaGrafico() {
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('D')
   const [tipo, setTipo] = useState<TipoGrafico>('velas')
   const [escala, setEscala] = useState<EscalaPrecio>('lineal')
+  const [mostrarVolumen, setMostrarVolumen] = useState(true)
 
   return (
     <div className="pagina-grafico">
@@ -27,6 +29,7 @@ function PaginaGrafico() {
         <SelectorTemporalidad temporalidad={temporalidad} alCambiar={setTemporalidad} />
         <span className="separador-barra" />
         <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
+        <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />
         <InterruptorMoneda />
       </div>
       <div className="pantalla-grafico">
@@ -36,6 +39,7 @@ function PaginaGrafico() {
           moneda={moneda}
           tipo={tipo}
           escala={escala}
+          mostrarVolumen={mostrarVolumen}
         />
         <div className="escala-overlay">
           <SelectorEscala escala={escala} alCambiar={setEscala} />
