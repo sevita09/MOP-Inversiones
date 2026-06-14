@@ -85,9 +85,22 @@ body {
 .barra-grafico {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 6px 12px;
   border-bottom: 1px solid #30363d;
+}
+
+.identidad-ticker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identidad-simbolo {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #e6edf3;
 }
 
 .pagina-vacia {
