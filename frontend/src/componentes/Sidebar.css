@@ -1,5 +1,5 @@
 .sidebar {
-  width: 150px;
+  width: 175px;
   flex-shrink: 0;
   overflow-y: auto;
   border-left: 1px solid #30363d;
@@ -79,11 +79,10 @@
 .fila-seleccion {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 7px;
   flex: 1;
   min-width: 0;
-  padding: 6px 14px 6px 4px;
+  padding: 5px 14px 5px 4px;
   font-size: 13px;
   color: #e6edf3;
   background: transparent;
@@ -96,6 +95,7 @@
 }
 
 .ticker-variacion {
+  margin-left: auto;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
