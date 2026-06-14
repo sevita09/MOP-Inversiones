@@ -1,5 +1,5 @@
 .sidebar {
-  width: 200px;
+  width: 150px;
   flex-shrink: 0;
   overflow-y: auto;
   border-left: 1px solid #30363d;
@@ -21,9 +21,11 @@
 }
 
 .fila-ticker {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
-  text-align: left;
   padding: 6px 14px;
   font-size: 13px;
   color: #e6edf3;
@@ -31,6 +33,23 @@
   border: none;
   border-left: 2px solid transparent;
   cursor: pointer;
+}
+
+.ticker-simbolo {
+  font-weight: 500;
+}
+
+.ticker-variacion {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.var-verde {
+  color: #3fb950;
+}
+
+.var-roja {
+  color: #f85149;
 }
 
 .fila-ticker:hover {

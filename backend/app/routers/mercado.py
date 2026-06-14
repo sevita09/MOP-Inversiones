@@ -16,6 +16,7 @@ from app.config import (
 from app.db import conexion_api
 from app.repositorios.velas import obtener_velas
 from app.servicios.dolar import convertir_velas_a_usd
+from app.servicios.precios import calcular_precios
 
 MONEDAS = ("ARS", "USD")
 
@@ -34,6 +35,17 @@ def tickers():
         "cedears": CEDEARS,
         "dolar": TICKERS_DOLAR,
     }
+
+
+@router.get("/precios")
+def precios(
+    moneda: str = "ARS",
+    conexion: sqlite3.Connection = Depends(conexion_api),
+):
+    if moneda not in MONEDAS:
+        raise HTTPException(422, f"Moneda inválida: {moneda} (usar ARS o USD)")
+    todos = list(_tickers_validos())
+    return calcular_precios(conexion, todos, moneda)
 
 
 @router.get("/velas")

@@ -32,6 +32,13 @@ export interface Paneles {
   dolar: string[]
 }
 
+export interface Precio {
+  cierre: number
+  variacion_pct: number | null
+}
+
+export type Precios = Record<string, Precio>
+
 export interface Tasa {
   fecha: string
   tipo: string

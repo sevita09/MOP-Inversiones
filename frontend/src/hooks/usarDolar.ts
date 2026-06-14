@@ -12,7 +12,7 @@ export function usarDolar(): RespuestaDolar | null {
         if (activo) setDolar(respuesta)
       })
       .catch(() => {
-        if (activo) setDolar(null)
+        // Conservar la cotización previa ante un fallo transitorio
       })
     return () => {
       activo = false

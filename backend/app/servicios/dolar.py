@@ -123,6 +123,21 @@ def se_convierte_a_usd(ticker: str) -> bool:
     return ticker in tickers_byma()
 
 
+def serie_ccl(conexion: sqlite3.Connection) -> tuple[list[str], list[float]]:
+    """Fechas y valores CCL ordenados, para resolver tasas con búsqueda binaria."""
+    tasas = obtener_tasas(conexion, CCL)
+    return [t["fecha"] for t in tasas], [t["valor"] for t in tasas]
+
+
+def tasa_ccl_para_ts(
+    fechas: list[str], valores: list[float], ts: int
+) -> Optional[float]:
+    """Tasa CCL vigente en la fecha del ts: la del día o la del hábil anterior."""
+    fecha = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+    posicion = bisect_right(fechas, fecha)
+    return valores[posicion - 1] if posicion > 0 else None
+
+
 def convertir_velas_a_usd(
     conexion: sqlite3.Connection, ticker: str, velas: list[dict]
 ) -> list[dict]:
@@ -133,19 +148,15 @@ def convertir_velas_a_usd(
     """
     if not se_convierte_a_usd(ticker) or not velas:
         return velas
-    tasas = obtener_tasas(conexion, CCL)
-    if not tasas:
+    fechas, valores = serie_ccl(conexion)
+    if not fechas:
         return []
-    fechas = [t["fecha"] for t in tasas]
-    valores = [t["valor"] for t in tasas]
 
     convertidas = []
     for vela in velas:
-        fecha = datetime.fromtimestamp(vela["ts"], tz=timezone.utc).strftime("%Y-%m-%d")
-        posicion = bisect_right(fechas, fecha)
-        if posicion == 0:
+        tasa = tasa_ccl_para_ts(fechas, valores, vela["ts"])
+        if tasa is None:
             continue  # sin tasa vigente para esa fecha
-        tasa = valores[posicion - 1]
         convertidas.append(
             dict(
                 vela,

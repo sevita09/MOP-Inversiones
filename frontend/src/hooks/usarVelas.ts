@@ -30,7 +30,8 @@ export function usarVelas(
       .catch((err: unknown) => {
         if (activo) {
           const mensaje = err instanceof Error ? err.message : 'Error al cargar velas'
-          setEstado({ velas: [], cargando: false, error: mensaje })
+          // Conservar las velas previas: un fallo transitorio no borra el gráfico
+          setEstado((previo) => ({ velas: previo.velas, cargando: false, error: mensaje }))
         }
       })
 

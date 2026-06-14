@@ -1,4 +1,11 @@
-import type { Moneda, Paneles, RespuestaDolar, RespuestaVelas, Temporalidad } from './tipos'
+import type {
+  Moneda,
+  Paneles,
+  Precios,
+  RespuestaDolar,
+  RespuestaVelas,
+  Temporalidad,
+} from './tipos'
 
 const URL_BASE = 'http://localhost:8000'
 
@@ -25,4 +32,8 @@ export function obtenerDolar(): Promise<RespuestaDolar> {
 
 export function obtenerTickers(): Promise<Paneles> {
   return obtenerJson<Paneles>('/api/tickers')
+}
+
+export function obtenerPrecios(moneda: Moneda): Promise<Precios> {
+  return obtenerJson<Precios>(`/api/precios?moneda=${moneda}`)
 }

@@ -87,7 +87,8 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
   const indiceMostrado = indiceActivo ?? velas.length - 1
   const velaMostrada = velas[indiceMostrado] ?? null
   const velaPrevia = indiceMostrado > 0 ? velas[indiceMostrado - 1] : null
-  const sinDatos = !cargando && !error && velas.length === 0
+  const hayVelas = velas.length > 0
+  const sinDatos = !cargando && !error && !hayVelas
 
   return (
     <div className="panel-precio">
@@ -95,17 +96,21 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
         <LeyendaOHLC ticker={ticker} vela={velaMostrada} velaPrevia={velaPrevia} />
       )}
       <div ref={contenedor} className="grafico" />
-      {cargando && (
+      {cargando && !hayVelas && (
         <div className="grafico-estado">
           <span className="spinner" />
           Cargando {ticker}…
         </div>
       )}
-      {error && (
+      {error && !hayVelas && (
         <div className="grafico-estado grafico-estado-error">
           No se pudieron cargar los datos
           <span className="grafico-estado-detalle">{error}</span>
         </div>
+      )}
+      {error && hayVelas && (
+        // Ya hay datos en pantalla: el error va como aviso discreto, sin tapar el gráfico
+        <div className="grafico-banner-error">Sin conexión — mostrando datos previos</div>
       )}
       {sinDatos && (
         <div className="grafico-estado">Sin datos para {ticker} en {temporalidad}</div>
