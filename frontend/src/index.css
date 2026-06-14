@@ -15,6 +15,20 @@ body {
   flex-direction: column;
 }
 
+.cuerpo {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
 .encabezado {
   display: flex;
   align-items: center;
@@ -263,6 +277,21 @@ body {
 
 .grafico-estado-error {
   color: #f85149;
+}
+
+.grafico-banner-error {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-size: 12px;
+  color: #d29922;
+  background: rgba(13, 17, 23, 0.9);
+  border: 1px solid #30363d;
+  padding: 4px 12px;
+  border-radius: 6px;
+  pointer-events: none;
 }
 
 .grafico-estado-detalle {

@@ -40,8 +40,13 @@ RutaBase = Union[Path, str]
 
 
 def obtener_conexion(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> sqlite3.Connection:
-    conexion = sqlite3.connect(ruta)
+    # check_same_thread=False: FastAPI corre los endpoints sync en un pool de
+    # threads, así que la conexión (una por request) puede crearse y usarse en
+    # threads distintos. No se comparten conexiones entre requests, así que es seguro.
+    conexion = sqlite3.connect(ruta, check_same_thread=False)
     conexion.row_factory = sqlite3.Row
+    # Esperar a un lock de escritura (el sync en background) en vez de fallar al toque
+    conexion.execute("PRAGMA busy_timeout = 5000")
     return conexion
 
 

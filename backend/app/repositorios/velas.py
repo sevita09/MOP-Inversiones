@@ -114,6 +114,17 @@ def obtener_ultima_vela(
     return dict(fila) if fila else None
 
 
+def obtener_ultimas_velas(
+    conexion: sqlite3.Connection, ticker: str, temporalidad: str, limite: int
+) -> list[dict]:
+    """Las últimas `limite` velas, ordenadas por ts ascendente."""
+    filas = conexion.execute(
+        "SELECT * FROM velas WHERE ticker = ? AND temporalidad = ? ORDER BY ts DESC LIMIT ?",
+        (ticker, temporalidad, limite),
+    ).fetchall()
+    return [dict(fila) for fila in reversed(filas)]
+
+
 def obtener_velas(
     conexion: sqlite3.Connection,
     ticker: str,
