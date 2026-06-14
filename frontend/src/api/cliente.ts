@@ -1,4 +1,4 @@
-import type { Moneda, RespuestaVelas, Temporalidad } from './tipos'
+import type { Moneda, RespuestaDolar, RespuestaVelas, Temporalidad } from './tipos'
 
 const URL_BASE = 'http://localhost:8000'
 
@@ -17,4 +17,8 @@ export function obtenerVelas(
 ): Promise<RespuestaVelas> {
   const parametros = new URLSearchParams({ ticker, temporalidad, moneda })
   return obtenerJson<RespuestaVelas>(`/api/velas?${parametros}`)
+}
+
+export function obtenerDolar(): Promise<RespuestaDolar> {
+  return obtenerJson<RespuestaDolar>('/api/dolar')
 }

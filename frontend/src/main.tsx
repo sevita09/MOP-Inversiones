@@ -1,13 +1,16 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { ProveedorMoneda } from './contextos/MonedaContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ProveedorMoneda>
-      <App />
-    </ProveedorMoneda>
+    <BrowserRouter>
+      <ProveedorMoneda>
+        <App />
+      </ProveedorMoneda>
+    </BrowserRouter>
   </StrictMode>,
 )

@@ -141,6 +141,29 @@ def test_sincronizar_ccl_sin_datos_devuelve_cero(conexion):
     assert sincronizar_ccl(conexion) == 0
 
 
+# --- endpoint /api/dolar ---
+
+
+def test_endpoint_dolar_devuelve_la_ultima_cotizacion(cliente, conexion):
+    guardar_tasas(
+        conexion,
+        [
+            {"fecha": "2026-06-10", "tipo": CCL, "valor": 1450.0},
+            {"fecha": "2026-06-12", "tipo": CCL, "valor": 1488.4},
+            {"fecha": "2026-06-11", "tipo": OFICIAL, "valor": 1428.5},
+        ],
+    )
+    datos = cliente.get("/api/dolar").json()
+    assert datos["ccl"]["valor"] == 1488.4
+    assert datos["ccl"]["fecha"] == "2026-06-12"
+    assert datos["oficial"]["valor"] == 1428.5
+
+
+def test_endpoint_dolar_sin_datos_devuelve_nulos(cliente):
+    datos = cliente.get("/api/dolar").json()
+    assert datos == {"ccl": None, "oficial": None}
+
+
 # --- velas sintéticas DOLARCCL ---
 
 
