@@ -49,15 +49,45 @@
 .fila-ticker {
   display: flex;
   align-items: center;
+  border-left: 2px solid transparent;
+}
+
+.fila-ticker:hover {
+  background: #161b22;
+}
+
+.fila-ticker.activo {
+  background: #1c2128;
+  border-left-color: #388bfd;
+}
+
+.estrella {
+  padding: 6px 4px 6px 10px;
+  font-size: 13px;
+  line-height: 1;
+  color: #484f58;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.estrella:hover,
+.estrella.marcada {
+  color: #d29922;
+}
+
+.fila-seleccion {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  width: 100%;
-  padding: 6px 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 14px 6px 4px;
   font-size: 13px;
   color: #e6edf3;
   background: transparent;
   border: none;
-  border-left: 2px solid transparent;
   cursor: pointer;
 }
 
@@ -76,13 +106,4 @@
 
 .var-roja {
   color: #f85149;
-}
-
-.fila-ticker:hover {
-  background: #161b22;
-}
-
-.fila-ticker.activo {
-  background: #1c2128;
-  border-left-color: #388bfd;
 }
