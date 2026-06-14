@@ -11,6 +11,7 @@ import type { Moneda, Temporalidad, Vela } from '../../api/tipos'
 import { usarVelas } from '../../hooks/usarVelas'
 import { OPCIONES_GRAFICO, OPCIONES_VELAS } from './configGrafico'
 import LeyendaOHLC from './LeyendaOHLC'
+import './PanelPrecio.css'
 
 function aDatosVelas(velas: Vela[]): CandlestickData[] {
   return velas.map((vela) => ({

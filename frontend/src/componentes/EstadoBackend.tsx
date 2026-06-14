@@ -1,4 +1,5 @@
 import { usarEstadoBackend } from '../hooks/usarEstadoBackend'
+import './EstadoBackend.css'
 
 const TEXTOS = {
   verificando: 'Verificando backend…',

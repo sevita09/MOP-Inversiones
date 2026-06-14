@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import './Navegacion.css'
 
 const SECCIONES = [
   { ruta: '/', etiqueta: 'Gráfico' },

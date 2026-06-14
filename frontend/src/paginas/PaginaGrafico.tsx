@@ -6,6 +6,7 @@ import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarTicker } from '../contextos/TickerContext'
 import type { Temporalidad } from '../api/tipos'
+import './PaginaGrafico.css'
 
 function PaginaGrafico() {
   const { moneda } = usarMoneda()

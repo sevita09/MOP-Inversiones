@@ -1,0 +1,32 @@
+.pagina-grafico {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.barra-grafico {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #30363d;
+}
+
+.identidad-ticker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identidad-simbolo {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #e6edf3;
+}
+
+.pantalla-grafico {
+  flex: 1;
+  min-height: 0;
+}

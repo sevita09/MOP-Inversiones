@@ -1,0 +1,23 @@
+.navegacion {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+}
+
+.tab-navegacion {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #8b949e;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.tab-navegacion:hover {
+  color: #e6edf3;
+  background: #1c2128;
+}
+
+.tab-navegacion.activo {
+  color: #e6edf3;
+  background: #1c2128;
+}
