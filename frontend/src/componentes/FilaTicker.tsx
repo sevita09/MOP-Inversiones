@@ -1,3 +1,4 @@
+import LogoTicker from './LogoTicker'
 import type { Precio } from '../api/tipos'
 
 interface Props {
@@ -27,6 +28,7 @@ function FilaTicker({ simbolo, precio, activo, favorito, alElegir, alAlternarFav
         {favorito ? '★' : '☆'}
       </button>
       <button type="button" className="fila-seleccion" onClick={() => alElegir(simbolo)}>
+        <LogoTicker ticker={simbolo} tamano={18} />
         <span className="ticker-simbolo">{simbolo}</span>
         {variacion !== null && (
           <span className={`ticker-variacion ${variacion >= 0 ? 'var-verde' : 'var-roja'}`}>

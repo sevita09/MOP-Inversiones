@@ -1,5 +1,6 @@
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarDolar } from '../hooks/usarDolar'
+import './InterruptorMoneda.css'
 
 function formatearCCL(valor: number): string {
   return valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

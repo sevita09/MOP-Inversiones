@@ -1,4 +1,5 @@
 import type { Temporalidad } from '../../api/tipos'
+import './SelectorTemporalidad.css'
 
 const TEMPORALIDADES: { valor: Temporalidad; etiqueta: string }[] = [
   { valor: 'H', etiqueta: '1H' },
