@@ -1,8 +1,10 @@
 import { ColorType } from 'lightweight-charts'
 import type {
+  AreaSeriesPartialOptions,
   CandlestickSeriesPartialOptions,
   DeepPartial,
   ChartOptions,
+  LineSeriesPartialOptions,
 } from 'lightweight-charts'
 
 // Paleta del tema oscuro (consistente con index.css)
@@ -13,6 +15,7 @@ export const COLORES = {
   borde: '#30363d',
   verde: '#3fb950',
   rojo: '#f85149',
+  azul: '#388bfd',
 } as const
 
 export const OPCIONES_GRAFICO: DeepPartial<ChartOptions> = {
@@ -38,4 +41,16 @@ export const OPCIONES_VELAS: CandlestickSeriesPartialOptions = {
   borderDownColor: COLORES.rojo,
   wickUpColor: COLORES.verde,
   wickDownColor: COLORES.rojo,
+}
+
+export const OPCIONES_LINEA: LineSeriesPartialOptions = {
+  color: COLORES.azul,
+  lineWidth: 2,
+}
+
+export const OPCIONES_AREA: AreaSeriesPartialOptions = {
+  lineColor: COLORES.azul,
+  topColor: 'rgba(56, 139, 253, 0.4)',
+  bottomColor: 'rgba(56, 139, 253, 0.02)',
+  lineWidth: 2,
 }

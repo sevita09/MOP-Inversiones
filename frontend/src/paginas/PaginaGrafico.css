@@ -26,6 +26,13 @@
   color: #e6edf3;
 }
 
+.separador-barra {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 0;
+  background: #30363d;
+}
+
 .pantalla-grafico {
   flex: 1;
   min-height: 0;

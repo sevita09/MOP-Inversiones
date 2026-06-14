@@ -5,6 +5,7 @@ export interface EstadoSalud {
 
 export type Temporalidad = 'H' | 'D' | 'S' | 'M'
 export type Moneda = 'ARS' | 'USD'
+export type TipoGrafico = 'velas' | 'linea' | 'area'
 
 export interface Vela {
   ticker: string
