@@ -30,6 +30,10 @@ export function obtenerDolar(): Promise<RespuestaDolar> {
   return obtenerJson<RespuestaDolar>('/api/dolar')
 }
 
+export function urlLogo(ticker: string): string {
+  return `${URL_BASE}/api/logo/${ticker}`
+}
+
 export function obtenerTickers(): Promise<Paneles> {
   return obtenerJson<Paneles>('/api/tickers')
 }
