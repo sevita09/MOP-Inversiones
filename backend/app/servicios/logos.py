@@ -7,6 +7,7 @@ falten, así un ticker nuevo agregado al código se completa solo al arrancar.
 """
 from __future__ import annotations
 
+import threading
 import time
 from pathlib import Path
 from typing import Optional
@@ -88,3 +89,8 @@ def asegurar_logos(pausa: float = 0.2) -> int:
                 continue  # un ticker que falla no frena al resto
             time.sleep(pausa)  # no martillar a TradingView
     return bajados
+
+
+def asegurar_logos_en_background() -> None:
+    """Lanza asegurar_logos en un thread aparte (no bloquea el arranque)."""
+    threading.Thread(target=asegurar_logos, name="logos-mop", daemon=True).start()
