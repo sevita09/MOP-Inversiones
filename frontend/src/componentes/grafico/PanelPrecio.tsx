@@ -92,9 +92,7 @@ function PanelPrecio({ ticker, temporalidad, moneda }: Props) {
 
   return (
     <div className="panel-precio">
-      {velaMostrada && (
-        <LeyendaOHLC ticker={ticker} vela={velaMostrada} velaPrevia={velaPrevia} />
-      )}
+      {velaMostrada && <LeyendaOHLC vela={velaMostrada} velaPrevia={velaPrevia} />}
       <div ref={contenedor} className="grafico" />
       {cargando && !hayVelas && (
         <div className="grafico-estado">

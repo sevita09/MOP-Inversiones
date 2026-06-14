@@ -1,7 +1,6 @@
 import type { Vela } from '../../api/tipos'
 
 interface Props {
-  ticker: string
   vela: Vela
   velaPrevia: Vela | null
 }
@@ -16,7 +15,7 @@ function formatearVolumen(valor: number): string {
   return `${valor}`
 }
 
-function LeyendaOHLC({ ticker, vela, velaPrevia }: Props) {
+function LeyendaOHLC({ vela, velaPrevia }: Props) {
   // Variación contra el cierre anterior (estilo TradingView); si no hay, contra la apertura
   const base = velaPrevia ? velaPrevia.cierre : vela.apertura
   const cambio = vela.cierre - base
@@ -27,7 +26,6 @@ function LeyendaOHLC({ ticker, vela, velaPrevia }: Props) {
 
   return (
     <div className="leyenda-ohlc">
-      <span className="leyenda-ticker">{ticker}</span>
       <span className="leyenda-campo">O <b>{formatearPrecio(vela.apertura)}</b></span>
       <span className="leyenda-campo">H <b>{formatearPrecio(vela.maximo)}</b></span>
       <span className="leyenda-campo">L <b>{formatearPrecio(vela.minimo)}</b></span>

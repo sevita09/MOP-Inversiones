@@ -250,13 +250,6 @@ body {
   pointer-events: none;
 }
 
-.leyenda-ticker {
-  font-size: 13px;
-  font-weight: 600;
-  color: #e6edf3;
-  letter-spacing: -0.2px;
-}
-
 .leyenda-campo b {
   color: #e6edf3;
   font-weight: 500;
