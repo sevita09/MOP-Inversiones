@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { createChart, PriceScaleMode } from 'lightweight-charts'
 import type {
   CandlestickData,
@@ -7,6 +7,7 @@ import type {
   LineData,
   MouseEventParams,
   SeriesType,
+  Time,
   UTCTimestamp,
 } from 'lightweight-charts'
 import type {
@@ -70,7 +71,17 @@ interface Props {
   mostrarVolumen: boolean
 }
 
-function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala, mostrarVolumen }: Props) {
+export interface PanelPrecioHandle {
+  // meses a mostrar hacia atrás desde la última vela; null = todo el historial
+  verRango: (meses: number | null) => void
+}
+
+const DIAS_POR_MES = 30 * 86400
+
+const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
+  { ticker, temporalidad, moneda, tipo, escala, mostrarVolumen },
+  ref,
+) {
   const contenedor = useRef<HTMLDivElement>(null)
   const grafico = useRef<IChartApi | null>(null)
   const serie = useRef<ISeriesApi<SeriesType> | null>(null)
@@ -89,6 +100,24 @@ function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala, mostrarVolume
   indicePorTsRef.current = indicePorTs
   const velasRef = useRef(velas)
   velasRef.current = velas
+
+  useImperativeHandle(ref, () => ({
+    verRango(meses) {
+      const chart = grafico.current
+      if (!chart) return
+      if (meses === null) {
+        chart.timeScale().fitContent()
+        return
+      }
+      const actuales = velasRef.current
+      if (actuales.length === 0) return
+      const hasta = actuales[actuales.length - 1].ts
+      chart.timeScale().setVisibleRange({
+        from: (hasta - meses * DIAS_POR_MES) as Time,
+        to: hasta as Time,
+      })
+    },
+  }), [])
 
   // Crear el gráfico una sola vez; autoSize lo mantiene del tamaño del contenedor
   useEffect(() => {
@@ -199,6 +228,6 @@ function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala, mostrarVolume
       )}
     </div>
   )
-}
+})
 
 export default PanelPrecio
