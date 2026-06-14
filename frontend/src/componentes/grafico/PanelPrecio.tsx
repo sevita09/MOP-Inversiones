@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { createChart } from 'lightweight-charts'
+import { createChart, PriceScaleMode } from 'lightweight-charts'
 import type {
   CandlestickData,
   IChartApi,
@@ -9,7 +9,13 @@ import type {
   SeriesType,
   UTCTimestamp,
 } from 'lightweight-charts'
-import type { Moneda, Temporalidad, TipoGrafico, Vela } from '../../api/tipos'
+import type {
+  EscalaPrecio,
+  Moneda,
+  Temporalidad,
+  TipoGrafico,
+  Vela,
+} from '../../api/tipos'
 import { usarVelas } from '../../hooks/usarVelas'
 import {
   OPCIONES_AREA,
@@ -49,9 +55,10 @@ interface Props {
   temporalidad: Temporalidad
   moneda: Moneda
   tipo: TipoGrafico
+  escala: EscalaPrecio
 }
 
-function PanelPrecio({ ticker, temporalidad, moneda, tipo }: Props) {
+function PanelPrecio({ ticker, temporalidad, moneda, tipo, escala }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
   const grafico = useRef<IChartApi | null>(null)
   const serie = useRef<ISeriesApi<SeriesType> | null>(null)
@@ -89,6 +96,13 @@ function PanelPrecio({ ticker, temporalidad, moneda, tipo }: Props) {
       serie.current = null
     }
   }, [])
+
+  // Aplicar la escala (lineal o logarítmica) al eje de precios
+  useEffect(() => {
+    grafico.current?.priceScale('right').applyOptions({
+      mode: escala === 'log' ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
+    })
+  }, [escala])
 
   // Crear/recrear la serie al cambiar el tipo de gráfico
   useEffect(() => {

@@ -1,0 +1,22 @@
+.boton-escala {
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #8b949e;
+  background: rgba(13, 17, 23, 0.85);
+  border: 1px solid #30363d;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.boton-escala:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.boton-escala.activo {
+  color: #e6edf3;
+  background: #1f6feb;
+  border-color: #1f6feb;
+}

@@ -4,9 +4,10 @@ import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio from '../componentes/grafico/PanelPrecio'
 import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
+import SelectorEscala from '../componentes/grafico/SelectorEscala'
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarTicker } from '../contextos/TickerContext'
-import type { Temporalidad, TipoGrafico } from '../api/tipos'
+import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
 import './PaginaGrafico.css'
 
 function PaginaGrafico() {
@@ -14,6 +15,7 @@ function PaginaGrafico() {
   const { ticker } = usarTicker()
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('D')
   const [tipo, setTipo] = useState<TipoGrafico>('velas')
+  const [escala, setEscala] = useState<EscalaPrecio>('lineal')
 
   return (
     <div className="pagina-grafico">
@@ -33,7 +35,11 @@ function PaginaGrafico() {
           temporalidad={temporalidad}
           moneda={moneda}
           tipo={tipo}
+          escala={escala}
         />
+        <div className="escala-overlay">
+          <SelectorEscala escala={escala} alCambiar={setEscala} />
+        </div>
       </div>
     </div>
   )
