@@ -9,6 +9,15 @@ def velas(cierres):
     ]
 
 
+def velas_ohlc(datos):
+    """datos = [(apertura, maximo, minimo, cierre), ...]"""
+    return [
+        {"ticker": "X", "temporalidad": "D", "ts": i, "apertura": o, "maximo": h,
+         "minimo": l, "cierre": c, "volumen": 0.0}
+        for i, (o, h, l, c) in enumerate(datos)
+    ]
+
+
 def ema_manual(cierres, span):
     """EMA recursiva con adjust=False: ema[0]=cierre[0], luego α·c + (1−α)·ema."""
     alfa = 2 / (span + 1)
@@ -187,3 +196,117 @@ def test_estocastico_siempre_entre_0_y_100():
 def test_estocastico_warmup_es_none():
     k = calcular("estocastico", velas(list(range(1, 10))), periodo=14)["k"]
     assert k[0] is None  # ventana de 14 incompleta al inicio
+
+
+# --- ATR ---
+
+
+def test_atr_serie_constante_es_cero():
+    datos = [(10, 10, 10, 10)] * 20
+    atr = calcular("atr", velas_ohlc(datos), periodo=5)["atr"]
+    valores = [v for v in atr if v is not None]
+    assert all(v == 0.0 for v in valores)
+
+
+def test_atr_true_range_usa_maximo_y_minimo():
+    # Barra: high=15, low=5 → TR = 10 (con cierre previo dentro del rango)
+    datos = [(10, 10, 10, 10)] * 14 + [(10, 15, 5, 12)]
+    atr = calcular("atr", velas_ohlc(datos), periodo=14)["atr"]
+    assert atr[-1] is not None and atr[-1] > 0
+
+
+def test_atr_gap_usa_cierre_anterior():
+    # Gap: cierre previo=10, nueva barra high=25, low=20 → TR = max(5, 15, 10) = 15
+    datos = [(10, 10, 10, 10)] * 14 + [(20, 25, 20, 22)]
+    atr = calcular("atr", velas_ohlc(datos), periodo=14)["atr"]
+    assert atr[-1] is not None and atr[-1] > 0
+
+
+def test_atr_warmup_es_none():
+    datos = [(10, 12, 8, 10)] * 10
+    atr = calcular("atr", velas_ohlc(datos), periodo=14)["atr"]
+    assert atr[0] is None
+
+
+# --- %B de Bollinger ---
+
+
+def test_porcentaje_b_dentro_de_bandas_esta_entre_0_y_1():
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20, 19, 22, 21, 23, 22]
+    b = calcular("porcentaje_b", velas(cierres), periodo=5)["porcentaje_b"]
+    valores = [v for v in b[4:] if v is not None]
+    promedio = sum(valores) / len(valores)
+    assert 0.2 < promedio < 0.8
+
+
+def test_porcentaje_b_precio_en_banda_superior_es_1():
+    # Serie: media + 2σ → %B ≈ 1
+    cierres = [10] * 20 + [20]  # salto brusco, cierre > banda superior
+    b = calcular("porcentaje_b", velas(cierres), periodo=20)["porcentaje_b"]
+    assert b[-1] is not None and b[-1] > 1.0  # por encima de la banda
+
+
+def test_porcentaje_b_siempre_tiene_valor_tras_warmup():
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20, 19, 22, 21, 23, 25, 24, 26, 28, 27, 30]
+    b = calcular("porcentaje_b", velas(cierres), periodo=5)["porcentaje_b"]
+    valores = [v for v in b[4:] if v is not None]
+    assert len(valores) > 0
+
+
+# --- ADX ---
+
+
+def test_adx_tendencia_fuerte_es_alto():
+    # Serie fuertemente alcista → ADX alto
+    datos = [(i, i + 2, i - 1, i + 1) for i in range(1, 40)]
+    adx = calcular("adx", velas_ohlc(datos), periodo=14)["adx"]
+    valores = [v for v in adx if v is not None]
+    assert valores and valores[-1] > 30
+
+
+def test_adx_sin_tendencia_es_bajo():
+    import random
+    rng = random.Random(42)
+    datos = [(10, 10 + rng.uniform(0.5, 2), 10 - rng.uniform(0.5, 2), 10 + rng.uniform(-1, 1))
+             for _ in range(60)]
+    adx = calcular("adx", velas_ohlc(datos), periodo=14)["adx"]
+    valores = [v for v in adx if v is not None]
+    assert valores and valores[-1] < 30
+
+
+def test_adx_siempre_positivo():
+    datos = [(i, i + 3, i - 2, i + 1) for i in range(1, 40)]
+    adx = calcular("adx", velas_ohlc(datos), periodo=14)["adx"]
+    valores = [v for v in adx if v is not None]
+    assert all(v >= 0 for v in valores)
+
+
+def test_adx_warmup_es_none():
+    datos = [(10, 12, 8, 10)] * 5
+    adx = calcular("adx", velas_ohlc(datos), periodo=14)["adx"]
+    assert adx[0] is None
+
+
+# --- Percentil de distancia ---
+
+
+def test_percentil_distancia_maximo_es_100():
+    # Último precio muy por encima de la EMA → percentil alto
+    cierres = [10] * 300 + list(range(10, 30))
+    p = calcular("percentil_distancia", velas(cierres), periodo=5, ventana=50)["percentil"]
+    valores = [v for v in p if v is not None]
+    assert valores and valores[-1] > 90
+
+
+def test_percentil_distancia_minimo_es_cercano_a_cero():
+    # Último precio muy por debajo de la EMA → percentil bajo
+    cierres = [10] * 300 + list(range(10, 0, -1))
+    p = calcular("percentil_distancia", velas(cierres), periodo=5, ventana=50)["percentil"]
+    valores = [v for v in p if v is not None]
+    assert valores and valores[-1] < 10
+
+
+def test_percentil_distancia_warmup_es_none():
+    cierres = list(range(1, 20))
+    p = calcular("percentil_distancia", velas(cierres), periodo=5, ventana=252)["percentil"]
+    assert p[0] is None

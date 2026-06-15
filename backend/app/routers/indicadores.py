@@ -21,7 +21,7 @@ MONEDAS = ("ARS", "USD")
 
 # Indicadores cuya ventana es la EMA central de la metodología: el período
 # depende de la temporalidad y lo inyecta el router (no es un default fijo)
-INDICADORES_EMA_CENTRAL = {"bandas"}
+INDICADORES_EMA_CENTRAL = {"bandas", "percentil_distancia"}
 
 
 @router.get("/indicadores")
