@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
@@ -10,17 +10,18 @@ import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarTicker } from '../contextos/TickerContext'
 import { usarAtajosTeclado } from '../hooks/usarAtajosTeclado'
+import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
 import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
 import './PaginaGrafico.css'
 
 function PaginaGrafico() {
   const { moneda } = usarMoneda()
   const { ticker } = usarTicker()
-  const [temporalidad, setTemporalidad] = useState<Temporalidad>('D')
+  const [temporalidad, setTemporalidad] = usarEstadoPersistente<Temporalidad>('mop.temporalidad', 'D')
   usarAtajosTeclado(setTemporalidad)
-  const [tipo, setTipo] = useState<TipoGrafico>('velas')
-  const [escala, setEscala] = useState<EscalaPrecio>('lineal')
-  const [mostrarVolumen, setMostrarVolumen] = useState(true)
+  const [tipo, setTipo] = usarEstadoPersistente<TipoGrafico>('mop.tipo', 'velas')
+  const [escala, setEscala] = usarEstadoPersistente<EscalaPrecio>('mop.escala', 'lineal')
+  const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const panelRef = useRef<PanelPrecioHandle>(null)
 
   return (
