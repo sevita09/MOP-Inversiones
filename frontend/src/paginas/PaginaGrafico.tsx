@@ -9,6 +9,7 @@ import SelectorVolumen from '../componentes/grafico/SelectorVolumen'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarTicker } from '../contextos/TickerContext'
+import { usarAtajosTeclado } from '../hooks/usarAtajosTeclado'
 import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
 import './PaginaGrafico.css'
 
@@ -16,6 +17,7 @@ function PaginaGrafico() {
   const { moneda } = usarMoneda()
   const { ticker } = usarTicker()
   const [temporalidad, setTemporalidad] = useState<Temporalidad>('D')
+  usarAtajosTeclado(setTemporalidad)
   const [tipo, setTipo] = useState<TipoGrafico>('velas')
   const [escala, setEscala] = useState<EscalaPrecio>('lineal')
   const [mostrarVolumen, setMostrarVolumen] = useState(true)
