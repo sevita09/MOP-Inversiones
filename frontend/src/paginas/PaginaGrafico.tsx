@@ -40,13 +40,12 @@ function PaginaGrafico() {
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const [mostrarEma, setMostrarEma] = usarEstadoPersistente('mop.ema', false)
   const [mostrarBandas, setMostrarBandas] = usarEstadoPersistente('mop.bandas', false)
-  const [osciladores, setOsciladores] = useState<Set<NombreOscilador>>(new Set())
+  const [oscActivos, setOscActivos] = usarEstadoPersistente<NombreOscilador[]>('mop.osciladores', [])
+  const osciladores = new Set(oscActivos)
   const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
-    setOsciladores((prev) => {
-      const siguiente = new Set(prev)
-      activo ? siguiente.add(nombre) : siguiente.delete(nombre)
-      return siguiente
-    })
+    const siguiente = new Set(oscActivos)
+    activo ? siguiente.add(nombre) : siguiente.delete(nombre)
+    setOscActivos([...siguiente])
   }
   const panelRef = useRef<PanelPrecioHandle>(null)
   const paginaRef = useRef<HTMLDivElement>(null)
