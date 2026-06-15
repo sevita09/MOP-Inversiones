@@ -33,6 +33,7 @@ import {
   crearSeriesBandas,
   volcarBandas,
   volcarEma,
+  zEnIndice,
 } from './seriesBandas'
 import LeyendaOHLC from './LeyendaOHLC'
 import './PanelPrecio.css'
@@ -260,10 +261,13 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const velaPrevia = indiceMostrado > 0 ? velas[indiceMostrado - 1] : null
   const hayVelas = velas.length > 0
   const sinDatos = !cargando && !error && !hayVelas
+  const zBandas = zEnIndice(bandas, velaMostrada, indiceMostrado)
 
   return (
     <div className="panel-precio">
-      {velaMostrada && <LeyendaOHLC vela={velaMostrada} velaPrevia={velaPrevia} />}
+      {velaMostrada && (
+        <LeyendaOHLC vela={velaMostrada} velaPrevia={velaPrevia} z={zBandas} />
+      )}
       <div ref={contenedor} className="grafico" />
       {cargando && !hayVelas && (
         <div className="grafico-estado">

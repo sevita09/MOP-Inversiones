@@ -3,6 +3,8 @@ import type { Vela } from '../../api/tipos'
 interface Props {
   vela: Vela
   velaPrevia: Vela | null
+  // Posición del precio respecto a la EMA central, en σ (null = bandas apagadas)
+  z: number | null
 }
 
 function formatearPrecio(valor: number): string {
@@ -15,7 +17,16 @@ function formatearVolumen(valor: number): string {
   return `${valor}`
 }
 
-function LeyendaOHLC({ vela, velaPrevia }: Props) {
+// Semáforo de reversión por zona de σ: blanco dentro de ±1σ, amarillo entre 1 y
+// 2σ, verde si está ≤ −2σ (barato) y rojo si está ≥ +2σ (caro).
+function claseZ(z: number): string {
+  const abs = Math.abs(z)
+  if (abs <= 1) return 'z-neutro'
+  if (abs < 2) return 'z-medio'
+  return z >= 0 ? 'z-alto' : 'z-bajo'
+}
+
+function LeyendaOHLC({ vela, velaPrevia, z }: Props) {
   // Variación contra el cierre anterior (estilo TradingView); si no hay, contra la apertura
   const base = velaPrevia ? velaPrevia.cierre : vela.apertura
   const cambio = vela.cierre - base
@@ -34,6 +45,11 @@ function LeyendaOHLC({ vela, velaPrevia }: Props) {
         {signo}{formatearPrecio(cambio)} ({signo}{cambioPct.toFixed(2)}%)
       </span>
       <span className="leyenda-campo">Vol <b>{formatearVolumen(vela.volumen)}</b></span>
+      {z !== null && (
+        <span className="leyenda-campo leyenda-z">
+          Z: <b className={claseZ(z)}>{z >= 0 ? '+' : '−'}{Math.abs(z).toFixed(2)} σ</b>
+        </span>
+      )}
     </div>
   )
 }

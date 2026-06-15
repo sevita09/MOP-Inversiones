@@ -6,6 +6,7 @@ import type {
   UTCTimestamp,
   WhitespaceData,
 } from 'lightweight-charts'
+import type { Vela } from '../../api/tipos'
 import type { DatosBandas } from '../../hooks/usarBandas'
 import { COLOR_EMA_CENTRAL, COLORES_BANDAS } from './configGrafico'
 
@@ -53,4 +54,20 @@ export function volcarBandas(
   for (const [clave, serie] of series) {
     serie.setData(datos ? datosSerie(datos.ts, datos.series[clave] ?? []) : [])
   }
+}
+
+// Posición del precio respecto a la EMA central, en desvíos σ (z = banda ±k).
+// velas y bandas vienen del mismo query → alinean por índice; se verifica el ts.
+export function zEnIndice(
+  datos: DatosBandas | null,
+  vela: Vela | null,
+  indice: number,
+): number | null {
+  if (!datos || !vela || datos.ts[indice] !== vela.ts) return null
+  const media = datos.series.media[indice]
+  const sup1 = datos.series.sup1[indice]
+  if (media == null || sup1 == null) return null
+  const sigma = sup1 - media
+  if (sigma === 0) return null
+  return (vela.cierre - media) / sigma
 }
