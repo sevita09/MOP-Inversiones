@@ -4,7 +4,12 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.config import TEMPORALIDADES, TICKERS_DOLAR, todos_los_tickers
+from app.config import (
+    TEMPORALIDADES,
+    TICKERS_DOLAR,
+    periodo_ema_central,
+    todos_los_tickers,
+)
 from app.db import conexion_api
 from app.repositorios.velas import obtener_velas
 from app.servicios.dolar import convertir_velas_a_usd
@@ -13,6 +18,10 @@ from app.servicios.indicadores import calcular
 router = APIRouter(prefix="/api")
 
 MONEDAS = ("ARS", "USD")
+
+# Indicadores cuya ventana es la EMA central de la metodología: el período
+# depende de la temporalidad y lo inyecta el router (no es un default fijo)
+INDICADORES_EMA_CENTRAL = {"bandas"}
 
 
 @router.get("/indicadores")
@@ -37,8 +46,11 @@ def indicadores(
     nombres = [n.strip() for n in incluir.split(",") if n.strip()]
     resultado: dict[str, dict] = {}
     for nombre in nombres:
+        params = {}
+        if nombre in INDICADORES_EMA_CENTRAL:
+            params["periodo"] = periodo_ema_central(temporalidad)
         try:
-            resultado[nombre] = calcular(nombre, velas)
+            resultado[nombre] = calcular(nombre, velas, **params)
         except KeyError:
             raise HTTPException(422, f"Indicador desconocido: {nombre}")
 
