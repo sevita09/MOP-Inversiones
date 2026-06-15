@@ -3,7 +3,9 @@ import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
 import PanelOscilador from '../componentes/grafico/PanelOscilador'
-import { OSCILADORES } from '../componentes/grafico/configOsciladores'
+import SelectorOscilador from '../componentes/grafico/SelectorOscilador'
+import { OSCILADORES, ORDEN_OSCILADORES } from '../componentes/grafico/configOsciladores'
+import type { NombreOscilador } from '../componentes/grafico/configOsciladores'
 import { crearSincronizadorTiempo } from '../componentes/grafico/sincronizadorTiempo'
 import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
@@ -38,6 +40,14 @@ function PaginaGrafico() {
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const [mostrarEma, setMostrarEma] = usarEstadoPersistente('mop.ema', false)
   const [mostrarBandas, setMostrarBandas] = usarEstadoPersistente('mop.bandas', false)
+  const [osciladores, setOsciladores] = useState<Set<NombreOscilador>>(new Set())
+  const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
+    setOsciladores((prev) => {
+      const siguiente = new Set(prev)
+      activo ? siguiente.add(nombre) : siguiente.delete(nombre)
+      return siguiente
+    })
+  }
   const panelRef = useRef<PanelPrecioHandle>(null)
   const paginaRef = useRef<HTMLDivElement>(null)
   const pantalla = usarPantallaCompleta(paginaRef)
@@ -72,6 +82,15 @@ function PaginaGrafico() {
         <SelectorEma mostrar={mostrarEma} alCambiar={setMostrarEma} />
         <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
         <span className="separador-barra" />
+        {ORDEN_OSCILADORES.map((nombre) => (
+          <SelectorOscilador
+            key={nombre}
+            etiqueta={OSCILADORES[nombre].titulo}
+            activo={osciladores.has(nombre)}
+            alCambiar={(v) => alternarOscilador(nombre, v)}
+          />
+        ))}
+        <span className="separador-barra" />
         <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
         <InterruptorMoneda />
         <BotonPantallaCompleta activa={pantalla.activa} alAlternar={pantalla.alternar} />
@@ -94,13 +113,16 @@ function PaginaGrafico() {
             <SelectorEscala escala={escala} alCambiar={setEscala} />
           </div>
         </div>
-        <PanelOscilador
-          config={OSCILADORES.macd}
-          ticker={ticker}
-          temporalidad={temporalidad}
-          moneda={moneda}
-          sincronizador={sincronizador}
-        />
+        {ORDEN_OSCILADORES.filter((n) => osciladores.has(n)).map((nombre) => (
+          <PanelOscilador
+            key={nombre}
+            config={OSCILADORES[nombre]}
+            ticker={ticker}
+            temporalidad={temporalidad}
+            moneda={moneda}
+            sincronizador={sincronizador}
+          />
+        ))}
       </div>
     </div>
   )

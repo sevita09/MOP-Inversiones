@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createChart, LineStyle } from 'lightweight-charts'
 import type {
   IChartApi,
@@ -45,12 +45,34 @@ interface Props {
   sincronizador: SincronizadorTiempo
 }
 
+const ALTURA_MIN = 60
+const ALTURA_MAX = 350
+const ALTURA_INICIAL = 130
+
 function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
+  const grafico = useRef<IChartApi | null>(null)
   const series = useRef<Map<string, ISeriesApi<SeriesType>>>(new Map())
   const datos = usarIndicador(ticker, temporalidad, moneda, config.nombre, true)
   const datosRef = useRef(datos)
   datosRef.current = datos
+  const [altura, setAltura] = useState(ALTURA_INICIAL)
+
+  const alArrastrar = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const yInicial = e.clientY
+    const alturaInicial = altura
+    const mover = (ev: MouseEvent) => {
+      const delta = yInicial - ev.clientY
+      setAltura(Math.min(ALTURA_MAX, Math.max(ALTURA_MIN, alturaInicial + delta)))
+    }
+    const soltar = () => {
+      document.removeEventListener('mousemove', mover)
+      document.removeEventListener('mouseup', soltar)
+    }
+    document.addEventListener('mousemove', mover)
+    document.addEventListener('mouseup', soltar)
+  }, [altura])
 
   // Crear el chart, sus series y sincronizarlo (una sola vez)
   useEffect(() => {
@@ -82,7 +104,7 @@ function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }:
         for (const nivel of config.referencias ?? []) {
           serie.createPriceLine({
             price: nivel,
-            color: COLORES.borde,
+            color: 'rgba(255, 255, 255, 0.3)',
             lineStyle: LineStyle.Dashed,
             lineWidth: 1,
             axisLabelVisible: true,
@@ -93,12 +115,14 @@ function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }:
       series.current.set(def.clave, serie)
     })
 
-    volcar(series.current, datosRef.current, config)
+    grafico.current = chart
+    sincronizador.volcarYSincronizar(chart, () => volcar(series.current, datosRef.current, config))
     const liberar = sincronizador.registrar(chart)
 
     return () => {
       liberar()
       chart.remove()
+      grafico.current = null
       series.current.clear()
     }
     // Solo al montar: el chart y sus series no cambian con los props de datos
@@ -107,11 +131,17 @@ function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }:
 
   // Volcar los datos cuando cambian (ticker/temporalidad/moneda)
   useEffect(() => {
-    volcar(series.current, datos, config)
-  }, [datos, config])
+    const chart = grafico.current
+    if (chart) {
+      sincronizador.volcarYSincronizar(chart, () => volcar(series.current, datos, config))
+    } else {
+      volcar(series.current, datos, config)
+    }
+  }, [datos, config, sincronizador])
 
   return (
-    <div className="panel-oscilador">
+    <div className="panel-oscilador" style={{ height: altura }}>
+      <div className="oscilador-handle" onMouseDown={alArrastrar} />
       <span className="oscilador-titulo">{config.titulo}</span>
       <div ref={contenedor} className="oscilador-grafico" />
     </div>

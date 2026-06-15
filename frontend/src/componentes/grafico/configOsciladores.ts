@@ -33,7 +33,7 @@ export const OSCILADORES: Record<string, ConfigOscilador> = {
     titulo: 'RSI',
     series: [{ clave: 'rsi', tipo: 'linea', color: '#a371f7' }],
     rango: { min: 0, max: 100 },
-    referencias: [20, 80],
+    referencias: [30, 70],
   },
   estocastico: {
     nombre: 'estocastico',

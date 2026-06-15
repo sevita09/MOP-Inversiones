@@ -1,10 +1,8 @@
 import type { IChartApi, LogicalRange } from 'lightweight-charts'
 
-// Mantiene varios charts (precio + osciladores) con el mismo rango temporal
-// visible: cuando el usuario hace zoom o pan en uno, replica el rango en los
-// demás. El flag `aplicando` corta el loop de reentrada entre suscripciones.
 export interface SincronizadorTiempo {
   registrar(chart: IChartApi): () => void
+  volcarYSincronizar(chart: IChartApi, fn: () => void): void
 }
 
 export function crearSincronizadorTiempo(): SincronizadorTiempo {
@@ -23,19 +21,32 @@ export function crearSincronizadorTiempo(): SincronizadorTiempo {
     chart.timeScale().subscribeVisibleLogicalRangeChange(alCambiar)
     charts.add(chart)
 
-    // Al entrar, alinearse con el rango de algún chart ya presente
-    for (const otro of charts) {
-      if (otro === chart) continue
-      const rango = otro.timeScale().getVisibleLogicalRange()
-      if (rango) chart.timeScale().setVisibleLogicalRange(rango)
-      break
-    }
-
     return () => {
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(alCambiar)
       charts.delete(chart)
     }
   }
 
-  return { registrar }
+  function volcarYSincronizar(chart: IChartApi, fn: () => void) {
+    let rangoOrigen: LogicalRange | null = null
+    for (const otro of charts) {
+      if (otro === chart) continue
+      rangoOrigen = otro.timeScale().getVisibleLogicalRange()
+      if (rangoOrigen) break
+    }
+
+    aplicando = true
+    fn()
+    aplicando = false
+
+    if (rangoOrigen) {
+      requestAnimationFrame(() => {
+        aplicando = true
+        chart.timeScale().setVisibleLogicalRange(rangoOrigen)
+        aplicando = false
+      })
+    }
+  }
+
+  return { registrar, volcarYSincronizar }
 }
