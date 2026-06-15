@@ -34,6 +34,15 @@ CREATE TABLE IF NOT EXISTS tasas_dolar (
     valor    REAL NOT NULL,   -- ARS por USD
     PRIMARY KEY (fecha, tipo)
 );
+
+CREATE TABLE IF NOT EXISTS dibujos (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker   TEXT NOT NULL,
+    tipo     TEXT NOT NULL,   -- "horizontal", "tendencia", "fibonacci", "medicion"
+    datos    TEXT NOT NULL,   -- JSON con puntos y propiedades
+    creado   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_dibujos_ticker ON dibujos(ticker);
 """
 
 RutaBase = Union[Path, str]

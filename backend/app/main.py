@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import inicializar_base
-from app.routers import dolar, indicadores, logos, mercado, reparacion, sincronizacion
+from app.routers import dibujos, dolar, indicadores, logos, mercado, reparacion, sincronizacion
 from app.servicios.logos import asegurar_logos_en_background
 from app.servicios.respaldos import respaldar_base
 from app.servicios.sincronizador import sincronizar_en_background
@@ -21,6 +21,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="MOP Inversiones", lifespan=lifespan)
+app.include_router(dibujos.router)
 app.include_router(dolar.router)
 app.include_router(indicadores.router)
 app.include_router(logos.router)
