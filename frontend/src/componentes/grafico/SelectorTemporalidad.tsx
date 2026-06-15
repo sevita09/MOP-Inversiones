@@ -11,12 +11,16 @@ const TEMPORALIDADES: { valor: Temporalidad; etiqueta: string }[] = [
 interface Props {
   temporalidad: Temporalidad
   alCambiar: (temporalidad: Temporalidad) => void
+  disponibles?: Temporalidad[]
 }
 
-function SelectorTemporalidad({ temporalidad, alCambiar }: Props) {
+function SelectorTemporalidad({ temporalidad, alCambiar, disponibles }: Props) {
+  const opciones = disponibles
+    ? TEMPORALIDADES.filter(({ valor }) => disponibles.includes(valor))
+    : TEMPORALIDADES
   return (
     <div className="selector-temporalidad">
-      {TEMPORALIDADES.map(({ valor, etiqueta }) => (
+      {opciones.map(({ valor, etiqueta }) => (
         <button
           key={valor}
           type="button"

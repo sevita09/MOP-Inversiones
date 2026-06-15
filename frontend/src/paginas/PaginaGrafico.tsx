@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
@@ -14,6 +14,13 @@ import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
 import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
 import './PaginaGrafico.css'
 
+// Los tickers de dólar (CCL/oficial) no tienen intradía: solo D, S y M
+const TEMPORALIDADES_DOLAR: Temporalidad[] = ['D', 'S', 'M']
+
+function esTickerDolar(ticker: string): boolean {
+  return ticker.startsWith('DOLAR')
+}
+
 function PaginaGrafico() {
   const { moneda } = usarMoneda()
   const { ticker } = usarTicker()
@@ -24,6 +31,15 @@ function PaginaGrafico() {
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const panelRef = useRef<PanelPrecioHandle>(null)
 
+  const disponibles = esTickerDolar(ticker) ? TEMPORALIDADES_DOLAR : undefined
+
+  // Si la temporalidad activa no aplica al ticker (p.ej. 1H en un dólar), pasar a D
+  useEffect(() => {
+    if (disponibles && !disponibles.includes(temporalidad)) {
+      setTemporalidad('D')
+    }
+  }, [disponibles, temporalidad, setTemporalidad])
+
   return (
     <div className="pagina-grafico">
       <div className="barra-grafico">
@@ -31,7 +47,11 @@ function PaginaGrafico() {
           <LogoTicker ticker={ticker} tamano={24} />
           <span className="identidad-simbolo">{ticker}</span>
         </span>
-        <SelectorTemporalidad temporalidad={temporalidad} alCambiar={setTemporalidad} />
+        <SelectorTemporalidad
+          temporalidad={temporalidad}
+          alCambiar={setTemporalidad}
+          disponibles={disponibles}
+        />
         <span className="separador-barra" />
         <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
         <span className="separador-barra" />
