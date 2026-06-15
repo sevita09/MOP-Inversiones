@@ -52,3 +52,43 @@ export function obtenerTickers(): Promise<Paneles> {
 export function obtenerPrecios(moneda: Moneda): Promise<Precios> {
   return obtenerJson<Precios>(`/api/precios?moneda=${moneda}`)
 }
+
+// --- Dibujos ---
+
+export interface Dibujo {
+  id: number
+  ticker: string
+  tipo: string
+  datos: Record<string, unknown>
+}
+
+export function obtenerDibujos(ticker: string): Promise<Dibujo[]> {
+  return obtenerJson<Dibujo[]>(`/api/dibujos?ticker=${ticker}`)
+}
+
+async function fetchJson<T>(ruta: string, opciones: RequestInit): Promise<T> {
+  const resp = await fetch(`${URL_BASE}${ruta}`, {
+    ...opciones,
+    headers: { 'Content-Type': 'application/json', ...opciones.headers },
+  })
+  if (!resp.ok) throw new Error(`Error ${resp.status} en ${ruta}`)
+  return resp.json() as Promise<T>
+}
+
+export function crearDibujo(ticker: string, tipo: string, datos: Record<string, unknown>): Promise<Dibujo> {
+  return fetchJson<Dibujo>('/api/dibujos', {
+    method: 'POST',
+    body: JSON.stringify({ ticker, tipo, datos }),
+  })
+}
+
+export function actualizarDibujo(id: number, datos: Record<string, unknown>): Promise<void> {
+  return fetchJson('/api/dibujos/' + id, {
+    method: 'PUT',
+    body: JSON.stringify({ datos }),
+  })
+}
+
+export function eliminarDibujo(id: number): Promise<void> {
+  return fetchJson('/api/dibujos/' + id, { method: 'DELETE' })
+}

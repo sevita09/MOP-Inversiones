@@ -84,8 +84,9 @@ interface Props {
 }
 
 export interface PanelPrecioHandle {
-  // meses a mostrar hacia atrás desde la última vela; null = todo el historial
   verRango: (meses: number | null) => void
+  obtenerChart: () => IChartApi | null
+  obtenerSerie: () => ISeriesApi<SeriesType> | null
 }
 
 const DIAS_POR_MES = 30 * 86400
@@ -145,6 +146,8 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
         to: hasta as Time,
       })
     },
+    obtenerChart: () => grafico.current,
+    obtenerSerie: () => serie.current,
   }), [])
 
   // Crear el gráfico una sola vez; autoSize lo mantiene del tamaño del contenedor
