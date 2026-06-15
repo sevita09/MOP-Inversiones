@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 from bisect import bisect_right
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.config import TICKER_CCL_BASE, tickers_byma
 from app.repositorios.tasas_dolar import CCL, OFICIAL, guardar_tasas, obtener_tasas
@@ -88,24 +88,67 @@ def _tasa_a_vela(ticker: str, fecha: str, valor: float) -> dict:
     }
 
 
+def _inicio_periodo(ts: int, temporalidad: str) -> int:
+    """Inicio del período (lunes para S, día 1 para M) al que pertenece el ts."""
+    fecha = datetime.fromtimestamp(ts, tz=timezone.utc)
+    if temporalidad == "S":
+        inicio = (fecha - timedelta(days=fecha.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+    else:  # M
+        inicio = fecha.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return int(inicio.timestamp())
+
+
+def resamplear(velas_diarias: list[dict], ticker: str, temporalidad: str) -> list[dict]:
+    """Agrupa velas diarias en velas S o M (OHLC del período). Espera orden ascendente."""
+    grupos: dict[int, list[dict]] = {}
+    for vela in velas_diarias:
+        grupos.setdefault(_inicio_periodo(vela["ts"], temporalidad), []).append(vela)
+    return [
+        {
+            "ticker": ticker,
+            "temporalidad": temporalidad,
+            "ts": ts,
+            "apertura": grupo[0]["apertura"],
+            "maximo": max(v["maximo"] for v in grupo),
+            "minimo": min(v["minimo"] for v in grupo),
+            "cierre": grupo[-1]["cierre"],
+            "volumen": sum(v["volumen"] for v in grupo),
+            "es_faltante": 0,
+        }
+        for ts, grupo in sorted(grupos.items())
+    ]
+
+
+def _guardar_diaria_y_resampleos(
+    conexion: sqlite3.Connection, ticker: str, velas_diarias: list[dict]
+) -> int:
+    """Guarda las velas diarias del dólar y sus resampleos S y M. La horaria no
+    aplica: el dólar (CCL/oficial) es un valor de cierre diario, sin intradía real."""
+    total = guardar_velas(conexion, velas_diarias)
+    for temporalidad in ("S", "M"):
+        resampleadas = resamplear(velas_diarias, ticker, temporalidad)
+        if resampleadas:
+            guardar_velas(conexion, resampleadas)
+    return total
+
+
 def generar_velas_ccl(conexion: sqlite3.Connection) -> int:
-    """Crea velas sintéticas DOLARCCL desde la serie de tasas CCL. Devuelve cuántas."""
+    """Crea velas sintéticas DOLARCCL (D, S, M) desde la serie de tasas CCL."""
     velas = [
         _tasa_a_vela(TICKER_CCL, tasa["fecha"], tasa["valor"])
         for tasa in obtener_tasas(conexion, CCL)
     ]
-    return guardar_velas(conexion, velas) if velas else 0
+    return _guardar_diaria_y_resampleos(conexion, TICKER_CCL, velas) if velas else 0
 
 
 def sincronizar_dolar_oficial(conexion: sqlite3.Connection) -> int:
-    """Baja el dólar oficial de yfinance, lo guarda como velas DOLAROF y como tasas.
-
-    Devuelve cuántas velas guardó.
-    """
+    """Baja el dólar oficial de yfinance, lo guarda como velas DOLAROF (D, S, M) y como tasas."""
     velas = descargar_velas(TICKER_OFICIAL, "D")
     if not velas:
         return 0
-    guardar_velas(conexion, velas)
+    _guardar_diaria_y_resampleos(conexion, TICKER_OFICIAL, velas)
     tasas = [
         {
             "fecha": datetime.fromtimestamp(vela["ts"], tz=timezone.utc).strftime("%Y-%m-%d"),

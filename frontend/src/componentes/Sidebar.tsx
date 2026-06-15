@@ -1,6 +1,6 @@
 import { usarTickers } from '../hooks/usarTickers'
 import { usarPrecios } from '../hooks/usarPrecios'
-import { usarFavoritos } from '../hooks/usarFavoritos'
+import { usarFavoritos } from '../contextos/FavoritosContext'
 import { usarTicker } from '../contextos/TickerContext'
 import FilaTicker from './FilaTicker'
 import type { Paneles } from '../api/tipos'

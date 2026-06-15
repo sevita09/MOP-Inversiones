@@ -10,6 +10,7 @@ from app.servicios.dolar import (
     calcular_ccl_diario,
     convertir_velas_a_usd,
     generar_velas_ccl,
+    resamplear,
     se_convierte_a_usd,
     sincronizar_ccl,
 )
@@ -175,10 +176,71 @@ def test_genera_velas_ccl_desde_las_tasas(conexion):
             {"fecha": "2026-06-11", "tipo": CCL, "valor": 1495.0},
         ],
     )
-    assert generar_velas_ccl(conexion) == 2
+    assert generar_velas_ccl(conexion) == 2  # devuelve las diarias guardadas
     velas = obtener_velas(conexion, "DOLARCCL", "D")
     primera = velas[0]
     assert primera["apertura"] == primera["maximo"] == primera["minimo"] == primera["cierre"] == 1488.4
+
+
+def test_genera_velas_ccl_tambien_en_semanal_y_mensual(conexion):
+    # Dos días de la misma semana (mié 10 y jue 11 de junio 2026) y mismo mes
+    guardar_tasas(
+        conexion,
+        [
+            {"fecha": "2026-06-10", "tipo": CCL, "valor": 1480.0},
+            {"fecha": "2026-06-11", "tipo": CCL, "valor": 1495.0},
+        ],
+    )
+    generar_velas_ccl(conexion)
+    semanal = obtener_velas(conexion, "DOLARCCL", "S")
+    mensual = obtener_velas(conexion, "DOLARCCL", "M")
+    assert len(semanal) == 1  # ambos días caen en la misma semana
+    assert semanal[0]["apertura"] == 1480.0  # primer día
+    assert semanal[0]["cierre"] == 1495.0    # último día
+    assert semanal[0]["maximo"] == 1495.0
+    assert len(mensual) == 1
+    assert mensual[0]["cierre"] == 1495.0
+
+
+# --- resampleo ---
+
+
+def vela_d(ts, valor):
+    return {
+        "ticker": "DOLARCCL",
+        "temporalidad": "D",
+        "ts": ts,
+        "apertura": valor,
+        "maximo": valor,
+        "minimo": valor,
+        "cierre": valor,
+        "volumen": 0.0,
+    }
+
+
+def test_resamplea_semanal_agrupa_por_semana():
+    # lunes 8, martes 9, y lunes 15 de junio 2026 (dos semanas)
+    lun8 = int(__import__("datetime").datetime(2026, 6, 8, tzinfo=__import__("datetime").timezone.utc).timestamp())
+    mar9 = lun8 + UN_DIA
+    lun15 = lun8 + 7 * UN_DIA
+    velas = resamplear([vela_d(lun8, 100), vela_d(mar9, 110), vela_d(lun15, 120)], "DOLARCCL", "S")
+    assert len(velas) == 2
+    assert velas[0]["apertura"] == 100 and velas[0]["cierre"] == 110 and velas[0]["maximo"] == 110
+    assert velas[1]["apertura"] == 120
+
+
+def test_resamplea_mensual_toma_ohlc_del_mes():
+    import datetime as dt
+    def ts(y, m, d):
+        return int(dt.datetime(y, m, d, tzinfo=dt.timezone.utc).timestamp())
+    velas = resamplear(
+        [vela_d(ts(2026, 6, 1), 100), vela_d(ts(2026, 6, 15), 130), vela_d(ts(2026, 6, 30), 90),
+         vela_d(ts(2026, 7, 1), 95)],
+        "DOLARCCL", "M",
+    )
+    assert len(velas) == 2
+    junio = velas[0]
+    assert junio["apertura"] == 100 and junio["maximo"] == 130 and junio["minimo"] == 90 and junio["cierre"] == 90
 
 
 # --- conversión a USD ---
