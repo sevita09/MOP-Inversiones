@@ -29,5 +29,18 @@ def macd(
     return {"macd": linea, "senal": linea_senal, "histograma": linea - linea_senal}
 
 
+def estocastico(df: pd.DataFrame, periodo: int = 14, suavizado: int = 3) -> dict[str, pd.Series]:
+    """Estocástico: %K = posición del cierre en el rango [mín, máx] de la ventana
+    (0-100), y %D = media móvil de %K (la señal). Usa máximo/mínimo, no solo el
+    cierre. Si el rango es 0 (sin variación) %K queda indefinido → None.
+    """
+    bajo = df["minimo"].rolling(window=periodo).min()
+    alto = df["maximo"].rolling(window=periodo).max()
+    k = 100 * (df["cierre"] - bajo) / (alto - bajo)
+    d = k.rolling(window=suavizado).mean()
+    return {"k": k, "d": d}
+
+
 registrar("rsi", rsi, {"periodo": 14})
 registrar("macd", macd, {"rapida": 12, "lenta": 26, "senal": 9})
+registrar("estocastico", estocastico, {"periodo": 14, "suavizado": 3})
