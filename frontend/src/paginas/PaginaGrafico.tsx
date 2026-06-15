@@ -3,7 +3,7 @@ import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
 import PanelOscilador from '../componentes/grafico/PanelOscilador'
-import SelectorOscilador from '../componentes/grafico/SelectorOscilador'
+import MenuIndicadores from '../componentes/grafico/MenuIndicadores'
 import { OSCILADORES, ORDEN_OSCILADORES } from '../componentes/grafico/configOsciladores'
 import type { NombreOscilador } from '../componentes/grafico/configOsciladores'
 import { crearSincronizadorTiempo } from '../componentes/grafico/sincronizadorTiempo'
@@ -81,14 +81,7 @@ function PaginaGrafico() {
         <SelectorEma mostrar={mostrarEma} alCambiar={setMostrarEma} />
         <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
         <span className="separador-barra" />
-        {ORDEN_OSCILADORES.map((nombre) => (
-          <SelectorOscilador
-            key={nombre}
-            etiqueta={OSCILADORES[nombre].titulo}
-            activo={osciladores.has(nombre)}
-            alCambiar={(v) => alternarOscilador(nombre, v)}
-          />
-        ))}
+        <MenuIndicadores activos={osciladores} alAlternar={alternarOscilador} />
         <span className="separador-barra" />
         <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
         <InterruptorMoneda />

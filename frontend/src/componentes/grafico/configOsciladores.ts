@@ -45,8 +45,36 @@ export const OSCILADORES: Record<string, ConfigOscilador> = {
     rango: { min: 0, max: 100 },
     referencias: [20, 80],
   },
+  atr: {
+    nombre: 'atr',
+    titulo: 'ATR',
+    series: [{ clave: 'atr', tipo: 'linea', color: '#e3b341' }],
+  },
+  adx: {
+    nombre: 'adx',
+    titulo: 'ADX',
+    series: [{ clave: 'adx', tipo: 'linea', color: '#a371f7' }],
+    rango: { min: 0, max: 100 },
+    referencias: [25],
+  },
+  porcentaje_b: {
+    nombre: 'porcentaje_b',
+    titulo: '%B Bollinger',
+    series: [{ clave: 'porcentaje_b', tipo: 'linea', color: '#388bfd' }],
+    rango: { min: -0.5, max: 1.5 },
+    referencias: [0, 1],
+  },
+  percentil_distancia: {
+    nombre: 'percentil_distancia',
+    titulo: 'Percentil dist.',
+    series: [{ clave: 'percentil', tipo: 'linea', color: '#3fb950' }],
+    rango: { min: 0, max: 100 },
+    referencias: [20, 80],
+  },
 }
 
 // Orden de aparición de los paneles bajo el precio
-export const ORDEN_OSCILADORES = ['macd', 'rsi', 'estocastico'] as const
+export const ORDEN_OSCILADORES = [
+  'macd', 'rsi', 'estocastico', 'atr', 'adx', 'porcentaje_b', 'percentil_distancia',
+] as const
 export type NombreOscilador = (typeof ORDEN_OSCILADORES)[number]
