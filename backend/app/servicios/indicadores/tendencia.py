@@ -16,13 +16,15 @@ def z_score(
 ) -> dict[str, pd.Series]:
     """Posición normalizada del precio respecto a su EMA: (precio − EMA) / σ.
 
-    La σ es el desvío estándar (rolling) de la distancia precio−EMA, no de los
-    retornos. Es la métrica central de la metodología (señales y confluencia).
+    La σ es la distancia RMS a la EMA: raíz del promedio (rolling) de
+    (precio − EMA)², medida ALREDEDOR DE LA EMA (cero), igual que en las bandas
+    (ver `volatilidad.bandas`). Así z = ±k coincide exactamente con la banda
+    ±kσ. Es la métrica central de la metodología (señales y confluencia).
     """
     ema_central = df["cierre"].ewm(span=ema_periodo, adjust=False).mean()
     distancia = df["cierre"] - ema_central
-    std = distancia.rolling(window=std_periodo).std()
-    return {"z": distancia / std}
+    sigma = (distancia**2).rolling(window=std_periodo).mean() ** 0.5
+    return {"z": distancia / sigma}
 
 
 registrar("ema", ema, {"periodo": 200})

@@ -6,6 +6,8 @@ import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
 import SelectorEscala from '../componentes/grafico/SelectorEscala'
 import SelectorVolumen from '../componentes/grafico/SelectorVolumen'
+import SelectorEma from '../componentes/grafico/SelectorEma'
+import SelectorBandas from '../componentes/grafico/SelectorBandas'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
 import { usarMoneda } from '../contextos/MonedaContext'
@@ -31,6 +33,8 @@ function PaginaGrafico() {
   const [tipo, setTipo] = usarEstadoPersistente<TipoGrafico>('mop.tipo', 'velas')
   const [escala, setEscala] = usarEstadoPersistente<EscalaPrecio>('mop.escala', 'lineal')
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
+  const [mostrarEma, setMostrarEma] = usarEstadoPersistente('mop.ema', false)
+  const [mostrarBandas, setMostrarBandas] = usarEstadoPersistente('mop.bandas', false)
   const panelRef = useRef<PanelPrecioHandle>(null)
   const paginaRef = useRef<HTMLDivElement>(null)
   const pantalla = usarPantallaCompleta(paginaRef)
@@ -60,6 +64,8 @@ function PaginaGrafico() {
         <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
         <span className="separador-barra" />
         <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />
+        <SelectorEma mostrar={mostrarEma} alCambiar={setMostrarEma} />
+        <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
         <span className="separador-barra" />
         <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
         <InterruptorMoneda />
@@ -74,6 +80,8 @@ function PaginaGrafico() {
           tipo={tipo}
           escala={escala}
           mostrarVolumen={mostrarVolumen}
+          mostrarEma={mostrarEma}
+          mostrarBandas={mostrarBandas}
         />
         <div className="escala-overlay">
           <SelectorEscala escala={escala} alCambiar={setEscala} />

@@ -4,10 +4,10 @@ from app.repositorios.velas import guardar_velas
 UN_DIA = 86400
 
 
-def vela(ts, cierre, ticker="GGAL"):
+def vela(ts, cierre, ticker="GGAL", temporalidad="D"):
     return {
         "ticker": ticker,
-        "temporalidad": "D",
+        "temporalidad": temporalidad,
         "ts": ts,
         "apertura": cierre,
         "maximo": cierre,
@@ -17,8 +17,19 @@ def vela(ts, cierre, ticker="GGAL"):
     }
 
 
-def cargar(conexion, cierres, ticker="GGAL"):
-    guardar_velas(conexion, [vela((i + 1) * UN_DIA, c, ticker) for i, c in enumerate(cierres)])
+def cargar(conexion, cierres, ticker="GGAL", temporalidad="D"):
+    guardar_velas(
+        conexion,
+        [vela((i + 1) * UN_DIA, c, ticker, temporalidad) for i, c in enumerate(cierres)],
+    )
+
+
+def ema_manual(cierres, span):
+    alfa = 2 / (span + 1)
+    valores = [float(cierres[0])]
+    for c in cierres[1:]:
+        valores.append(alfa * c + (1 - alfa) * valores[-1])
+    return valores
 
 
 def test_calcula_solo_lo_pedido(cliente, conexion):
@@ -70,6 +81,23 @@ def test_rechaza_ticker_desconocido(cliente):
     assert cliente.get(
         "/api/indicadores", params={"ticker": "NOEXISTE", "incluir": "ema"}
     ).status_code == 404
+
+
+def test_bandas_usan_la_ema_central_de_cada_temporalidad(cliente, conexion):
+    cierres = list(range(1, 40))
+    cargar(conexion, cierres, temporalidad="D")  # EMA central D = 200
+    cargar(conexion, cierres, temporalidad="M")  # EMA central M = 12
+    diaria = cliente.get(
+        "/api/indicadores", params={"ticker": "GGAL", "temporalidad": "D", "incluir": "bandas"}
+    ).json()
+    mensual = cliente.get(
+        "/api/indicadores", params={"ticker": "GGAL", "temporalidad": "M", "incluir": "bandas"}
+    ).json()
+    media_d = diaria["indicadores"]["bandas"]["media"][-1]
+    media_m = mensual["indicadores"]["bandas"]["media"][-1]
+    assert media_d == round(ema_manual(cierres, 200)[-1], 6)
+    assert media_m == round(ema_manual(cierres, 12)[-1], 6)
+    assert media_d != media_m  # cada temporalidad usa su propia ventana
 
 
 def test_indicadores_en_usd_usan_precios_convertidos(cliente, conexion):

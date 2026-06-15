@@ -1,5 +1,3 @@
-import statistics
-
 from app.servicios.indicadores import calcular
 
 
@@ -64,8 +62,8 @@ def test_z_score_sigue_la_formula():
             esperado.append(None)
         else:
             ventana = distancia[i - 2 : i + 1]
-            std = statistics.stdev(ventana)  # ddof=1, igual que pandas
-            esperado.append(round(distancia[i] / std, 6) if std else None)
+            sigma = (sum(d * d for d in ventana) / 3) ** 0.5  # RMS alrededor de cero
+            esperado.append(round(distancia[i] / sigma, 6) if sigma else None)
     assert salida == esperado
 
 
@@ -73,6 +71,52 @@ def test_z_score_positivo_si_el_precio_esta_sobre_la_ema():
     # serie alcista: el precio queda por encima de su EMA → z > 0
     z = calcular("z_score", velas(list(range(1, 30))), ema_periodo=5, std_periodo=5)["z"]
     assert z[-1] is not None and z[-1] > 0
+
+
+# --- bandas (EMA central + σ) ---
+
+
+def test_bandas_media_es_la_ema_del_periodo():
+    cierres = [10, 12, 11, 13, 15, 14, 16]
+    salida = calcular("bandas", velas(cierres), periodo=3)
+    assert salida["media"] == [round(v, 6) for v in ema_manual(cierres, 3)]
+
+
+def test_bandas_simetricas_alrededor_de_la_media():
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20]
+    b = calcular("bandas", velas(cierres), periodo=3)
+    for i, media in enumerate(b["media"]):
+        if b["sup1"][i] is None:  # warmup sin σ
+            continue
+        sigma = b["sup1"][i] - media
+        for k in (1, 2, 3):
+            assert abs((b[f"sup{k}"][i] - media) - k * sigma) < 1e-5
+            assert abs((media - b[f"inf{k}"][i]) - k * sigma) < 1e-5
+
+
+def test_bandas_sigma_es_la_distancia_rms_a_la_ema():
+    # σ = raíz del promedio de (precio − EMA)² sobre la ventana, alrededor de
+    # CERO (no de la media de la distancia): así las bandas contienen al precio.
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20]
+    periodo = 4
+    b = calcular("bandas", velas(cierres), periodo=periodo)
+    ema = ema_manual(cierres, periodo)
+    dist = [c - e for c, e in zip(cierres, ema)]
+    for i in range(len(cierres)):
+        if i < periodo - 1:  # ventana incompleta → None
+            assert b["sup1"][i] is None
+            continue
+        ventana = dist[i - periodo + 1 : i + 1]
+        sigma = (sum(d * d for d in ventana) / periodo) ** 0.5
+        assert abs((b["sup1"][i] - b["media"][i]) - sigma) < 1e-5
+
+
+def test_bandas_warmup_sin_sigma_es_none_pero_media_existe():
+    cierres = [10, 12, 11]  # período 200 > longitud → σ rolling NaN, pero la EMA existe
+    b = calcular("bandas", velas(cierres), periodo=200)
+    assert all(v is not None for v in b["media"])
+    assert b["sup1"] == [None, None, None]
+    assert b["inf3"] == [None, None, None]
 
 
 # --- RSI ---

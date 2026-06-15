@@ -28,6 +28,22 @@
   font-weight: 500;
 }
 
+.leyenda-z .z-neutro {
+  color: #e6edf3;
+}
+
+.leyenda-z .z-medio {
+  color: #e3b341;
+}
+
+.leyenda-z .z-bajo {
+  color: #3fb950;
+}
+
+.leyenda-z .z-alto {
+  color: #f85149;
+}
+
 .leyenda-cambio {
   font-weight: 500;
 }

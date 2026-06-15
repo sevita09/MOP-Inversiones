@@ -51,3 +51,14 @@ export interface RespuestaDolar {
   ccl: Tasa | null
   oficial: Tasa | null
 }
+
+// Cada serie de un indicador; null en las posiciones de warmup (sin valor)
+export type SerieIndicador = (number | null)[]
+
+export interface RespuestaIndicadores {
+  ticker: string
+  temporalidad: string
+  moneda: Moneda
+  ts: number[]
+  indicadores: Record<string, Record<string, SerieIndicador>>
+}

@@ -51,6 +51,11 @@ EMA_POR_TEMPORALIDAD = {
 TEMPORALIDADES_BOTS = ["D", "S", "M"]
 
 
+def periodo_ema_central(temporalidad: str) -> int:
+    """Período de la EMA central de la metodología para una temporalidad."""
+    return EMA_POR_TEMPORALIDAD[temporalidad]
+
+
 def tickers_byma() -> list:
     return PANEL_LIDER + PANEL_GENERAL
 
