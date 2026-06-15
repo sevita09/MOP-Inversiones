@@ -7,10 +7,12 @@ import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
 import SelectorEscala from '../componentes/grafico/SelectorEscala'
 import SelectorVolumen from '../componentes/grafico/SelectorVolumen'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
+import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
 import { usarMoneda } from '../contextos/MonedaContext'
 import { usarTicker } from '../contextos/TickerContext'
 import { usarAtajosTeclado } from '../hooks/usarAtajosTeclado'
 import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
+import { usarPantallaCompleta } from '../hooks/usarPantallaCompleta'
 import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
 import './PaginaGrafico.css'
 
@@ -30,6 +32,8 @@ function PaginaGrafico() {
   const [escala, setEscala] = usarEstadoPersistente<EscalaPrecio>('mop.escala', 'lineal')
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const panelRef = useRef<PanelPrecioHandle>(null)
+  const paginaRef = useRef<HTMLDivElement>(null)
+  const pantalla = usarPantallaCompleta(paginaRef)
 
   const disponibles = esTickerDolar(ticker) ? TEMPORALIDADES_DOLAR : undefined
 
@@ -41,7 +45,7 @@ function PaginaGrafico() {
   }, [disponibles, temporalidad, setTemporalidad])
 
   return (
-    <div className="pagina-grafico">
+    <div className="pagina-grafico" ref={paginaRef}>
       <div className="barra-grafico">
         <span className="identidad-ticker">
           <LogoTicker ticker={ticker} tamano={24} />
@@ -59,6 +63,7 @@ function PaginaGrafico() {
         <span className="separador-barra" />
         <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
         <InterruptorMoneda />
+        <BotonPantallaCompleta activa={pantalla.activa} alAlternar={pantalla.alternar} />
       </div>
       <div className="pantalla-grafico">
         <PanelPrecio
