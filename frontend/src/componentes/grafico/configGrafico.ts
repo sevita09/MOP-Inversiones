@@ -55,6 +55,15 @@ export const OPCIONES_AREA: AreaSeriesPartialOptions = {
   lineWidth: 2,
 }
 
+// EMA central de la metodología (dorada) y bandas σ (azules, más tenues cuanto
+// más lejos de la media: ±1σ la más marcada, ±3σ la más sutil)
+export const COLOR_EMA_CENTRAL = '#e3b341'
+export const COLORES_BANDAS: Record<1 | 2 | 3, string> = {
+  1: 'rgba(56, 139, 253, 0.55)',
+  2: 'rgba(56, 139, 253, 0.38)',
+  3: 'rgba(56, 139, 253, 0.22)',
+}
+
 // Colores semitransparentes del histograma de volumen
 export const VOLUMEN_VERDE = 'rgba(63, 185, 80, 0.45)'
 export const VOLUMEN_ROJO = 'rgba(248, 81, 73, 0.45)'

@@ -18,6 +18,7 @@ import type {
   Vela,
 } from '../../api/tipos'
 import { usarVelas } from '../../hooks/usarVelas'
+import { usarBandas } from '../../hooks/usarBandas'
 import {
   MARGENES_VOLUMEN,
   OPCIONES_AREA,
@@ -27,6 +28,12 @@ import {
   VOLUMEN_ROJO,
   VOLUMEN_VERDE,
 } from './configGrafico'
+import {
+  crearSerieEma,
+  crearSeriesBandas,
+  volcarBandas,
+  volcarEma,
+} from './seriesBandas'
 import LeyendaOHLC from './LeyendaOHLC'
 import './PanelPrecio.css'
 
@@ -69,6 +76,8 @@ interface Props {
   tipo: TipoGrafico
   escala: EscalaPrecio
   mostrarVolumen: boolean
+  mostrarEma: boolean
+  mostrarBandas: boolean
 }
 
 export interface PanelPrecioHandle {
@@ -79,14 +88,20 @@ export interface PanelPrecioHandle {
 const DIAS_POR_MES = 30 * 86400
 
 const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
-  { ticker, temporalidad, moneda, tipo, escala, mostrarVolumen },
+  { ticker, temporalidad, moneda, tipo, escala, mostrarVolumen, mostrarEma, mostrarBandas },
   ref,
 ) {
   const contenedor = useRef<HTMLDivElement>(null)
   const grafico = useRef<IChartApi | null>(null)
   const serie = useRef<ISeriesApi<SeriesType> | null>(null)
   const serieVolumen = useRef<ISeriesApi<'Histogram'> | null>(null)
+  const serieEma = useRef<ISeriesApi<'Line'> | null>(null)
+  const seriesBandas = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
+  // La media y las bandas salen del mismo indicador: basta con que alguno esté activo
+  const bandas = usarBandas(ticker, temporalidad, moneda, mostrarEma || mostrarBandas)
+  const bandasRef = useRef(bandas)
+  bandasRef.current = bandas
   // Índice de la vela bajo el crosshair; null = ninguna (se muestra la última)
   const [indiceActivo, setIndiceActivo] = useState<number | null>(null)
 
@@ -184,6 +199,48 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
       serieVolumen.current = null
     }
   }, [mostrarVolumen])
+
+  // Línea de EMA central: se crea/elimina con su toggle
+  useEffect(() => {
+    const chart = grafico.current
+    if (!chart || !mostrarEma) return
+    const s = crearSerieEma(chart)
+    serieEma.current = s
+    volcarEma(s, bandasRef.current)
+    return () => {
+      try {
+        chart.removeSeries(s)
+      } catch {
+        /* chart disposed */
+      }
+      serieEma.current = null
+    }
+  }, [mostrarEma])
+
+  // Bandas σ (las 6 líneas azules): se crean/eliminan con su toggle
+  useEffect(() => {
+    const chart = grafico.current
+    if (!chart || !mostrarBandas) return
+    const s = crearSeriesBandas(chart)
+    seriesBandas.current = s
+    volcarBandas(s, bandasRef.current)
+    return () => {
+      for (const linea of s.values()) {
+        try {
+          chart.removeSeries(linea)
+        } catch {
+          /* chart disposed */
+        }
+      }
+      seriesBandas.current = null
+    }
+  }, [mostrarBandas])
+
+  // Volcar los datos cuando cambian (ticker/temporalidad/moneda)
+  useEffect(() => {
+    if (serieEma.current) volcarEma(serieEma.current, bandas)
+    if (seriesBandas.current) volcarBandas(seriesBandas.current, bandas)
+  }, [bandas])
 
   // Volcar las velas cuando cambian. El rango temporal solo se reencuadra al
   // cambiar de ticker o temporalidad, no al togglear moneda ni refrescar.

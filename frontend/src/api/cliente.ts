@@ -3,6 +3,7 @@ import type {
   Paneles,
   Precios,
   RespuestaDolar,
+  RespuestaIndicadores,
   RespuestaVelas,
   Temporalidad,
 } from './tipos'
@@ -28,6 +29,16 @@ export function obtenerVelas(
 
 export function obtenerDolar(): Promise<RespuestaDolar> {
   return obtenerJson<RespuestaDolar>('/api/dolar')
+}
+
+export function obtenerIndicadores(
+  ticker: string,
+  temporalidad: Temporalidad,
+  moneda: Moneda,
+  incluir: string,
+): Promise<RespuestaIndicadores> {
+  const parametros = new URLSearchParams({ ticker, temporalidad, moneda, incluir })
+  return obtenerJson<RespuestaIndicadores>(`/api/indicadores?${parametros}`)
 }
 
 export function urlLogo(ticker: string): string {
