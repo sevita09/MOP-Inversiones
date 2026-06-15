@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
+import PanelOscilador from '../componentes/grafico/PanelOscilador'
+import { OSCILADORES } from '../componentes/grafico/configOsciladores'
+import { crearSincronizadorTiempo } from '../componentes/grafico/sincronizadorTiempo'
 import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
 import SelectorEscala from '../componentes/grafico/SelectorEscala'
@@ -38,6 +41,8 @@ function PaginaGrafico() {
   const panelRef = useRef<PanelPrecioHandle>(null)
   const paginaRef = useRef<HTMLDivElement>(null)
   const pantalla = usarPantallaCompleta(paginaRef)
+  // Un único sincronizador mantiene el precio y los osciladores con el mismo zoom
+  const [sincronizador] = useState(crearSincronizadorTiempo)
 
   const disponibles = esTickerDolar(ticker) ? TEMPORALIDADES_DOLAR : undefined
 
@@ -72,20 +77,30 @@ function PaginaGrafico() {
         <BotonPantallaCompleta activa={pantalla.activa} alAlternar={pantalla.alternar} />
       </div>
       <div className="pantalla-grafico">
-        <PanelPrecio
-          ref={panelRef}
+        <div className="area-precio">
+          <PanelPrecio
+            ref={panelRef}
+            ticker={ticker}
+            temporalidad={temporalidad}
+            moneda={moneda}
+            tipo={tipo}
+            escala={escala}
+            mostrarVolumen={mostrarVolumen}
+            mostrarEma={mostrarEma}
+            mostrarBandas={mostrarBandas}
+            sincronizador={sincronizador}
+          />
+          <div className="escala-overlay">
+            <SelectorEscala escala={escala} alCambiar={setEscala} />
+          </div>
+        </div>
+        <PanelOscilador
+          config={OSCILADORES.macd}
           ticker={ticker}
           temporalidad={temporalidad}
           moneda={moneda}
-          tipo={tipo}
-          escala={escala}
-          mostrarVolumen={mostrarVolumen}
-          mostrarEma={mostrarEma}
-          mostrarBandas={mostrarBandas}
+          sincronizador={sincronizador}
         />
-        <div className="escala-overlay">
-          <SelectorEscala escala={escala} alCambiar={setEscala} />
-        </div>
       </div>
     </div>
   )
