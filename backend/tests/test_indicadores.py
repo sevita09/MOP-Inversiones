@@ -75,6 +75,35 @@ def test_z_score_positivo_si_el_precio_esta_sobre_la_ema():
     assert z[-1] is not None and z[-1] > 0
 
 
+# --- bandas (EMA central + σ) ---
+
+
+def test_bandas_media_es_la_ema_del_periodo():
+    cierres = [10, 12, 11, 13, 15, 14, 16]
+    salida = calcular("bandas", velas(cierres), periodo=3)
+    assert salida["media"] == [round(v, 6) for v in ema_manual(cierres, 3)]
+
+
+def test_bandas_simetricas_alrededor_de_la_media():
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20]
+    b = calcular("bandas", velas(cierres), periodo=3)
+    for i, media in enumerate(b["media"]):
+        if b["sup1"][i] is None:  # warmup sin σ
+            continue
+        sigma = b["sup1"][i] - media
+        for k in (1, 2, 3):
+            assert abs((b[f"sup{k}"][i] - media) - k * sigma) < 1e-5
+            assert abs((media - b[f"inf{k}"][i]) - k * sigma) < 1e-5
+
+
+def test_bandas_warmup_sin_sigma_es_none_pero_media_existe():
+    cierres = [10, 12, 11]  # período 200 > longitud → σ rolling NaN, pero la EMA existe
+    b = calcular("bandas", velas(cierres), periodo=200)
+    assert all(v is not None for v in b["media"])
+    assert b["sup1"] == [None, None, None]
+    assert b["inf3"] == [None, None, None]
+
+
 # --- RSI ---
 
 
