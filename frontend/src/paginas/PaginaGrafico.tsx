@@ -1,7 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
+import PanelOscilador from '../componentes/grafico/PanelOscilador'
+import SelectorOscilador from '../componentes/grafico/SelectorOscilador'
+import { OSCILADORES, ORDEN_OSCILADORES } from '../componentes/grafico/configOsciladores'
+import type { NombreOscilador } from '../componentes/grafico/configOsciladores'
+import { crearSincronizadorTiempo } from '../componentes/grafico/sincronizadorTiempo'
 import SelectorTemporalidad from '../componentes/grafico/SelectorTemporalidad'
 import SelectorTipoGrafico from '../componentes/grafico/SelectorTipoGrafico'
 import SelectorEscala from '../componentes/grafico/SelectorEscala'
@@ -35,9 +40,18 @@ function PaginaGrafico() {
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const [mostrarEma, setMostrarEma] = usarEstadoPersistente('mop.ema', false)
   const [mostrarBandas, setMostrarBandas] = usarEstadoPersistente('mop.bandas', false)
+  const [oscActivos, setOscActivos] = usarEstadoPersistente<NombreOscilador[]>('mop.osciladores', [])
+  const osciladores = new Set(oscActivos)
+  const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
+    const siguiente = new Set(oscActivos)
+    activo ? siguiente.add(nombre) : siguiente.delete(nombre)
+    setOscActivos([...siguiente])
+  }
   const panelRef = useRef<PanelPrecioHandle>(null)
   const paginaRef = useRef<HTMLDivElement>(null)
   const pantalla = usarPantallaCompleta(paginaRef)
+  // Un único sincronizador mantiene el precio y los osciladores con el mismo zoom
+  const [sincronizador] = useState(crearSincronizadorTiempo)
 
   const disponibles = esTickerDolar(ticker) ? TEMPORALIDADES_DOLAR : undefined
 
@@ -67,25 +81,47 @@ function PaginaGrafico() {
         <SelectorEma mostrar={mostrarEma} alCambiar={setMostrarEma} />
         <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
         <span className="separador-barra" />
+        {ORDEN_OSCILADORES.map((nombre) => (
+          <SelectorOscilador
+            key={nombre}
+            etiqueta={OSCILADORES[nombre].titulo}
+            activo={osciladores.has(nombre)}
+            alCambiar={(v) => alternarOscilador(nombre, v)}
+          />
+        ))}
+        <span className="separador-barra" />
         <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
         <InterruptorMoneda />
         <BotonPantallaCompleta activa={pantalla.activa} alAlternar={pantalla.alternar} />
       </div>
       <div className="pantalla-grafico">
-        <PanelPrecio
-          ref={panelRef}
-          ticker={ticker}
-          temporalidad={temporalidad}
-          moneda={moneda}
-          tipo={tipo}
-          escala={escala}
-          mostrarVolumen={mostrarVolumen}
-          mostrarEma={mostrarEma}
-          mostrarBandas={mostrarBandas}
-        />
-        <div className="escala-overlay">
-          <SelectorEscala escala={escala} alCambiar={setEscala} />
+        <div className="area-precio">
+          <PanelPrecio
+            ref={panelRef}
+            ticker={ticker}
+            temporalidad={temporalidad}
+            moneda={moneda}
+            tipo={tipo}
+            escala={escala}
+            mostrarVolumen={mostrarVolumen}
+            mostrarEma={mostrarEma}
+            mostrarBandas={mostrarBandas}
+            sincronizador={sincronizador}
+          />
+          <div className="escala-overlay">
+            <SelectorEscala escala={escala} alCambiar={setEscala} />
+          </div>
         </div>
+        {ORDEN_OSCILADORES.filter((n) => osciladores.has(n)).map((nombre) => (
+          <PanelOscilador
+            key={nombre}
+            config={OSCILADORES[nombre]}
+            ticker={ticker}
+            temporalidad={temporalidad}
+            moneda={moneda}
+            sincronizador={sincronizador}
+          />
+        ))}
       </div>
     </div>
   )

@@ -35,6 +35,7 @@ import {
   volcarEma,
   zEnIndice,
 } from './seriesBandas'
+import type { SincronizadorTiempo } from './sincronizadorTiempo'
 import LeyendaOHLC from './LeyendaOHLC'
 import './PanelPrecio.css'
 
@@ -79,6 +80,7 @@ interface Props {
   mostrarVolumen: boolean
   mostrarEma: boolean
   mostrarBandas: boolean
+  sincronizador?: SincronizadorTiempo
 }
 
 export interface PanelPrecioHandle {
@@ -89,7 +91,17 @@ export interface PanelPrecioHandle {
 const DIAS_POR_MES = 30 * 86400
 
 const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
-  { ticker, temporalidad, moneda, tipo, escala, mostrarVolumen, mostrarEma, mostrarBandas },
+  {
+    ticker,
+    temporalidad,
+    moneda,
+    tipo,
+    escala,
+    mostrarVolumen,
+    mostrarEma,
+    mostrarBandas,
+    sincronizador,
+  },
   ref,
 ) {
   const contenedor = useRef<HTMLDivElement>(null)
@@ -146,14 +158,16 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
       setIndiceActivo(ts != null ? indicePorTsRef.current.get(ts) ?? null : null)
     }
     chart.subscribeCrosshairMove(alMover)
+    const liberar = sincronizador?.registrar(chart)
 
     return () => {
+      liberar?.()
       chart.unsubscribeCrosshairMove(alMover)
       chart.remove()
       grafico.current = null
       serie.current = null
     }
-  }, [])
+  }, [sincronizador])
 
   // Aplicar la escala (lineal o logarítmica) al eje de precios
   useEffect(() => {

@@ -142,3 +142,48 @@ def test_rsi_siempre_entre_0_y_100():
 def test_rsi_warmup_es_none():
     rsi = calcular("rsi", velas(list(range(1, 20))), periodo=14)["rsi"]
     assert rsi[0] is None  # no hay suficientes datos al inicio
+
+
+# --- estocástico ---
+
+
+def test_estocastico_serie_alcista_k_es_100():
+    # cierre = máximo de la ventana → %K = 100
+    k = calcular("estocastico", velas(list(range(1, 30))), periodo=14)["k"]
+    assert k[-1] == 100.0
+
+
+def test_estocastico_serie_bajista_k_es_0():
+    # cierre = mínimo de la ventana → %K = 0
+    k = calcular("estocastico", velas(list(range(30, 1, -1))), periodo=14)["k"]
+    assert k[-1] == 0.0
+
+
+def test_estocastico_calcula_k_segun_el_rango():
+    # ventana de 5 al final: [12, 8, 11, 9, 11] → mín 8, máx 12, cierre 11
+    # %K = 100·(11−8)/(12−8) = 75
+    k = calcular("estocastico", velas([10, 12, 8, 11, 9, 11]), periodo=5, suavizado=3)["k"]
+    assert k[-1] == 75.0
+
+
+def test_estocastico_d_es_media_movil_de_k():
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20, 19, 22]
+    s = calcular("estocastico", velas(cierres), periodo=5, suavizado=3)
+    k, d = s["k"], s["d"]
+    for i in range(2, len(k)):
+        ventana = k[i - 2 : i + 1]
+        if all(x is not None for x in ventana):
+            assert d[i] is not None and abs(d[i] - sum(ventana) / 3) < 1e-5
+
+
+def test_estocastico_siempre_entre_0_y_100():
+    cierres = [10, 12, 11, 13, 9, 14, 8, 15, 16, 12, 18, 11, 20, 19, 21, 17, 22, 25]
+    s = calcular("estocastico", velas(cierres), periodo=14)
+    for serie in (s["k"], s["d"]):
+        valores = [v for v in serie if v is not None]
+        assert valores and all(0 <= v <= 100 for v in valores)
+
+
+def test_estocastico_warmup_es_none():
+    k = calcular("estocastico", velas(list(range(1, 10))), periodo=14)["k"]
+    assert k[0] is None  # ventana de 14 incompleta al inicio

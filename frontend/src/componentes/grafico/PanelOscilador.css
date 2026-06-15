@@ -1,0 +1,30 @@
+.panel-oscilador {
+  position: relative;
+  width: 100%;
+}
+
+.oscilador-handle {
+  height: 5px;
+  cursor: ns-resize;
+  background: #30363d;
+}
+
+.oscilador-handle:hover {
+  background: #484f58;
+}
+
+.oscilador-grafico {
+  width: 100%;
+  height: calc(100% - 5px);
+}
+
+.oscilador-titulo {
+  position: absolute;
+  top: 11px;
+  left: 12px;
+  z-index: 2;
+  font-size: 11px;
+  font-weight: 500;
+  color: #8b949e;
+  pointer-events: none;
+}

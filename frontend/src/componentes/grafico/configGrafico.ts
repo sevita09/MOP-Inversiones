@@ -29,7 +29,9 @@ export const OPCIONES_GRAFICO: DeepPartial<ChartOptions> = {
     vertLines: { color: COLORES.grilla },
     horzLines: { color: COLORES.grilla },
   },
-  rightPriceScale: { borderColor: COLORES.borde },
+  // minimumWidth fija el ancho del eje de precios para que el panel de precio y
+  // los osciladores queden alineados verticalmente (mismo margen derecho)
+  rightPriceScale: { borderColor: COLORES.borde, minimumWidth: 70 },
   timeScale: { borderColor: COLORES.borde, timeVisible: true },
   crosshair: { mode: 0 },
 }

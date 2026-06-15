@@ -1,0 +1,172 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { createChart, LineStyle } from 'lightweight-charts'
+import type {
+  IChartApi,
+  ISeriesApi,
+  LineData,
+  SeriesType,
+  UTCTimestamp,
+  WhitespaceData,
+} from 'lightweight-charts'
+import type { Moneda, SerieIndicador, Temporalidad } from '../../api/tipos'
+import { usarIndicador } from '../../hooks/usarIndicador'
+import { COLORES, OPCIONES_GRAFICO } from './configGrafico'
+import type { ConfigOscilador } from './configOsciladores'
+import type { SincronizadorTiempo } from './sincronizadorTiempo'
+import './PanelOscilador.css'
+
+function puntosLinea(ts: number[], valores: SerieIndicador): (LineData | WhitespaceData)[] {
+  return ts.map((t, i) => {
+    const valor = valores[i]
+    return valor == null
+      ? { time: t as UTCTimestamp }
+      : { time: t as UTCTimestamp, value: valor }
+  })
+}
+
+// El histograma del MACD se colorea por signo (verde sobre cero, rojo bajo cero)
+function puntosHistograma(ts: number[], valores: SerieIndicador) {
+  return ts.map((t, i) => {
+    const valor = valores[i]
+    if (valor == null) return { time: t as UTCTimestamp }
+    return {
+      time: t as UTCTimestamp,
+      value: valor,
+      color: valor >= 0 ? COLORES.verde : COLORES.rojo,
+    }
+  })
+}
+
+interface Props {
+  config: ConfigOscilador
+  ticker: string
+  temporalidad: Temporalidad
+  moneda: Moneda
+  sincronizador: SincronizadorTiempo
+}
+
+const ALTURA_MIN = 60
+const ALTURA_MAX = 350
+const ALTURA_INICIAL = 130
+
+function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }: Props) {
+  const contenedor = useRef<HTMLDivElement>(null)
+  const grafico = useRef<IChartApi | null>(null)
+  const series = useRef<Map<string, ISeriesApi<SeriesType>>>(new Map())
+  const datos = usarIndicador(ticker, temporalidad, moneda, config.nombre, true)
+  const datosRef = useRef(datos)
+  datosRef.current = datos
+  const [altura, setAltura] = useState(ALTURA_INICIAL)
+
+  const alArrastrar = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const yInicial = e.clientY
+    const alturaInicial = altura
+    const mover = (ev: MouseEvent) => {
+      const delta = yInicial - ev.clientY
+      setAltura(Math.min(ALTURA_MAX, Math.max(ALTURA_MIN, alturaInicial + delta)))
+    }
+    const soltar = () => {
+      document.removeEventListener('mousemove', mover)
+      document.removeEventListener('mouseup', soltar)
+    }
+    document.addEventListener('mousemove', mover)
+    document.addEventListener('mouseup', soltar)
+  }, [altura])
+
+  // Crear el chart, sus series y sincronizarlo (una sola vez)
+  useEffect(() => {
+    if (!contenedor.current) return
+    const chart = createChart(contenedor.current, {
+      ...OPCIONES_GRAFICO,
+      autoSize: true,
+      timeScale: { ...OPCIONES_GRAFICO.timeScale, visible: false },
+    })
+
+    // Escala fija (RSI/estocástico 0-100) vía autoscaleInfoProvider
+    const proveedor = config.rango
+      ? () => ({ priceRange: { minValue: config.rango!.min, maxValue: config.rango!.max } })
+      : undefined
+
+    config.series.forEach((def, indice) => {
+      const serie =
+        def.tipo === 'histograma'
+          ? chart.addHistogramSeries({ color: def.color, priceLineVisible: false })
+          : chart.addLineSeries({
+              color: def.color,
+              lineWidth: 1,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              autoscaleInfoProvider: proveedor,
+            })
+      // Las líneas de referencia (20/80) cuelgan de la primera serie
+      if (indice === 0) {
+        for (const nivel of config.referencias ?? []) {
+          serie.createPriceLine({
+            price: nivel,
+            color: 'rgba(255, 255, 255, 0.3)',
+            lineStyle: LineStyle.Dashed,
+            lineWidth: 1,
+            axisLabelVisible: true,
+            title: '',
+          })
+        }
+      }
+      series.current.set(def.clave, serie)
+    })
+
+    grafico.current = chart
+    sincronizador.volcarYSincronizar(chart, () => volcar(series.current, datosRef.current, config))
+    const liberar = sincronizador.registrar(chart)
+
+    return () => {
+      liberar()
+      chart.remove()
+      grafico.current = null
+      series.current.clear()
+    }
+    // Solo al montar: el chart y sus series no cambian con los props de datos
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Volcar los datos cuando cambian (ticker/temporalidad/moneda)
+  useEffect(() => {
+    const chart = grafico.current
+    if (chart) {
+      sincronizador.volcarYSincronizar(chart, () => volcar(series.current, datos, config))
+    } else {
+      volcar(series.current, datos, config)
+    }
+  }, [datos, config, sincronizador])
+
+  return (
+    <div className="panel-oscilador" style={{ height: altura }}>
+      <div className="oscilador-handle" onMouseDown={alArrastrar} />
+      <span className="oscilador-titulo">{config.titulo}</span>
+      <div ref={contenedor} className="oscilador-grafico" />
+    </div>
+  )
+}
+
+function volcar(
+  series: Map<string, ISeriesApi<SeriesType>>,
+  datos: { ts: number[]; series: Record<string, SerieIndicador> } | null,
+  config: ConfigOscilador,
+) {
+  for (const def of config.series) {
+    const serie = series.get(def.clave)
+    if (!serie) continue
+    if (!datos) {
+      serie.setData([])
+      continue
+    }
+    const valores = datos.series[def.clave] ?? []
+    serie.setData(
+      def.tipo === 'histograma'
+        ? puntosHistograma(datos.ts, valores)
+        : puntosLinea(datos.ts, valores),
+    )
+  }
+}
+
+export default PanelOscilador
