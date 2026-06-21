@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import InterruptorMoneda from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
 import PanelOscilador from '../componentes/grafico/PanelOscilador'
+import CapaDibujos from '../componentes/grafico/herramientas/CapaDibujos'
 import MenuIndicadores from '../componentes/grafico/MenuIndicadores'
 import { OSCILADORES, ORDEN_OSCILADORES } from '../componentes/grafico/configOsciladores'
 import type { NombreOscilador } from '../componentes/grafico/configOsciladores'
@@ -52,6 +53,8 @@ function PaginaGrafico() {
   const pantalla = usarPantallaCompleta(paginaRef)
   // Un único sincronizador mantiene el precio y los osciladores con el mismo zoom
   const [sincronizador] = useState(crearSincronizadorTiempo)
+  const obtenerChart = useCallback(() => panelRef.current?.obtenerChart() ?? null, [])
+  const obtenerSerie = useCallback(() => panelRef.current?.obtenerSerie() ?? null, [])
 
   const disponibles = esTickerDolar(ticker) ? TEMPORALIDADES_DOLAR : undefined
 
@@ -100,6 +103,11 @@ function PaginaGrafico() {
             mostrarEma={mostrarEma}
             mostrarBandas={mostrarBandas}
             sincronizador={sincronizador}
+          />
+          <CapaDibujos
+            ticker={ticker}
+            obtenerChart={obtenerChart}
+            obtenerSerie={obtenerSerie}
           />
           <div className="escala-overlay">
             <SelectorEscala escala={escala} alCambiar={setEscala} />

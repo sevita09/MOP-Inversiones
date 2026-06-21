@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type RefObject } from 'react'
 
-export function usarPantallaCompleta(ref: RefObject<HTMLElement>) {
+export function usarPantallaCompleta(ref: RefObject<HTMLElement | null>) {
   const [activa, setActiva] = useState(false)
 
   useEffect(() => {
