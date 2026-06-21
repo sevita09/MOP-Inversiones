@@ -30,6 +30,7 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
   const agregarRef = useRef(agregar)
   agregarRef.current = agregar
   const primerPunto = useRef<PuntoDibujo | null>(null)
+  const seleccionado = useRef<number | null>(null)
 
   useEffect(() => {
     const chart = obtenerChart()
@@ -45,13 +46,36 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
 
   useEffect(() => {
     renderizador.current?.sincronizar(dibujos)
+    if (seleccionado.current != null && !dibujos.some((d) => d.id === seleccionado.current)) {
+      seleccionado.current = null
+    }
   }, [dibujos])
 
-  // Al cambiar de herramienta, resetear el primer punto y la previsualización
+  // Al activar una herramienta, soltar la selección y resetear el primer punto
   useEffect(() => {
     primerPunto.current = null
     renderizador.current?.limpiarPrevisualizacion()
+    if (herramienta) {
+      seleccionado.current = null
+      renderizador.current?.seleccionar(null)
+    }
   }, [herramienta])
+
+  // Borrar el dibujo seleccionado con Supr / Backspace
+  useEffect(() => {
+    const alTecla = (e: KeyboardEvent) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return
+      const id = seleccionado.current
+      if (id == null) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+      e.preventDefault()
+      eliminar(id)
+      seleccionado.current = null
+    }
+    window.addEventListener('keydown', alTecla)
+    return () => window.removeEventListener('keydown', alTecla)
+  }, [eliminar])
 
   useEffect(() => {
     const chart = obtenerChart()
@@ -59,7 +83,16 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
 
     const alClick = (params: MouseEventParams) => {
       const tipo = herramientaRef.current
-      if (!tipo) return
+
+      // Sin herramienta activa: el click selecciona el dibujo tocado (o lo deselecciona)
+      if (!tipo) {
+        if (!params.point) return
+        const id = renderizador.current?.dibujoEn(params.point.x, params.point.y) ?? null
+        seleccionado.current = id
+        renderizador.current?.seleccionar(id)
+        return
+      }
+
       const serie = obtenerSerie()
       if (!serie) return
 
@@ -95,7 +128,7 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       if (!tipo || tipo === 'horizontal') return
       const p1 = primerPunto.current
       if (!p1 || !params.point) return
-      renderizador.current?.previsualizarTendencia(p1, params.point.x, params.point.y)
+      renderizador.current?.previsualizar(tipo, p1, params.point.x, params.point.y)
     }
 
     chart.subscribeClick(alClick)

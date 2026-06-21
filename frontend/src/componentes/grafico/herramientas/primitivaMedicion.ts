@@ -10,8 +10,11 @@ import type {
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
 
-const COLOR = '#e3b341'
-const COLOR_SELECCION = '#ffffff'
+const VERDE = '#3fb950'
+const ROJO = '#f85149'
+const RELLENO_VERDE = 'rgba(63, 185, 80, 0.12)'
+const RELLENO_ROJO = 'rgba(248, 81, 73, 0.12)'
+const FONDO_ETIQUETA = '#0d1117'
 
 interface Punto {
   ts: number
@@ -23,11 +26,13 @@ interface Pixel {
   y: number
 }
 
-class RendererTendencia implements ISeriesPrimitivePaneRenderer {
-  private _p1x = 0
-  private _p1y = 0
-  private _p2x = 0
-  private _p2y = 0
+class RendererMedicion implements ISeriesPrimitivePaneRenderer {
+  private _x1 = 0
+  private _y1 = 0
+  private _x2 = 0
+  private _y2 = 0
+  private _texto = ''
+  private _sube = true
   private _punteada: boolean
   private _seleccionado = false
 
@@ -35,11 +40,13 @@ class RendererTendencia implements ISeriesPrimitivePaneRenderer {
     this._punteada = punteada
   }
 
-  actualizar(p1x: number, p1y: number, p2x: number, p2y: number) {
-    this._p1x = p1x
-    this._p1y = p1y
-    this._p2x = p2x
-    this._p2y = p2y
+  actualizar(x1: number, y1: number, x2: number, y2: number, texto: string, sube: boolean) {
+    this._x1 = x1
+    this._y1 = y1
+    this._x2 = x2
+    this._y2 = y2
+    this._texto = texto
+    this._sube = sube
   }
 
   seleccionar(sel: boolean) {
@@ -48,25 +55,42 @@ class RendererTendencia implements ISeriesPrimitivePaneRenderer {
 
   draw(target: CanvasRenderingTarget2D) {
     target.useMediaCoordinateSpace(({ context: ctx }) => {
-      ctx.beginPath()
-      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : COLOR
+      const izq = Math.min(this._x1, this._x2)
+      const der = Math.max(this._x1, this._x2)
+      const arr = Math.min(this._y1, this._y2)
+      const aba = Math.max(this._y1, this._y2)
+      const color = this._sube ? VERDE : ROJO
+
+      ctx.fillStyle = this._sube ? RELLENO_VERDE : RELLENO_ROJO
+      ctx.fillRect(izq, arr, der - izq, aba - arr)
+
+      ctx.strokeStyle = color
       ctx.lineWidth = this._seleccionado ? 2 : 1
       ctx.setLineDash(this._punteada ? [4, 4] : [])
-      ctx.moveTo(this._p1x, this._p1y)
-      ctx.lineTo(this._p2x, this._p2y)
-      ctx.stroke()
+      ctx.strokeRect(izq, arr, der - izq, aba - arr)
       ctx.setLineDash([])
+
+      ctx.font = '11px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      const cx = (izq + der) / 2
+      const cy = this._sube ? arr - 10 : aba + 10
+      const ancho = ctx.measureText(this._texto).width + 10
+      ctx.fillStyle = color
+      ctx.fillRect(cx - ancho / 2, cy - 9, ancho, 18)
+      ctx.fillStyle = FONDO_ETIQUETA
+      ctx.fillText(this._texto, cx, cy)
+      ctx.textAlign = 'left'
     })
   }
 }
 
-class VistaTendencia implements ISeriesPrimitivePaneView {
-  private _renderer: RendererTendencia
+class VistaMedicion implements ISeriesPrimitivePaneView {
+  private _renderer: RendererMedicion
   private _serie: ISeriesApi<SeriesType>
   private _chart: IChartApi
   p1: Punto
   p2: Punto
-  // Si está seteado, el segundo extremo se dibuja en píxeles (preview que sigue al mouse)
   p2pixel: Pixel | null = null
 
   constructor(
@@ -80,7 +104,7 @@ class VistaTendencia implements ISeriesPrimitivePaneView {
     this._serie = serie
     this.p1 = p1
     this.p2 = p2
-    this._renderer = new RendererTendencia(punteada)
+    this._renderer = new RendererMedicion(punteada)
   }
 
   update() {
@@ -91,15 +115,27 @@ class VistaTendencia implements ISeriesPrimitivePaneView {
 
     let x2: number | null
     let y2: number | null
+    let precio2: number
     if (this.p2pixel) {
       x2 = this.p2pixel.x
       y2 = this.p2pixel.y
+      const pr = this._serie.coordinateToPrice(this.p2pixel.y)
+      if (pr == null) return
+      precio2 = pr
     } else {
       x2 = ts.timeToCoordinate(this.p2.ts as unknown as Time)
       y2 = this._serie.priceToCoordinate(this.p2.precio)
+      precio2 = this.p2.precio
     }
     if (x2 == null || y2 == null) return
-    this._renderer.actualizar(x1, y1, x2, y2)
+
+    const pct = this.p1.precio !== 0 ? ((precio2 - this.p1.precio) / this.p1.precio) * 100 : 0
+    const l1 = ts.coordinateToLogical(x1)
+    const l2 = ts.coordinateToLogical(x2)
+    const barras = l1 != null && l2 != null ? Math.abs(Math.round(l2 - l1)) : 0
+    const signo = pct >= 0 ? '+' : ''
+    const texto = `${signo}${pct.toFixed(2)}%   ${barras} barras`
+    this._renderer.actualizar(x1, y1, x2, y2, texto, precio2 >= this.p1.precio)
   }
 
   seleccionar(sel: boolean) {
@@ -110,13 +146,13 @@ class VistaTendencia implements ISeriesPrimitivePaneView {
     return this._renderer
   }
 
-  zOrder(): 'normal' {
-    return 'normal'
+  zOrder(): 'top' {
+    return 'top'
   }
 }
 
-export class PrimitivaTendencia implements ISeriesPrimitive {
-  private _vista: VistaTendencia
+export class PrimitivaMedicion implements ISeriesPrimitive {
+  private _vista: VistaMedicion
   private _requestUpdate?: () => void
 
   constructor(
@@ -126,7 +162,7 @@ export class PrimitivaTendencia implements ISeriesPrimitive {
     p2: Punto,
     punteada = false,
   ) {
-    this._vista = new VistaTendencia(chart, serie, p1, p2, punteada)
+    this._vista = new VistaMedicion(chart, serie, p1, p2, punteada)
   }
 
   attached(param: SeriesAttachedParameter<Time>) {
@@ -152,7 +188,6 @@ export class PrimitivaTendencia implements ISeriesPrimitive {
     this._requestUpdate?.()
   }
 
-  // Mueve el segundo extremo en píxeles y repinta de inmediato (preview fluido)
   actualizarPixel(x: number, y: number) {
     this._vista.p2pixel = { x, y }
     this._requestUpdate?.()

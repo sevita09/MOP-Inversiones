@@ -15,7 +15,12 @@ const HERRAMIENTAS: ItemHerramienta[] = [
 ]
 
 // Herramientas con renderizado implementado; el resto se muestra deshabilitado
-const IMPLEMENTADAS = new Set<TipoHerramienta>(['horizontal', 'tendencia'])
+const IMPLEMENTADAS = new Set<TipoHerramienta>([
+  'horizontal',
+  'tendencia',
+  'fibonacci',
+  'medicion',
+])
 
 interface Props {
   activa: TipoHerramienta

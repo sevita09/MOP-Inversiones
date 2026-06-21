@@ -10,8 +10,10 @@ import type {
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
 
+export const NIVELES_FIBONACCI = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
 const COLOR = '#e3b341'
 const COLOR_SELECCION = '#ffffff'
+const COLOR_TEXTO = '#e6edf3'
 
 interface Punto {
   ts: number
@@ -23,11 +25,15 @@ interface Pixel {
   y: number
 }
 
-class RendererTendencia implements ISeriesPrimitivePaneRenderer {
-  private _p1x = 0
-  private _p1y = 0
-  private _p2x = 0
-  private _p2y = 0
+interface NivelDibujo {
+  y: number
+  etiqueta: string
+}
+
+class RendererFibonacci implements ISeriesPrimitivePaneRenderer {
+  private _x1 = 0
+  private _x2 = 0
+  private _niveles: NivelDibujo[] = []
   private _punteada: boolean
   private _seleccionado = false
 
@@ -35,11 +41,10 @@ class RendererTendencia implements ISeriesPrimitivePaneRenderer {
     this._punteada = punteada
   }
 
-  actualizar(p1x: number, p1y: number, p2x: number, p2y: number) {
-    this._p1x = p1x
-    this._p1y = p1y
-    this._p2x = p2x
-    this._p2y = p2y
+  actualizar(x1: number, x2: number, niveles: NivelDibujo[]) {
+    this._x1 = x1
+    this._x2 = x2
+    this._niveles = niveles
   }
 
   seleccionar(sel: boolean) {
@@ -48,25 +53,32 @@ class RendererTendencia implements ISeriesPrimitivePaneRenderer {
 
   draw(target: CanvasRenderingTarget2D) {
     target.useMediaCoordinateSpace(({ context: ctx }) => {
-      ctx.beginPath()
-      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : COLOR
+      const izq = Math.min(this._x1, this._x2)
+      const der = Math.max(this._x1, this._x2)
       ctx.lineWidth = this._seleccionado ? 2 : 1
+      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : COLOR
+      ctx.fillStyle = COLOR_TEXTO
+      ctx.font = '11px sans-serif'
+      ctx.textBaseline = 'middle'
       ctx.setLineDash(this._punteada ? [4, 4] : [])
-      ctx.moveTo(this._p1x, this._p1y)
-      ctx.lineTo(this._p2x, this._p2y)
-      ctx.stroke()
+      for (const n of this._niveles) {
+        ctx.beginPath()
+        ctx.moveTo(izq, n.y)
+        ctx.lineTo(der, n.y)
+        ctx.stroke()
+        ctx.fillText(n.etiqueta, der + 4, n.y)
+      }
       ctx.setLineDash([])
     })
   }
 }
 
-class VistaTendencia implements ISeriesPrimitivePaneView {
-  private _renderer: RendererTendencia
+class VistaFibonacci implements ISeriesPrimitivePaneView {
+  private _renderer: RendererFibonacci
   private _serie: ISeriesApi<SeriesType>
   private _chart: IChartApi
   p1: Punto
   p2: Punto
-  // Si está seteado, el segundo extremo se dibuja en píxeles (preview que sigue al mouse)
   p2pixel: Pixel | null = null
 
   constructor(
@@ -80,26 +92,35 @@ class VistaTendencia implements ISeriesPrimitivePaneView {
     this._serie = serie
     this.p1 = p1
     this.p2 = p2
-    this._renderer = new RendererTendencia(punteada)
+    this._renderer = new RendererFibonacci(punteada)
   }
 
   update() {
     const ts = this._chart.timeScale()
     const x1 = ts.timeToCoordinate(this.p1.ts as unknown as Time)
-    const y1 = this._serie.priceToCoordinate(this.p1.precio)
-    if (x1 == null || y1 == null) return
+    if (x1 == null) return
 
     let x2: number | null
-    let y2: number | null
+    let precio2: number
     if (this.p2pixel) {
       x2 = this.p2pixel.x
-      y2 = this.p2pixel.y
+      const pr = this._serie.coordinateToPrice(this.p2pixel.y)
+      if (pr == null) return
+      precio2 = pr
     } else {
       x2 = ts.timeToCoordinate(this.p2.ts as unknown as Time)
-      y2 = this._serie.priceToCoordinate(this.p2.precio)
+      precio2 = this.p2.precio
     }
-    if (x2 == null || y2 == null) return
-    this._renderer.actualizar(x1, y1, x2, y2)
+    if (x2 == null) return
+
+    const niveles: NivelDibujo[] = []
+    for (const nivel of NIVELES_FIBONACCI) {
+      const precio = this.p1.precio + (precio2 - this.p1.precio) * nivel
+      const y = this._serie.priceToCoordinate(precio)
+      if (y == null) continue
+      niveles.push({ y, etiqueta: `${(nivel * 100).toFixed(1)}%  ${precio.toFixed(2)}` })
+    }
+    this._renderer.actualizar(x1, x2, niveles)
   }
 
   seleccionar(sel: boolean) {
@@ -115,8 +136,8 @@ class VistaTendencia implements ISeriesPrimitivePaneView {
   }
 }
 
-export class PrimitivaTendencia implements ISeriesPrimitive {
-  private _vista: VistaTendencia
+export class PrimitivaFibonacci implements ISeriesPrimitive {
+  private _vista: VistaFibonacci
   private _requestUpdate?: () => void
 
   constructor(
@@ -126,7 +147,7 @@ export class PrimitivaTendencia implements ISeriesPrimitive {
     p2: Punto,
     punteada = false,
   ) {
-    this._vista = new VistaTendencia(chart, serie, p1, p2, punteada)
+    this._vista = new VistaFibonacci(chart, serie, p1, p2, punteada)
   }
 
   attached(param: SeriesAttachedParameter<Time>) {
@@ -152,7 +173,6 @@ export class PrimitivaTendencia implements ISeriesPrimitive {
     this._requestUpdate?.()
   }
 
-  // Mueve el segundo extremo en píxeles y repinta de inmediato (preview fluido)
   actualizarPixel(x: number, y: number) {
     this._vista.p2pixel = { x, y }
     this._requestUpdate?.()
