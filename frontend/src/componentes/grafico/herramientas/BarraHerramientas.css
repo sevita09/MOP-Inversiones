@@ -36,6 +36,16 @@
   background: #388bfd33;
 }
 
+.boton-herramienta:disabled {
+  color: #484f58;
+  cursor: default;
+}
+
+.boton-herramienta:disabled:hover {
+  color: #484f58;
+  background: transparent;
+}
+
 .boton-borrar:hover {
   color: #f85149;
 }

@@ -14,6 +14,9 @@ const HERRAMIENTAS: ItemHerramienta[] = [
   { tipo: 'medicion', etiqueta: 'Medir rango', icono: '⇕' },
 ]
 
+// Herramientas con renderizado implementado; el resto se muestra deshabilitado
+const IMPLEMENTADAS = new Set<TipoHerramienta>(['horizontal', 'tendencia'])
+
 interface Props {
   activa: TipoHerramienta
   alSeleccionar: (tipo: TipoHerramienta) => void
@@ -23,17 +26,21 @@ interface Props {
 function BarraHerramientas({ activa, alSeleccionar, alBorrarTodo }: Props) {
   return (
     <div className="barra-herramientas">
-      {HERRAMIENTAS.map((h) => (
-        <button
-          key={h.tipo}
-          type="button"
-          title={h.etiqueta}
-          className={`boton-herramienta${activa === h.tipo ? ' activo' : ''}`}
-          onClick={() => alSeleccionar(activa === h.tipo ? null : h.tipo)}
-        >
-          {h.icono}
-        </button>
-      ))}
+      {HERRAMIENTAS.map((h) => {
+        const disponible = IMPLEMENTADAS.has(h.tipo)
+        return (
+          <button
+            key={h.tipo}
+            type="button"
+            disabled={!disponible}
+            title={disponible ? h.etiqueta : `${h.etiqueta} (próximamente)`}
+            className={`boton-herramienta${activa === h.tipo ? ' activo' : ''}`}
+            onClick={() => alSeleccionar(activa === h.tipo ? null : h.tipo)}
+          >
+            {h.icono}
+          </button>
+        )
+      })}
       <div className="separador-herramientas" />
       <button
         type="button"
