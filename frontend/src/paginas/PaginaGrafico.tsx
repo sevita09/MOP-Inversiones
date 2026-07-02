@@ -14,6 +14,8 @@ import SelectorEscala from '../componentes/grafico/SelectorEscala'
 import SelectorVolumen from '../componentes/grafico/SelectorVolumen'
 import SelectorEma from '../componentes/grafico/SelectorEma'
 import SelectorBandas from '../componentes/grafico/SelectorBandas'
+import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
+import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
 import { usarMoneda } from '../contextos/MonedaContext'
@@ -41,6 +43,8 @@ function PaginaGrafico() {
   const [mostrarVolumen, setMostrarVolumen] = usarEstadoPersistente('mop.volumen', true)
   const [mostrarEma, setMostrarEma] = usarEstadoPersistente('mop.ema', false)
   const [mostrarBandas, setMostrarBandas] = usarEstadoPersistente('mop.bandas', false)
+  const [mostrarBollinger, setMostrarBollinger] = usarEstadoPersistente('mop.bollinger', false)
+  const [mostrarNiveles, setMostrarNiveles] = usarEstadoPersistente('mop.niveles', false)
   const [oscActivos, setOscActivos] = usarEstadoPersistente<NombreOscilador[]>('mop.osciladores', [])
   const osciladores = new Set(oscActivos)
   const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
@@ -81,8 +85,10 @@ function PaginaGrafico() {
         <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
         <span className="separador-barra" />
         <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />
-        <SelectorEma mostrar={mostrarEma} alCambiar={setMostrarEma} />
+        <SelectorEma mostrar={mostrarEma} temporalidad={temporalidad} alCambiar={setMostrarEma} />
         <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
+        <SelectorBollinger mostrar={mostrarBollinger} alCambiar={setMostrarBollinger} />
+        <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />
         <span className="separador-barra" />
         <MenuIndicadores activos={osciladores} alAlternar={alternarOscilador} />
         <span className="separador-barra" />
@@ -102,6 +108,8 @@ function PaginaGrafico() {
             mostrarVolumen={mostrarVolumen}
             mostrarEma={mostrarEma}
             mostrarBandas={mostrarBandas}
+            mostrarBollinger={mostrarBollinger}
+            mostrarNiveles={mostrarNiveles}
             sincronizador={sincronizador}
           />
           <CapaDibujos

@@ -92,3 +92,22 @@ export function actualizarDibujo(id: number, datos: Record<string, unknown>): Pr
 export function eliminarDibujo(id: number): Promise<void> {
   return fetchJson('/api/dibujos/' + id, { method: 'DELETE' })
 }
+
+// --- Niveles de swing (soporte/resistencia) ---
+
+export interface NivelSwing {
+  precio: number
+  tipo: 'soporte' | 'resistencia' | 'mixto'
+  contactos: number
+  origen: Temporalidad
+  ultimo_ts: number
+}
+
+export function obtenerNivelesSwing(
+  ticker: string,
+  temporalidad: Temporalidad,
+  moneda: Moneda,
+): Promise<{ niveles: NivelSwing[] }> {
+  const parametros = new URLSearchParams({ ticker, temporalidad, moneda })
+  return obtenerJson<{ niveles: NivelSwing[] }>(`/api/niveles_swing?${parametros}`)
+}
