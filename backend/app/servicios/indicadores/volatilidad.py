@@ -58,6 +58,21 @@ def porcentaje_b(
     return {"porcentaje_b": b}
 
 
+def bollinger(
+    df: pd.DataFrame, periodo: int = 20, desvios: float = 2.0
+) -> dict[str, pd.Series]:
+    """Bandas de Bollinger clásicas: media móvil SIMPLE de `periodo` ± k·σ, con σ el
+    desvío estándar rolling del cierre. Distinto de `bandas` (que centra en la EMA
+    de la metodología); esto es el Bollinger de manual (SMA 20 ± 2σ)."""
+    media = df["cierre"].rolling(window=periodo).mean()
+    sigma = df["cierre"].rolling(window=periodo).std(ddof=0)
+    return {
+        "media": media,
+        "superior": media + desvios * sigma,
+        "inferior": media - desvios * sigma,
+    }
+
+
 def adx(df: pd.DataFrame, periodo: int = 14) -> dict[str, pd.Series]:
     """Average Directional Index: fuerza de la tendencia (0-100), sin dirección."""
     alto = df["maximo"]
@@ -82,17 +97,29 @@ def adx(df: pd.DataFrame, periodo: int = 14) -> dict[str, pd.Series]:
 def percentil_distancia(
     df: pd.DataFrame, periodo: int = 200, ventana: int = 252
 ) -> dict[str, pd.Series]:
-    """Percentil de la distancia actual del precio a la EMA central dentro de una ventana rolling."""
+    """Percentil de la distancia actual del precio a la EMA central dentro de una
+    ventana rolling.
+
+    `min_periods` bajo para que muestre valores desde temprano (en mensual la
+    ventana de 252 supera la historia disponible; sin esto quedaba todo en NaN).
+    `raw=True` pasa arrays de numpy al apply: es varias veces más rápido que operar
+    sobre Series por ventana (evita que se trabe el gráfico).
+    """
     ema_central = df["cierre"].ewm(span=periodo, adjust=False).mean()
     distancia = df["cierre"] - ema_central
+
+    def percentil(ventana_vals) -> float:
+        return (ventana_vals < ventana_vals[-1]).sum() / len(ventana_vals) * 100
+
     return {
-        "percentil": distancia.rolling(window=ventana).apply(
-            lambda v: (v < v.iloc[-1]).sum() / len(v) * 100, raw=False
+        "percentil": distancia.rolling(window=ventana, min_periods=20).apply(
+            percentil, raw=True
         )
     }
 
 
 registrar("bandas", bandas, {"periodo": 200})
+registrar("bollinger", bollinger, {"periodo": 20, "desvios": 2.0})
 registrar("atr", atr, {"periodo": 14})
 registrar("porcentaje_b", porcentaje_b, {"periodo": 20, "desvios": 2.0})
 registrar("adx", adx, {"periodo": 14})
