@@ -9,7 +9,7 @@ function SelectorBandas({ mostrar, alCambiar }: Props) {
   return (
     <button
       type="button"
-      title={mostrar ? 'Ocultar bandas σ' : 'Mostrar bandas σ'}
+      title="Bandas σ: ±1/2/3 desvíos del precio respecto a la EMA central (zonas de sobreextensión)"
       className={`boton-bandas${mostrar ? ' activo' : ''}`}
       onClick={() => alCambiar(!mostrar)}
     >
