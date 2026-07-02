@@ -9,7 +9,7 @@ function SelectorVolumen({ mostrar, alCambiar }: Props) {
   return (
     <button
       type="button"
-      title={mostrar ? 'Ocultar volumen' : 'Mostrar volumen'}
+      title="Volumen: cantidad de acciones operadas en cada vela"
       className={`boton-volumen${mostrar ? ' activo' : ''}`}
       onClick={() => alCambiar(!mostrar)}
     >

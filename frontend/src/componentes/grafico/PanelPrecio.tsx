@@ -3,6 +3,7 @@ import { createChart, PriceScaleMode } from 'lightweight-charts'
 import type {
   CandlestickData,
   IChartApi,
+  IPriceLine,
   ISeriesApi,
   LineData,
   MouseEventParams,
@@ -19,6 +20,10 @@ import type {
 } from '../../api/tipos'
 import { usarVelas } from '../../hooks/usarVelas'
 import { usarBandas } from '../../hooks/usarBandas'
+import { usarBollinger } from '../../hooks/usarBollinger'
+import { usarNivelesSwing } from '../../hooks/usarNivelesSwing'
+import { crearSeriesBollinger, volcarBollinger } from './seriesBollinger'
+import { dibujarNiveles, quitarNiveles } from './seriesNiveles'
 import {
   MARGENES_VOLUMEN,
   OPCIONES_AREA,
@@ -80,6 +85,8 @@ interface Props {
   mostrarVolumen: boolean
   mostrarEma: boolean
   mostrarBandas: boolean
+  mostrarBollinger: boolean
+  mostrarNiveles: boolean
   sincronizador?: SincronizadorTiempo
 }
 
@@ -101,6 +108,8 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     mostrarVolumen,
     mostrarEma,
     mostrarBandas,
+    mostrarBollinger,
+    mostrarNiveles,
     sincronizador,
   },
   ref,
@@ -111,9 +120,15 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const serieVolumen = useRef<ISeriesApi<'Histogram'> | null>(null)
   const serieEma = useRef<ISeriesApi<'Line'> | null>(null)
   const seriesBandas = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
+  const seriesBollinger = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
+  const lineasNiveles = useRef<IPriceLine[]>([])
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
   // La media y las bandas salen del mismo indicador: basta con que alguno esté activo
   const bandas = usarBandas(ticker, temporalidad, moneda, mostrarEma || mostrarBandas)
+  const bollinger = usarBollinger(ticker, temporalidad, moneda, mostrarBollinger)
+  const bollingerRef = useRef(bollinger)
+  bollingerRef.current = bollinger
+  const niveles = usarNivelesSwing(ticker, temporalidad, moneda, mostrarNiveles)
   const bandasRef = useRef(bandas)
   bandasRef.current = bandas
   // Índice de la vela bajo el crosshair; null = ninguna (se muestra la última)
@@ -254,11 +269,45 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     }
   }, [mostrarBandas])
 
+  // Bandas de Bollinger (3 líneas grises): se crean/eliminan con su toggle
+  useEffect(() => {
+    const chart = grafico.current
+    if (!chart || !mostrarBollinger) return
+    const s = crearSeriesBollinger(chart)
+    seriesBollinger.current = s
+    volcarBollinger(s, bollingerRef.current)
+    return () => {
+      for (const linea of s.values()) {
+        try {
+          chart.removeSeries(linea)
+        } catch {
+          /* chart disposed */
+        }
+      }
+      seriesBollinger.current = null
+    }
+  }, [mostrarBollinger])
+
   // Volcar los datos cuando cambian (ticker/temporalidad/moneda)
   useEffect(() => {
     if (serieEma.current) volcarEma(serieEma.current, bandas)
     if (seriesBandas.current) volcarBandas(seriesBandas.current, bandas)
   }, [bandas])
+
+  useEffect(() => {
+    if (seriesBollinger.current) volcarBollinger(seriesBollinger.current, bollinger)
+  }, [bollinger])
+
+  // Niveles S/R como líneas de precio sobre la serie principal. Se redibujan al
+  // cambiar los datos o el tipo de gráfico (que recrea la serie). Sin cleanup:
+  // cada corrida quita las anteriores; al recrearse la serie sus líneas se van
+  // con ella (quitar las viejas es inocuo, va en try/catch).
+  useEffect(() => {
+    const s = serie.current
+    if (!s) return
+    quitarNiveles(s, lineasNiveles.current)
+    lineasNiveles.current = mostrarNiveles && niveles ? dibujarNiveles(s, niveles) : []
+  }, [niveles, mostrarNiveles, tipo])
 
   // Volcar las velas cuando cambian. El rango temporal solo se reencuadra al
   // cambiar de ticker o temporalidad, no al togglear moneda ni refrescar.

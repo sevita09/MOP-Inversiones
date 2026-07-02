@@ -33,7 +33,11 @@ function MenuIndicadores({ activos, alAlternar }: Props) {
       {abierto && (
         <div className="menu-indicadores-lista">
           {ORDEN_OSCILADORES.map((nombre) => (
-            <label key={nombre} className="menu-indicadores-item">
+            <label
+              key={nombre}
+              className="menu-indicadores-item"
+              title={OSCILADORES[nombre].descripcion}
+            >
               <input
                 type="checkbox"
                 checked={activos.has(nombre)}

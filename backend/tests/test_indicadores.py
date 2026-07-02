@@ -310,3 +310,34 @@ def test_percentil_distancia_warmup_es_none():
     cierres = list(range(1, 20))
     p = calcular("percentil_distancia", velas(cierres), periodo=5, ventana=252)["percentil"]
     assert p[0] is None
+
+
+def test_percentil_distancia_muestra_valores_antes_de_llenar_la_ventana():
+    # min_periods bajo: con ventana 252 pero solo 59 barras igual hay valores
+    # (antes quedaba todo en None, p.ej. en la mensual)
+    cierres = list(range(1, 60))
+    p = calcular("percentil_distancia", velas(cierres), periodo=5, ventana=252)["percentil"]
+    assert any(v is not None for v in p)
+
+
+# --- Bandas de Bollinger ---
+
+
+def test_bollinger_media_es_la_sma_del_periodo():
+    r = calcular("bollinger", velas([10, 20, 30, 40, 50]), periodo=3)
+    assert r["media"][2] == 20  # SMA(10, 20, 30)
+    assert r["media"][4] == 40  # SMA(30, 40, 50)
+
+
+def test_bollinger_bandas_simetricas_y_ancho_positivo():
+    cierres = [10, 12, 11, 13, 9, 14, 8, 15]
+    r = calcular("bollinger", velas(cierres), periodo=4)
+    i = len(cierres) - 1
+    media, sup, inf = r["media"][i], r["superior"][i], r["inferior"][i]
+    assert sup > media > inf
+    assert round(sup - media, 6) == round(media - inf, 6)
+
+
+def test_bollinger_serie_constante_colapsa_las_bandas():
+    r = calcular("bollinger", velas([50] * 10), periodo=5)
+    assert r["superior"][9] == 50 and r["inferior"][9] == 50

@@ -26,11 +26,15 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
   const [herramienta, setHerramienta] = useState<TipoHerramienta>(null)
   const renderizador = useRef<RenderizadorDibujos | null>(null)
   const herramientaRef = useRef(herramienta)
-  herramientaRef.current = herramienta
   const agregarRef = useRef(agregar)
-  agregarRef.current = agregar
   const primerPunto = useRef<PuntoDibujo | null>(null)
   const seleccionado = useRef<number | null>(null)
+
+  // Mantener los refs con el último valor sin reasignarlos durante el render
+  useEffect(() => {
+    herramientaRef.current = herramienta
+    agregarRef.current = agregar
+  })
 
   useEffect(() => {
     const chart = obtenerChart()
