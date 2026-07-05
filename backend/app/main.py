@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.db import inicializar_base
 from app.rutas import dir_recursos
 from app.routers import (
+    actualizacion,
     dibujos,
     dolar,
     indicadores,
@@ -32,6 +33,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="MOP Inversiones", lifespan=lifespan)
+app.include_router(actualizacion.router)
 app.include_router(dibujos.router)
 app.include_router(dolar.router)
 app.include_router(indicadores.router)

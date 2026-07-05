@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import AvisoActualizacion from './componentes/AvisoActualizacion'
 import BuscadorTickers from './componentes/BuscadorTickers'
 import EstadoBackend from './componentes/EstadoBackend'
 import Navegacion from './componentes/Navegacion'
@@ -14,6 +15,7 @@ function App() {
         <img src="/logo.png" alt="MOP Inversiones" className="logo-encabezado" />
         <span className="titulo-encabezado">MOP - Inversiones</span>
         <EstadoBackend />
+        <AvisoActualizacion />
         <Navegacion />
       </header>
       <div className="cuerpo">

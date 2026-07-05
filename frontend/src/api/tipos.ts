@@ -62,3 +62,10 @@ export interface RespuestaIndicadores {
   ts: number[]
   indicadores: Record<string, Record<string, SerieIndicador>>
 }
+
+export interface EstadoActualizacion {
+  actual: string
+  ultima: string | null
+  hay_nueva: boolean
+  url_descarga: string
+}

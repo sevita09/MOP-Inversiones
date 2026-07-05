@@ -1,0 +1,36 @@
+.aviso-actualizacion {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid #1f6feb;
+  border-radius: 999px;
+  background-color: rgba(31, 111, 235, 0.15);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.aviso-actualizacion a {
+  color: #58a6ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.aviso-actualizacion a:hover {
+  text-decoration: underline;
+}
+
+.cerrar-aviso {
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 5px;
+  cursor: pointer;
+}
+
+.cerrar-aviso:hover {
+  color: #e6edf3;
+}
