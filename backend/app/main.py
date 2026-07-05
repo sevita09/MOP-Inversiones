@@ -2,8 +2,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.db import inicializar_base
+from app.rutas import dir_recursos
 from app.routers import (
     dibujos,
     dolar,
@@ -51,3 +53,12 @@ app.add_middleware(
 @app.get("/api/salud")
 def salud():
     return {"estado": "ok", "servicio": "mop-backend"}
+
+
+# Frontend compilado (modo app de escritorio): servir el build de Vite desde el
+# mismo puerto que la API, así todo corre en un solo origen sin CORS. Se monta al
+# final para que las rutas /api tengan prioridad, y solo si existe el build (en
+# desarrollo con Vite y en los tests no hace falta).
+_FRONTEND_DIST = dir_recursos() / "frontend" / "dist"
+if _FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=_FRONTEND_DIST, html=True), name="frontend")
