@@ -4,8 +4,10 @@ import sqlite3
 from pathlib import Path
 from typing import Union
 
-# La base vive en la raíz del repo (gitignoreada)
-RUTA_BASE_DE_DATOS = Path(__file__).resolve().parents[2] / "mop.db"
+from app.rutas import dir_datos
+
+# En desarrollo: raíz del repo (gitignoreada). Empaquetada: ~/Library/Application Support/MOP
+RUTA_BASE_DE_DATOS = dir_datos() / "mop.db"
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS velas (

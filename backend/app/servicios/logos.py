@@ -15,8 +15,9 @@ from typing import Optional
 import httpx
 
 from app.config import CEDEARS, tickers_byma
+from app.rutas import dir_datos
 
-CARPETA_LOGOS = Path(__file__).resolve().parents[2] / "logos"
+CARPETA_LOGOS = dir_datos() / "logos"
 
 URL_SCANNER = "https://scanner.tradingview.com/symbol"
 URL_CDN = "https://s3-symbol-logo.tradingview.com"
