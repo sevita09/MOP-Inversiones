@@ -1,4 +1,5 @@
 import type {
+  EstadoActualizacion,
   Moneda,
   Paneles,
   Precios,
@@ -29,6 +30,10 @@ export function obtenerVelas(
 
 export function obtenerDolar(): Promise<RespuestaDolar> {
   return obtenerJson<RespuestaDolar>('/api/dolar')
+}
+
+export function obtenerActualizacion(): Promise<EstadoActualizacion> {
+  return obtenerJson<EstadoActualizacion>('/api/actualizacion')
 }
 
 export function obtenerIndicadores(
