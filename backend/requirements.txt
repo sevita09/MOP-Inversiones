@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+pywebview
 pytest
 httpx
 yfinance
