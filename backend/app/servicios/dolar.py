@@ -161,9 +161,18 @@ def sincronizar_dolar_oficial(conexion: sqlite3.Connection) -> int:
     return len(velas)
 
 
-def se_convierte_a_usd(ticker: str) -> bool:
-    """Solo los papeles BYMA se convierten; AAPL y los dólares ya están en su moneda."""
-    return ticker in tickers_byma()
+def se_convierte_a_usd(ticker: str, conexion: Optional[sqlite3.Connection] = None) -> bool:
+    """Solo lo que cotiza en ARS se convierte: papeles BYMA de config y tickers
+    agregados por el usuario con símbolo .BA. CEDEARs (subyacente USD), índices,
+    cripto y dólares ya están en su moneda."""
+    if ticker in tickers_byma():
+        return True
+    if conexion is not None:
+        from app.repositorios.tickers_extra import simbolo_de
+
+        simbolo = simbolo_de(conexion, ticker)
+        return simbolo is not None and simbolo.endswith(".BA")
+    return False
 
 
 def serie_ccl(conexion: sqlite3.Connection) -> tuple[list[str], list[float]]:
@@ -189,7 +198,7 @@ def convertir_velas_a_usd(
     Carga las tasas una sola vez y resuelve cada vela con búsqueda binaria en
     memoria. Las velas anteriores a la primera tasa conocida se descartan.
     """
-    if not se_convierte_a_usd(ticker) or not velas:
+    if not se_convierte_a_usd(ticker, conexion) or not velas:
         return velas
     fechas, valores = serie_ccl(conexion)
     if not fechas:
