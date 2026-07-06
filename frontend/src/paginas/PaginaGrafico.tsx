@@ -18,7 +18,7 @@ import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
 import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
-import { usarMoneda } from '../contextos/MonedaContext'
+import { usarMonedaEfectiva } from '../hooks/usarMonedaEfectiva'
 import { usarTicker } from '../contextos/TickerContext'
 import { usarAtajosTeclado } from '../hooks/usarAtajosTeclado'
 import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
@@ -34,7 +34,7 @@ function esTickerDolar(ticker: string): boolean {
 }
 
 function PaginaGrafico() {
-  const { moneda } = usarMoneda()
+  const { moneda } = usarMonedaEfectiva()
   const { ticker } = usarTicker()
   const [temporalidad, setTemporalidad] = usarEstadoPersistente<Temporalidad>('mop.temporalidad', 'D')
   usarAtajosTeclado(setTemporalidad)
