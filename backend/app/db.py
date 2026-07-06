@@ -37,6 +37,22 @@ CREATE TABLE IF NOT EXISTS tasas_dolar (
     PRIMARY KEY (fecha, tipo)
 );
 
+CREATE TABLE IF NOT EXISTS categorias (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS categorias_tickers (
+    categoria_id INTEGER NOT NULL,
+    ticker       TEXT NOT NULL,
+    PRIMARY KEY (categoria_id, ticker)
+);
+
+CREATE TABLE IF NOT EXISTS favoritos (
+    ticker TEXT PRIMARY KEY
+);
+
+
 CREATE TABLE IF NOT EXISTS dibujos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker   TEXT NOT NULL,
