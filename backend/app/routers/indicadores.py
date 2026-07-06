@@ -6,13 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import (
     TEMPORALIDADES,
-    TICKERS_DOLAR,
     periodo_ema_central,
-    todos_los_tickers,
 )
 from app.db import conexion_api
 from app.repositorios.velas import obtener_velas
 from app.servicios.dolar import convertir_velas_a_usd
+from app.servicios.tickers_extra import universo_completo
 from app.servicios.indicadores import calcular
 
 router = APIRouter(prefix="/api")
@@ -36,7 +35,7 @@ def indicadores(
         raise HTTPException(422, f"Temporalidad inválida: {temporalidad} (usar H, D, S o M)")
     if moneda not in MONEDAS:
         raise HTTPException(422, f"Moneda inválida: {moneda} (usar ARS o USD)")
-    if ticker not in set(todos_los_tickers()) | set(TICKERS_DOLAR):
+    if ticker not in universo_completo(conexion):
         raise HTTPException(404, f"Ticker desconocido: {ticker}")
 
     velas = obtener_velas(conexion, ticker, temporalidad)

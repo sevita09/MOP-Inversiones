@@ -1,4 +1,5 @@
 import { usarMoneda } from '../contextos/MonedaContext'
+import { usarMonedaEfectiva } from '../hooks/usarMonedaEfectiva'
 import { usarDolar } from '../hooks/usarDolar'
 import './InterruptorMoneda.css'
 
@@ -7,7 +8,8 @@ function formatearCCL(valor: number): string {
 }
 
 function InterruptorMoneda() {
-  const { moneda, alternarMoneda } = usarMoneda()
+  const { alternarMoneda } = usarMoneda()
+  const { moneda, fija } = usarMonedaEfectiva()
   const dolar = usarDolar()
 
   return (
@@ -21,7 +23,12 @@ function InterruptorMoneda() {
         type="button"
         className="interruptor-moneda"
         onClick={alternarMoneda}
-        title="Cambiar moneda de visualización"
+        disabled={fija}
+        title={
+          fija
+            ? 'Este ticker cotiza en una sola moneda'
+            : 'Cambiar moneda de visualización'
+        }
       >
         <span className={moneda === 'ARS' ? 'moneda-activa' : ''}>ARS</span>
         <span className="separador-moneda">/</span>

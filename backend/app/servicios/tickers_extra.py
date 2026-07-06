@@ -23,6 +23,12 @@ from app.repositorios import tickers_extra as repo
 GRUPOS_VALIDOS = ("panel_lider", "panel_general", "cedears", "indices", "cripto", "dolar")
 
 
+def universo_completo(conexion: sqlite3.Connection) -> set:
+    """Todos los tickers válidos: config + dólares + agregados por el usuario."""
+    extras = {e["ticker"] for e in repo.listar(conexion)}
+    return set(todos_los_tickers()) | set(TICKERS_DOLAR) | extras
+
+
 def probar_simbolo(simbolo: str) -> bool:
     """True si el símbolo existe en Yahoo Finance (trae historia reciente)."""
     import yfinance as yf  # import acá: los tests no deben cargar yfinance

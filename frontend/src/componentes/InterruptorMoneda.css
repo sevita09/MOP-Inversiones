@@ -38,3 +38,8 @@
 .separador-moneda {
   color: #484f58;
 }
+
+.interruptor-moneda:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

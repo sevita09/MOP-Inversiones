@@ -141,3 +141,28 @@ def test_ticker_agregado_vale_para_categorias_y_velas(
     )
     # /api/velas lo reconoce (sin datos todavía, pero ya no es "desconocido")
     assert cliente.get("/api/velas?ticker=MSFT").status_code == 200
+
+
+# --- conversión a USD de agregados BYMA (.BA) ---
+
+
+def test_extra_byma_se_convierte_a_usd(conexion, yahoo_conoce):
+    from app.servicios.dolar import se_convierte_a_usd
+
+    yahoo_conoce("HARG.BA")
+    servicio.agregar_ticker(conexion, "HARG", "panel_general")
+    assert se_convierte_a_usd("HARG", conexion)
+    # Un cedear agregado (subyacente USD) no se convierte
+    yahoo_conoce("MSFT")
+    servicio.agregar_ticker(conexion, "MSFT", "cedears")
+    assert not se_convierte_a_usd("MSFT", conexion)
+
+
+def test_indicadores_y_niveles_reconocen_al_agregado(
+    cliente, yahoo_conoce, sin_sync_ni_logo
+):
+    yahoo_conoce("MSFT")
+    cliente.post("/api/tickers_extra", json={"ticker": "MSFT", "grupo": "cedears"})
+    # Sin velas devuelven series vacías, pero ya no "Ticker desconocido"
+    assert cliente.get("/api/indicadores?ticker=MSFT&incluir=ema").status_code == 200
+    assert cliente.get("/api/niveles_swing?ticker=MSFT").status_code == 200
