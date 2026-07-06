@@ -39,6 +39,10 @@ export function obtenerActualizacion(): Promise<EstadoActualizacion> {
   return obtenerJson<EstadoActualizacion>('/api/actualizacion')
 }
 
+export function obtenerVersion(): Promise<{ version: string; canal: string }> {
+  return obtenerJson<{ version: string; canal: string }>('/api/version')
+}
+
 export function instalarActualizacion(): Promise<{ instalando: string }> {
   return fetchJson<{ instalando: string }>('/api/actualizacion/instalar', { method: 'POST' })
 }

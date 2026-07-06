@@ -7,13 +7,22 @@ import Sidebar from './componentes/Sidebar'
 import PaginaGrafico from './paginas/PaginaGrafico'
 import PaginaCartera from './paginas/PaginaCartera'
 import PaginaDatos from './paginas/PaginaDatos'
+import { usarCanal } from './hooks/usarCanal'
 
 function App() {
+  const esDev = usarCanal() === 'dev'
+
   return (
     <div className="app">
       <header className="encabezado">
-        <img src="/logo.png" alt="MOP Inversiones" className="logo-encabezado" />
-        <span className="titulo-encabezado">MOP - Inversiones</span>
+        <img
+          src={esDev ? '/logo-dev.png' : '/logo.png'}
+          alt="MOP Inversiones"
+          className="logo-encabezado"
+        />
+        <span className="titulo-encabezado">
+          MOP - Inversiones{esDev && <span className="chip-dev">DEV</span>}
+        </span>
         <EstadoBackend />
         <AvisoActualizacion />
         <Navegacion />
