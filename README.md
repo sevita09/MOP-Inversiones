@@ -28,7 +28,7 @@ Para publicar una versión (desarrollo): cerrar la versión con su tag `vX.Y.Z` 
 ## Modo desarrollo (web)
 
 ```bash
-./scripts/iniciar_backend.sh    # backend en http://localhost:8000
+./scripts/iniciar_backend.sh    # backend en http://localhost:8001
 ./scripts/iniciar_frontend.sh   # frontend en http://localhost:5173
 ```
 

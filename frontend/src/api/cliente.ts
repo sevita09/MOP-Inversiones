@@ -10,9 +10,10 @@ import type {
   Temporalidad,
 } from './tipos'
 
-// En desarrollo (Vite, puerto 5173) la API vive en el 8000; compilado, el
-// backend sirve el frontend desde el mismo origen (sea el puerto que sea)
-const URL_BASE = import.meta.env.DEV ? 'http://localhost:8000' : ''
+// En desarrollo (Vite, puerto 5173) la API vive en el 8001 — puerto propio del
+// modo web, para no chocar con la app instalada (8000) ni con MOP Dev (8100).
+// Compilado, el backend sirve el frontend desde el mismo origen.
+const URL_BASE = import.meta.env.DEV ? 'http://localhost:8001' : ''
 
 export async function obtenerJson<T>(ruta: string): Promise<T> {
   const respuesta = await fetch(`${URL_BASE}${ruta}`)
