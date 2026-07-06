@@ -93,6 +93,26 @@
   justify-content: space-between;
 }
 
+.acciones-lista {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.armar-lista {
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.armar-lista:hover {
+  color: #58a6ff;
+}
+
 .borrar-categoria {
   border: none;
   background: none;
@@ -179,4 +199,71 @@
 
 .var-roja {
   color: #f85149;
+}
+
+.fondo-confirmar {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 24vh;
+  background-color: rgba(1, 4, 9, 0.6);
+}
+
+.dialogo-confirmar {
+  width: 300px;
+  padding: 16px 18px;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  background-color: #161b22;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  font-size: 13.5px;
+  color: #e6edf3;
+}
+
+.dialogo-confirmar p {
+  margin: 0 0 6px;
+}
+
+.nota-confirmar {
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.botones-confirmar {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.boton-borrar {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: #da3633;
+  color: #fff;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.boton-borrar:hover {
+  background-color: #f85149;
+}
+
+.boton-cancelar {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #8b949e;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.boton-cancelar:hover {
+  color: #e6edf3;
+  background-color: #21262d;
 }
