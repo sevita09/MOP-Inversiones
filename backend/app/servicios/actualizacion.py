@@ -19,9 +19,9 @@ REPO_GITHUB = "sevita09/MOP-Inversiones"
 URL_TAGS = f"https://api.github.com/repos/{REPO_GITHUB}/tags"
 URL_DESCARGA = f"https://github.com/{REPO_GITHUB}/releases"
 
-# GitHub limita a 60 consultas por hora sin token y los tags no cambian seguido,
-# así que el resultado se cachea. Los fallos no se cachean: se reintenta.
-TTL_CACHE_SEGUNDOS = 3600.0
+# GitHub limita a 60 consultas por hora sin token; con 15 minutos de caché son
+# 4 consultas por hora y el aviso aparece rápido. Los fallos no se cachean.
+TTL_CACHE_SEGUNDOS = 900.0
 _cache: dict = {"resultado": None, "expira": 0.0}
 _lock = threading.Lock()
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { obtenerIndicadores } from '../api/cliente'
+import { usarRefrescoDatos } from './usarEstadoSync'
 import type { Moneda, SerieIndicador, Temporalidad } from '../api/tipos'
 
 export interface DatosIndicador {
@@ -17,6 +18,7 @@ export function usarIndicador(
   activo: boolean,
 ): DatosIndicador | null {
   const [datos, setDatos] = useState<DatosIndicador | null>(null)
+  const refresco = usarRefrescoDatos()
 
   useEffect(() => {
     if (!activo) {
@@ -35,7 +37,7 @@ export function usarIndicador(
     return () => {
       vigente = false
     }
-  }, [ticker, temporalidad, moneda, nombre, activo])
+  }, [ticker, temporalidad, moneda, nombre, activo, refresco])
 
   return datos
 }
