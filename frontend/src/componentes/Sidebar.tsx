@@ -34,6 +34,7 @@ function Sidebar() {
   const { ticker: activo, elegirTicker } = usarTicker()
   const [pestana, setPestana] = usarEstadoPersistente<Pestana>('mop.sidebar.pestana', 'tickers')
   const [listaAbierta, setListaAbierta] = useState<Categoria | null>(null)
+  const [borrando, setBorrando] = useState<Categoria | null>(null)
 
   const fila = (simbolo: string) => (
     <FilaTicker
@@ -119,7 +120,7 @@ function Sidebar() {
                       type="button"
                       className="borrar-categoria"
                       title={`Borrar la lista ${categoria.nombre}`}
-                      onClick={() => void eliminar(categoria.id)}
+                      onClick={() => setBorrando(categoria)}
                     >
                       ×
                     </button>
@@ -140,6 +141,33 @@ function Sidebar() {
           categoria={listaAbierta}
           alCerrar={() => setListaAbierta(null)}
         />
+      )}
+      {borrando && (
+        <div className="fondo-confirmar" onClick={() => setBorrando(null)}>
+          <div className="dialogo-confirmar" onClick={(evento) => evento.stopPropagation()}>
+            <p>
+              ¿Borrar la lista <strong>{borrando.nombre}</strong>?
+            </p>
+            <p className="nota-confirmar">
+              Los tickers no se pierden: siguen en sus grupos.
+            </p>
+            <div className="botones-confirmar">
+              <button
+                type="button"
+                className="boton-borrar"
+                onClick={() => {
+                  void eliminar(borrando.id)
+                  setBorrando(null)
+                }}
+              >
+                Borrar
+              </button>
+              <button type="button" className="boton-cancelar" onClick={() => setBorrando(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </aside>
   )
