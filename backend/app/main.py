@@ -20,6 +20,7 @@ from app.routers import (
     tickers_extra,
 )
 from app.servicios.logos import asegurar_logos_en_background
+from app.servicios.programador import iniciar_programador
 from app.servicios.respaldos import respaldar_base
 from app.servicios.sincronizador import sincronizar_en_background
 
@@ -30,6 +31,7 @@ async def lifespan(_app: FastAPI):
     respaldar_base()
     inicializar_base()
     sincronizar_en_background()
+    iniciar_programador()  # re-sincroniza cada 15 min en rueda, cada hora fuera
     asegurar_logos_en_background()  # baja los logos que falten, sin bloquear
     yield
 

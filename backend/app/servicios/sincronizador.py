@@ -15,6 +15,7 @@ from app.repositorios.velas import (
 )
 from app.db import obtener_conexion
 from app.servicios.descarga import descargar_velas
+from app.servicios.programador import INTERVALO_RUEDA, en_rueda
 
 # Un solo sync a la vez: SQLite no banca escrituras concurrentes y
 # el arranque y el endpoint manual pueden dispararlo al mismo tiempo
@@ -30,6 +31,14 @@ VIGENCIA_POR_TEMPORALIDAD = {
 }
 
 
+def vigencia_actual(temporalidad: str, ahora: Optional[datetime] = None) -> float:
+    """En rueda, la vela horaria y la diaria en curso envejecen a los 15 minutos
+    (los precios se mueven); fuera de rueda rigen las vigencias normales."""
+    if temporalidad in ("H", "D") and en_rueda(ahora):
+        return INTERVALO_RUEDA
+    return VIGENCIA_POR_TEMPORALIDAD[temporalidad]
+
+
 def esta_vencido(
     ultima_sync: Optional[str],
     temporalidad: str,
@@ -40,7 +49,7 @@ def esta_vencido(
         return True
     ahora = ahora or datetime.now(timezone.utc)
     transcurrido = (ahora - datetime.fromisoformat(ultima_sync)).total_seconds()
-    return transcurrido >= VIGENCIA_POR_TEMPORALIDAD[temporalidad]
+    return transcurrido >= vigencia_actual(temporalidad, ahora)
 
 
 def sincronizar_ticker(

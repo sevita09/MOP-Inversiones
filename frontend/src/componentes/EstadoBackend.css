@@ -2,9 +2,19 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   font-size: 13px;
   color: #8b949e;
+}
+
+.version-app {
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.ultima-sync {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .punto {

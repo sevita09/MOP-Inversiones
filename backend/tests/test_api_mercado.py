@@ -1,9 +1,11 @@
+import sqlite3
 import time
 from unittest.mock import patch
 
 import app.servicios.dolar as dolar
 import app.servicios.sincronizador as sincronizador
 from app.config import PANEL_GENERAL, PANEL_LIDER
+from app.db import ESQUEMA
 from app.repositorios.tasas_dolar import CCL, guardar_tasas
 from app.repositorios.velas import guardar_velas
 
@@ -141,8 +143,13 @@ def test_variacion_close_a_close_desde_el_endpoint(cliente, conexion):
 
 def test_sync_lanza_y_publica_el_resumen(cliente, conexion):
     resumen = {"velas_guardadas": 3, "pares_sincronizados": 1, "velas_refrescadas": 0, "errores": []}
+    # El thread del sync cierra su conexión al terminar: dársela propia (GET /api/sync
+    # ahora también consulta la base, y compartirla rompería la del test)
+    conexion_sync = sqlite3.connect(":memory:", check_same_thread=False)
+    conexion_sync.row_factory = sqlite3.Row
+    conexion_sync.executescript(ESQUEMA)
     with patch.object(sincronizador, "sincronizar_todo", return_value=dict(resumen)), \
-         patch.object(sincronizador, "obtener_conexion", return_value=conexion), \
+         patch.object(sincronizador, "obtener_conexion", return_value=conexion_sync), \
          patch.object(dolar, "descargar_velas", return_value=[]):  # nunca tocar la red
         assert cliente.post("/api/sync").json() == {"estado": "iniciado"}
         esperar_fin_de_sync()

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { obtenerNivelesSwing, type NivelSwing } from '../api/cliente'
+import { usarRefrescoDatos } from './usarEstadoSync'
 import type { Moneda, Temporalidad } from '../api/tipos'
 
 // Niveles de soporte/resistencia. Solo consulta el backend con el toggle activo;
@@ -11,6 +12,7 @@ export function usarNivelesSwing(
   activo: boolean,
 ): NivelSwing[] | null {
   const [datos, setDatos] = useState<NivelSwing[] | null>(null)
+  const refresco = usarRefrescoDatos()
 
   useEffect(() => {
     if (!activo) {
@@ -29,7 +31,7 @@ export function usarNivelesSwing(
     return () => {
       vigente = false
     }
-  }, [ticker, temporalidad, moneda, activo])
+  }, [ticker, temporalidad, moneda, activo, refresco])
 
   return datos
 }

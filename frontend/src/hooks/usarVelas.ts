@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { obtenerVelas } from '../api/cliente'
+import { usarRefrescoDatos } from './usarEstadoSync'
 import type { Moneda, Temporalidad, Vela } from '../api/tipos'
 
 interface EstadoVelas {
@@ -18,10 +19,12 @@ export function usarVelas(
     cargando: true,
     error: null,
   })
+  const refresco = usarRefrescoDatos()
 
   useEffect(() => {
     let activo = true
-    setEstado((previo) => ({ ...previo, cargando: true, error: null }))
+    // Refresco por sync: sin spinner, el gráfico se actualiza en el lugar
+    setEstado((previo) => ({ ...previo, cargando: previo.velas.length === 0, error: null }))
 
     obtenerVelas(ticker, temporalidad, moneda)
       .then((respuesta) => {
@@ -38,7 +41,7 @@ export function usarVelas(
     return () => {
       activo = false
     }
-  }, [ticker, temporalidad, moneda])
+  }, [ticker, temporalidad, moneda, refresco])
 
   return estado
 }
