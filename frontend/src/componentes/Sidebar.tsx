@@ -4,9 +4,11 @@ import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
 import { usarFavoritos } from '../contextos/FavoritosContext'
 import { usarCategorias } from '../contextos/CategoriasContext'
 import { usarTicker } from '../contextos/TickerContext'
+import { useState } from 'react'
 import FilaTicker from './FilaTicker'
 import MenuCategorias from './MenuCategorias'
-import type { Paneles } from '../api/tipos'
+import SelectorTickersLista from './SelectorTickersLista'
+import type { Categoria, Paneles } from '../api/tipos'
 import './Sidebar.css'
 
 const GRUPOS: { clave: keyof Paneles; titulo: string }[] = [
@@ -31,6 +33,7 @@ function Sidebar() {
   const { categorias, eliminar } = usarCategorias()
   const { ticker: activo, elegirTicker } = usarTicker()
   const [pestana, setPestana] = usarEstadoPersistente<Pestana>('mop.sidebar.pestana', 'tickers')
+  const [listaAbierta, setListaAbierta] = useState<Categoria | null>(null)
 
   const fila = (simbolo: string) => (
     <FilaTicker
@@ -103,14 +106,24 @@ function Sidebar() {
               <section key={categoria.id} className="grupo-tickers">
                 <h2 className="grupo-titulo con-borrar">
                   {categoria.nombre}
-                  <button
-                    type="button"
-                    className="borrar-categoria"
-                    title={`Borrar la lista ${categoria.nombre}`}
-                    onClick={() => void eliminar(categoria.id)}
-                  >
-                    ×
-                  </button>
+                  <span className="acciones-lista">
+                    <button
+                      type="button"
+                      className="armar-lista"
+                      title={`Agregar o quitar tickers de ${categoria.nombre}`}
+                      onClick={() => setListaAbierta(categoria)}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="borrar-categoria"
+                      title={`Borrar la lista ${categoria.nombre}`}
+                      onClick={() => void eliminar(categoria.id)}
+                    >
+                      ×
+                    </button>
+                  </span>
                 </h2>
                 {categoria.tickers.length > 0 ? (
                   categoria.tickers.map(fila)
@@ -122,6 +135,12 @@ function Sidebar() {
           </>
         )}
       </div>
+      {listaAbierta && (
+        <SelectorTickersLista
+          categoria={listaAbierta}
+          alCerrar={() => setListaAbierta(null)}
+        />
+      )}
     </aside>
   )
 }

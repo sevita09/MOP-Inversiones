@@ -93,6 +93,26 @@
   justify-content: space-between;
 }
 
+.acciones-lista {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.armar-lista {
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.armar-lista:hover {
+  color: #58a6ff;
+}
+
 .borrar-categoria {
   border: none;
   background: none;
