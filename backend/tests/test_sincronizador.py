@@ -11,7 +11,8 @@ from app.servicios.sincronizador import (
     sincronizar_todo,
 )
 
-AHORA = datetime(2026, 6, 12, 15, 0, tzinfo=timezone.utc)
+# Sábado: fuera de rueda, rigen las vigencias base (la rueda se cubre en test_programador)
+AHORA = datetime(2026, 6, 13, 15, 0, tzinfo=timezone.utc)
 UN_DIA = 86400
 LUNES = int(datetime(2026, 6, 8, tzinfo=timezone.utc).timestamp())
 
