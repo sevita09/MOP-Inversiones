@@ -131,6 +131,17 @@ export function quitarTickerDeCategoria(id: number, ticker: string): Promise<voi
   return fetchJson('/api/categorias/' + id + '/tickers/' + ticker, { method: 'DELETE' })
 }
 
+export function obtenerFavoritos(): Promise<{ tickers: string[] }> {
+  return obtenerJson<{ tickers: string[] }>('/api/favoritos')
+}
+
+export function guardarFavoritos(tickers: string[]): Promise<{ tickers: string[] }> {
+  return fetchJson<{ tickers: string[] }>('/api/favoritos', {
+    method: 'PUT',
+    body: JSON.stringify({ tickers }),
+  })
+}
+
 // --- Niveles de swing (soporte/resistencia) ---
 
 export interface NivelSwing {
