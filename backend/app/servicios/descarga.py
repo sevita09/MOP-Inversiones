@@ -36,11 +36,13 @@ def descargar_velas(
     temporalidad: str,
     desde: Optional[int] = None,
     hasta: Optional[int] = None,
+    simbolo: Optional[str] = None,
 ) -> list[dict]:
     """Baja velas de yfinance y las devuelve listas para guardar_velas.
 
     Con `desde` (ts unix) baja solo desde ahí (y hasta `hasta` si viene);
-    sin `desde`, toda la historia configurada.
+    sin `desde`, toda la historia configurada. `simbolo` fuerza el símbolo de
+    Yahoo (tickers agregados por el usuario, que no están en config).
     """
     parametros = {
         "interval": INTERVALO_YFINANCE[temporalidad],
@@ -52,7 +54,7 @@ def descargar_velas(
         parametros["start"] = datetime.fromtimestamp(desde, tz=timezone.utc)
         if hasta is not None:
             parametros["end"] = datetime.fromtimestamp(hasta, tz=timezone.utc)
-    historia = yf.Ticker(simbolo_yahoo(ticker)).history(**parametros)
+    historia = yf.Ticker(simbolo or simbolo_yahoo(ticker)).history(**parametros)
     return convertir_historia(historia, ticker, temporalidad)
 
 

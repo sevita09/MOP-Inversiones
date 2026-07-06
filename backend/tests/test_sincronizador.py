@@ -113,7 +113,7 @@ def test_refresco_no_aplica_si_la_semanal_esta_mas_actualizada(conexion):
 
 
 def test_sincronizar_todo_acumula_errores_sin_frenar(conexion):
-    def descarga_con_fallo(ticker, temporalidad, desde=None):
+    def descarga_con_fallo(ticker, temporalidad, desde=None, simbolo=None):
         if ticker == "GGAL":
             raise RuntimeError("yfinance caído")
         return [dict(vela_diaria(LUNES), ticker=ticker)]
