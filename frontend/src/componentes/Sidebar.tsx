@@ -13,6 +13,8 @@ const GRUPOS: { clave: keyof Paneles; titulo: string }[] = [
   { clave: 'panel_lider', titulo: 'Panel Líder' },
   { clave: 'panel_general', titulo: 'Panel General' },
   { clave: 'cedears', titulo: 'CEDEARs' },
+  { clave: 'indices', titulo: 'Índices' },
+  { clave: 'cripto', titulo: 'Cripto' },
   { clave: 'dolar', titulo: 'Dólar' },
 ]
 

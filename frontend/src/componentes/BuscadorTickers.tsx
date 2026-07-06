@@ -6,7 +6,14 @@ import './BuscadorTickers.css'
 
 function todosLosSimbolos(paneles: Paneles | null): string[] {
   if (!paneles) return []
-  return [...paneles.panel_lider, ...paneles.panel_general, ...paneles.cedears, ...paneles.dolar]
+  return [
+    ...paneles.panel_lider,
+    ...paneles.panel_general,
+    ...paneles.cedears,
+    ...paneles.indices,
+    ...paneles.cripto,
+    ...paneles.dolar,
+  ]
 }
 
 function BuscadorTickers() {

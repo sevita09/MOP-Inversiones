@@ -31,6 +31,8 @@ export interface Paneles {
   panel_lider: string[]
   panel_general: string[]
   cedears: string[]
+  indices: string[]
+  cripto: string[]
   dolar: string[]
 }
 
