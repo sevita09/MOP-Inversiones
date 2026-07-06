@@ -7,7 +7,8 @@ set -euo pipefail
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="sevita09/MOP-Inversiones"
 
-VERSION=$("$RAIZ/backend/venv/bin/python" -c "from app.version import VERSION; print(VERSION)")
+# El import de app.version necesita correr parado en backend/
+VERSION=$(cd "$RAIZ/backend" && venv/bin/python -c "from app.version import VERSION; print(VERSION)")
 TAG="v$VERSION"
 DMG="$RAIZ/backend/dist/MOP-Inversiones-v$VERSION.dmg"
 
