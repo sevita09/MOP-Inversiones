@@ -26,3 +26,9 @@ def registrar_sync(
         (ticker, temporalidad, momento),
     )
     conexion.commit()
+
+
+def obtener_ultima_sync_global(conexion: sqlite3.Connection) -> Optional[str]:
+    """La sincronización más reciente de cualquier ticker (para mostrar en la UI)."""
+    fila = conexion.execute("SELECT MAX(ultima_sync) AS ultima FROM registro_sync").fetchone()
+    return fila["ultima"] if fila and fila["ultima"] else None
