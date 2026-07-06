@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
+from app.canal import CANAL
 from app.rutas import empaquetada
 from app.servicios.actualizacion import estado_actualizacion
 from app.servicios.instalador import instalar_actualizacion
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/api")
 
 @router.get("/version")
 def version():
-    return {"version": VERSION}
+    return {"version": VERSION, "canal": CANAL}
 
 
 @router.get("/actualizacion")
@@ -21,7 +22,7 @@ def actualizacion():
 @router.post("/actualizacion/instalar")
 def instalar():
     """Instala la última release: la app se cierra sola y reabre actualizada."""
-    if not empaquetada():
+    if not empaquetada() or CANAL == "dev":
         raise HTTPException(409, "Solo disponible en la app instalada")
     try:
         return instalar_actualizacion()

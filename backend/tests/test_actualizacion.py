@@ -105,7 +105,7 @@ cliente_api = TestClient(app)
 def test_endpoint_version_informa_la_version():
     respuesta = cliente_api.get("/api/version")
     assert respuesta.status_code == 200
-    assert respuesta.json() == {"version": VERSION}
+    assert respuesta.json() == {"version": VERSION, "canal": "prod"}
 
 
 def test_endpoint_actualizacion(monkeypatch):

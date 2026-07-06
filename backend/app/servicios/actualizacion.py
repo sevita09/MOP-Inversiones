@@ -60,6 +60,16 @@ def ultima_version_publicada(cliente: Optional[httpx.Client] = None) -> Optional
 
 def estado_actualizacion(cliente: Optional[httpx.Client] = None) -> dict:
     """Versión actual, última publicada y si conviene actualizar (cacheado)."""
+    from app.canal import CANAL
+
+    if CANAL == "dev":
+        # La app de pruebas no se actualiza sola: se reconstruye desde el código
+        return {
+            "actual": VERSION,
+            "ultima": None,
+            "hay_nueva": False,
+            "url_descarga": URL_DESCARGA,
+        }
     ahora = time.time()
     with _lock:
         if _cache["resultado"] is not None and ahora < _cache["expira"]:
