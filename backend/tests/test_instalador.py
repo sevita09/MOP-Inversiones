@@ -1,6 +1,11 @@
 from unittest.mock import MagicMock
 
+from fastapi.testclient import TestClient
+
 import app.servicios.instalador as instalador
+from app.main import app
+
+cliente_api = TestClient(app)
 
 
 def release_de_github(tag="v9.9.9", assets=None):
@@ -72,3 +77,33 @@ def test_ayudante_espera_el_pid_y_reemplaza_la_app(tmp_path):
     assert "ditto" in contenido                    # reemplazo conservando atributos
     assert f'open "{instalador.RUTA_APP_INSTALADA}"' in contenido  # relanza
     assert ruta.stat().st_mode & 0o111             # ejecutable
+
+
+# --- endpoint ---
+
+
+def test_endpoint_rechaza_en_modo_desarrollo():
+    # Sin PyInstaller (sys.frozen) la app corre del repo: no hay .app que pisar
+    respuesta = cliente_api.post("/api/actualizacion/instalar")
+    assert respuesta.status_code == 409
+
+
+def test_endpoint_instala_cuando_corre_empaquetada(monkeypatch):
+    monkeypatch.setattr("app.routers.actualizacion.empaquetada", lambda: True)
+    monkeypatch.setattr(
+        "app.routers.actualizacion.instalar_actualizacion",
+        lambda: {"instalando": "9.9.9"},
+    )
+    respuesta = cliente_api.post("/api/actualizacion/instalar")
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"instalando": "9.9.9"}
+
+
+def test_endpoint_sin_version_nueva_devuelve_conflicto(monkeypatch):
+    def sin_nueva():
+        raise ValueError("No hay una versión nueva instalable")
+
+    monkeypatch.setattr("app.routers.actualizacion.empaquetada", lambda: True)
+    monkeypatch.setattr("app.routers.actualizacion.instalar_actualizacion", sin_nueva)
+    respuesta = cliente_api.post("/api/actualizacion/instalar")
+    assert respuesta.status_code == 409
