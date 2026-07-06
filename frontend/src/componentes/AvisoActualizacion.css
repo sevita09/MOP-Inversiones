@@ -1,24 +1,66 @@
 .aviso-actualizacion {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-left: 12px;
   padding: 3px 4px 3px 10px;
   border: 1px solid #1f6feb;
   border-radius: 999px;
   background-color: rgba(31, 111, 235, 0.15);
   font-size: 12.5px;
+  color: #e6edf3;
   white-space: nowrap;
 }
 
-.aviso-actualizacion a {
-  color: #58a6ff;
-  text-decoration: none;
-  font-weight: 600;
+.aviso-actualizacion.instalando {
+  border-color: #3fb950;
+  background-color: rgba(63, 185, 80, 0.15);
+  padding-right: 10px;
 }
 
-.aviso-actualizacion a:hover {
+.aviso-actualizacion a,
+.boton-aviso {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #58a6ff;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aviso-actualizacion a:hover,
+.boton-aviso:hover {
   text-decoration: underline;
+}
+
+.boton-instalar {
+  border: none;
+  border-radius: 999px;
+  background-color: #238636;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+
+.boton-instalar:hover {
+  background-color: #2ea043;
+}
+
+.boton-despues {
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 12px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.boton-despues:hover {
+  color: #e6edf3;
 }
 
 .cerrar-aviso {

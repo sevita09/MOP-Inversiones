@@ -36,6 +36,10 @@ export function obtenerActualizacion(): Promise<EstadoActualizacion> {
   return obtenerJson<EstadoActualizacion>('/api/actualizacion')
 }
 
+export function instalarActualizacion(): Promise<{ instalando: string }> {
+  return fetchJson<{ instalando: string }>('/api/actualizacion/instalar', { method: 'POST' })
+}
+
 export function obtenerIndicadores(
   ticker: string,
   temporalidad: Temporalidad,
