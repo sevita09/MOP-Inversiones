@@ -7,10 +7,10 @@ import Sidebar from './componentes/Sidebar'
 import PaginaGrafico from './paginas/PaginaGrafico'
 import PaginaCartera from './paginas/PaginaCartera'
 import PaginaDatos from './paginas/PaginaDatos'
-import { usarCanal } from './hooks/usarCanal'
+import { usarVersion } from './hooks/usarVersion'
 
 function App() {
-  const esDev = usarCanal() === 'dev'
+  const esDev = usarVersion().canal === 'dev'
 
   return (
     <div className="app">

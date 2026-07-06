@@ -43,6 +43,10 @@ export function obtenerVersion(): Promise<{ version: string; canal: string }> {
   return obtenerJson<{ version: string; canal: string }>('/api/version')
 }
 
+export function obtenerEstadoSync(): Promise<{ en_curso: boolean; ultima_sync: string | null }> {
+  return obtenerJson<{ en_curso: boolean; ultima_sync: string | null }>('/api/sync')
+}
+
 export function instalarActualizacion(): Promise<{ instalando: string }> {
   return fetchJson<{ instalando: string }>('/api/actualizacion/instalar', { method: 'POST' })
 }
