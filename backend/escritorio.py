@@ -15,10 +15,13 @@ import urllib.request
 import uvicorn
 import webview
 
+from app.canal import CANAL
 from app.main import app
 
 HOST = "localhost"  # mismo origen que usa el cliente del frontend (evita CORS)
-PORT = 8000
+# La app dev usa otro puerto: puede correr a la par de la instalada
+PORT = 8100 if CANAL == "dev" else 8000
+TITULO = "MOP Inversiones (DEV)" if CANAL == "dev" else "MOP Inversiones"
 
 
 def _levantar_backend() -> uvicorn.Server:
@@ -46,7 +49,7 @@ def main() -> None:
     if not _esperar_backend():
         raise RuntimeError("El backend no respondió a tiempo")
     webview.create_window(
-        "MOP Inversiones",
+        TITULO,
         f"http://{HOST}:{PORT}",
         width=1400,
         height=900,

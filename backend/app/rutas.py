@@ -20,9 +20,16 @@ def empaquetada() -> bool:
 
 
 def dir_datos() -> Path:
-    """Carpeta donde la app escribe (base, respaldos, logos)."""
+    """Carpeta donde la app escribe (base, respaldos, logos).
+
+    El canal dev usa su propia carpeta: probar la app de desarrollo nunca
+    toca los datos de la instalada.
+    """
     if empaquetada():
-        destino = Path.home() / "Library" / "Application Support" / "MOP"
+        from app.canal import CANAL
+
+        carpeta = "MOP Dev" if CANAL == "dev" else "MOP"
+        destino = Path.home() / "Library" / "Application Support" / carpeta
         destino.mkdir(parents=True, exist_ok=True)
         return destino
     return _RAIZ_REPO
