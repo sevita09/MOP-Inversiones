@@ -1,4 +1,5 @@
 import type {
+  Categoria,
   EstadoActualizacion,
   Moneda,
   Paneles,
@@ -100,6 +101,34 @@ export function actualizarDibujo(id: number, datos: Record<string, unknown>): Pr
 
 export function eliminarDibujo(id: number): Promise<void> {
   return fetchJson('/api/dibujos/' + id, { method: 'DELETE' })
+}
+
+// --- Categorías propias y favoritos ---
+
+export function obtenerCategorias(): Promise<Categoria[]> {
+  return obtenerJson<Categoria[]>('/api/categorias')
+}
+
+export function crearCategoria(nombre: string): Promise<Categoria> {
+  return fetchJson<Categoria>('/api/categorias', {
+    method: 'POST',
+    body: JSON.stringify({ nombre }),
+  })
+}
+
+export function eliminarCategoria(id: number): Promise<void> {
+  return fetchJson('/api/categorias/' + id, { method: 'DELETE' })
+}
+
+export function agregarTickerACategoria(id: number, ticker: string): Promise<void> {
+  return fetchJson('/api/categorias/' + id + '/tickers', {
+    method: 'POST',
+    body: JSON.stringify({ ticker }),
+  })
+}
+
+export function quitarTickerDeCategoria(id: number, ticker: string): Promise<void> {
+  return fetchJson('/api/categorias/' + id + '/tickers/' + ticker, { method: 'DELETE' })
 }
 
 // --- Niveles de swing (soporte/resistencia) ---

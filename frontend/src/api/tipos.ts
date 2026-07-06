@@ -69,3 +69,9 @@ export interface EstadoActualizacion {
   hay_nueva: boolean
   url_descarga: string
 }
+
+export interface Categoria {
+  id: number
+  nombre: string
+  tickers: string[]
+}
