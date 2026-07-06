@@ -59,3 +59,16 @@ def test_sin_red_no_es_instalable():
     cliente = MagicMock()
     cliente.get.side_effect = RuntimeError("sin red")
     assert instalador.release_instalable(cliente) is None
+
+
+# --- script ayudante ---
+
+
+def test_ayudante_espera_el_pid_y_reemplaza_la_app(tmp_path):
+    ruta = instalador.escribir_ayudante(tmp_path, pid=12345, armado=tmp_path / "armado")
+    contenido = ruta.read_text()
+    assert "kill -0 12345" in contenido           # espera el cierre real de la app
+    assert instalador.RUTA_APP_INSTALADA in contenido
+    assert "ditto" in contenido                    # reemplazo conservando atributos
+    assert f'open "{instalador.RUTA_APP_INSTALADA}"' in contenido  # relanza
+    assert ruta.stat().st_mode & 0o111             # ejecutable

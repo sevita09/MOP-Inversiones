@@ -82,3 +82,76 @@ def descargar_dmg(url: str, destino: Path, cliente: Optional[httpx.Client] = Non
         if cliente is None:
             propio.close()
     return destino
+
+
+def extraer_app_del_dmg(ruta_dmg: Path, armado: Path) -> Path:
+    """Monta el dmg, copia el .app a la carpeta de armado y desmonta."""
+    punto = Path(tempfile.mkdtemp(prefix="mop-dmg-"))
+    subprocess.run(
+        ["hdiutil", "attach", str(ruta_dmg), "-nobrowse", "-mountpoint", str(punto)],
+        check=True, capture_output=True,
+    )
+    try:
+        # ditto conserva permisos, atributos y la firma del bundle
+        subprocess.run(
+            ["ditto", str(punto / NOMBRE_APP), str(armado / NOMBRE_APP)],
+            check=True, capture_output=True,
+        )
+    finally:
+        subprocess.run(["hdiutil", "detach", str(punto)], capture_output=True)
+    return armado / NOMBRE_APP
+
+
+def escribir_ayudante(carpeta: Path, pid: int, armado: Path) -> Path:
+    """Script que espera el cierre de la app, la reemplaza y la relanza."""
+    ruta = carpeta / "actualizar_mop.sh"
+    ruta.write_text(f"""#!/bin/bash
+# Ayudante de actualización de MOP: corre desacoplado de la app.
+while kill -0 {pid} 2>/dev/null; do sleep 0.5; done   # esperar el cierre real
+rm -rf "{RUTA_APP_INSTALADA}"
+ditto "{armado / NOMBRE_APP}" "{RUTA_APP_INSTALADA}"
+rm -rf "{armado}"
+open "{RUTA_APP_INSTALADA}"
+rm -f "{ruta}"
+""")
+    ruta.chmod(0o755)
+    return ruta
+
+
+def _cerrar_app_en(segundos: float) -> None:
+    """Cierra la app: destruye la ventana (el proceso muere con ella)."""
+    def cerrar():
+        try:
+            import webview
+
+            for ventana in webview.windows:
+                ventana.destroy()
+        except Exception:
+            pass
+        # Red de seguridad: si no había ventana, terminar igual
+        threading.Timer(2.0, lambda: os._exit(0)).start()
+
+    threading.Timer(segundos, cerrar).start()
+
+
+def instalar_actualizacion(cliente: Optional[httpx.Client] = None) -> dict:
+    """Descarga la última release, prepara el reemplazo y cierra la app.
+
+    Devuelve la versión que se está instalando. Lanza ValueError si no hay
+    nada instalable (sin release nueva o sin asset .dmg).
+    """
+    release = release_instalable(cliente)
+    if release is None:
+        raise ValueError("No hay una versión nueva instalable")
+
+    trabajo = Path(tempfile.mkdtemp(prefix="mop-actualizacion-"))
+    ruta_dmg = descargar_dmg(release["url"], trabajo / release["nombre"], cliente)
+    extraer_app_del_dmg(ruta_dmg, trabajo)
+    ruta_dmg.unlink()  # el dmg ya no hace falta; el .app quedó en la carpeta
+
+    ayudante = escribir_ayudante(trabajo, os.getpid(), trabajo)
+    # start_new_session: el ayudante queda huérfano a propósito y sobrevive al cierre
+    subprocess.Popen(["/bin/bash", str(ayudante)], start_new_session=True)
+
+    _cerrar_app_en(1.0)  # dar tiempo a que la respuesta HTTP llegue al frontend
+    return {"instalando": release["version"]}
