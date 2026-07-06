@@ -54,6 +54,11 @@ def obtener_logoid(ticker: str, cliente: httpx.Client) -> Optional[str]:
     simbolo = simbolo_tradingview(ticker)
     if simbolo is None:
         return None
+    return obtener_logoid_de(simbolo, cliente)
+
+
+def obtener_logoid_de(simbolo: str, cliente: httpx.Client) -> Optional[str]:
+    """Logoid de un símbolo EXCHANGE:TICKER explícito."""
     respuesta = cliente.get(
         URL_SCANNER, params={"symbol": simbolo, "fields": "logoid"}, headers=ENCABEZADOS
     )
@@ -73,6 +78,47 @@ def descargar_logo(ticker: str, cliente: httpx.Client) -> bool:
     CARPETA_LOGOS.mkdir(exist_ok=True)
     ruta_logo(ticker).write_bytes(respuesta.content)
     return True
+
+
+def candidatos_tradingview(ticker: str, grupo: str) -> list[str]:
+    """Símbolos de TradingView a probar para el logo de un ticker agregado."""
+    if grupo in ("panel_lider", "panel_general"):
+        return [f"BCBA:{ticker}"]
+    if grupo == "cedears":
+        return [f"NASDAQ:{ticker}", f"NYSE:{ticker}"]
+    if grupo == "cripto":
+        base = ticker.split("-")[0]
+        return [f"CRYPTO:{base}USD"]
+    return []  # índices y dólar: sin logo (la UI cae a las iniciales)
+
+
+def descargar_logo_extra(ticker: str, grupo: str) -> bool:
+    """Baja el logo de un ticker agregado por el usuario probando exchanges."""
+    if tiene_logo(ticker):
+        return True
+    try:
+        with httpx.Client(timeout=15) as cliente:
+            for simbolo in candidatos_tradingview(ticker, grupo):
+                try:
+                    logoid = obtener_logoid_de(simbolo, cliente)
+                except Exception:
+                    continue
+                if not logoid:
+                    continue
+                respuesta = cliente.get(f"{URL_CDN}/{logoid}.svg", headers=ENCABEZADOS)
+                if respuesta.status_code == 200:
+                    CARPETA_LOGOS.mkdir(exist_ok=True)
+                    ruta_logo(ticker).write_bytes(respuesta.content)
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def descargar_logo_extra_en_background(ticker: str, grupo: str) -> None:
+    threading.Thread(
+        target=descargar_logo_extra, args=(ticker, grupo), daemon=True
+    ).start()
 
 
 def asegurar_logos(pausa: float = 0.2) -> int:

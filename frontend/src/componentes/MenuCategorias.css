@@ -179,3 +179,31 @@
   color: #58a6ff;
   font-size: 12.5px;
 }
+
+.grupos-alta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 8px 10px;
+}
+
+.chip-grupo {
+  padding: 4px 10px;
+  border: 1px solid #30363d;
+  border-radius: 999px;
+  background: none;
+  color: #8b949e;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip-grupo:hover {
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+.chip-grupo.activo {
+  border-color: #1f6feb;
+  background-color: rgba(31, 111, 235, 0.15);
+  color: #58a6ff;
+}

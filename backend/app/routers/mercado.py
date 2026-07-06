@@ -14,6 +14,7 @@ from app.config import (
     todos_los_tickers,
 )
 from app.db import conexion_api
+from app.repositorios.tickers_extra import listar as listar_tickers_extra
 from app.repositorios.velas import obtener_velas
 from app.servicios.dolar import convertir_velas_a_usd
 from app.servicios.precios import calcular_precios
@@ -21,19 +22,26 @@ from app.servicios.precios import calcular_precios
 MONEDAS = ("ARS", "USD")
 
 
-def _tickers_validos() -> set:
-    return set(todos_los_tickers()) | set(TICKERS_DOLAR)
+def _tickers_validos(conexion: sqlite3.Connection) -> set:
+    extras = {e["ticker"] for e in listar_tickers_extra(conexion)}
+    return set(todos_los_tickers()) | set(TICKERS_DOLAR) | extras
 
 router = APIRouter(prefix="/api")
 
 
 @router.get("/tickers")
-def tickers():
+def tickers(conexion: sqlite3.Connection = Depends(conexion_api)):
+    """Grupos del sidebar: los fijos de config + los agregados por el usuario."""
+    extras: dict[str, list[str]] = {}
+    for e in listar_tickers_extra(conexion):
+        extras.setdefault(e["grupo"], []).append(e["ticker"])
     return {
-        "panel_lider": PANEL_LIDER,
-        "panel_general": PANEL_GENERAL,
-        "cedears": CEDEARS,
-        "dolar": TICKERS_DOLAR,
+        "panel_lider": PANEL_LIDER + extras.get("panel_lider", []),
+        "panel_general": PANEL_GENERAL + extras.get("panel_general", []),
+        "cedears": CEDEARS + extras.get("cedears", []),
+        "indices": extras.get("indices", []),
+        "cripto": extras.get("cripto", []),
+        "dolar": TICKERS_DOLAR + extras.get("dolar", []),
     }
 
 
@@ -44,7 +52,7 @@ def precios(
 ):
     if moneda not in MONEDAS:
         raise HTTPException(422, f"Moneda inválida: {moneda} (usar ARS o USD)")
-    todos = list(_tickers_validos())
+    todos = list(_tickers_validos(conexion))
     return calcular_precios(conexion, todos, moneda)
 
 
@@ -61,7 +69,7 @@ def velas(
         raise HTTPException(422, f"Temporalidad inválida: {temporalidad} (usar H, D, S o M)")
     if moneda not in MONEDAS:
         raise HTTPException(422, f"Moneda inválida: {moneda} (usar ARS o USD)")
-    if ticker not in _tickers_validos():
+    if ticker not in _tickers_validos(conexion):
         raise HTTPException(404, f"Ticker desconocido: {ticker}")
     velas = obtener_velas(conexion, ticker, temporalidad, desde, hasta)
     if moneda == "USD":

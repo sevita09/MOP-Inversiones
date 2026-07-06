@@ -14,6 +14,18 @@ def yahoo_conoce(monkeypatch):
     return configurar
 
 
+@pytest.fixture
+def sin_sync_ni_logo(monkeypatch):
+    """Evita el sync y la descarga de logo reales en los tests de endpoints."""
+    monkeypatch.setattr(
+        "app.routers.tickers_extra.sincronizar_en_background", lambda: False
+    )
+    monkeypatch.setattr(
+        "app.routers.tickers_extra.descargar_logo_extra_en_background",
+        lambda ticker, grupo: None,
+    )
+
+
 # --- resolución de símbolo según el grupo ---
 
 
@@ -75,3 +87,57 @@ def test_rechaza_ticker_desconocido_en_yahoo(conexion, yahoo_conoce):
     yahoo_conoce()
     with pytest.raises(ValueError, match="no se encontró"):
         servicio.agregar_ticker(conexion, "ZZZZ", "cedears")
+
+
+# --- endpoints ---
+
+
+def test_endpoint_agrega_y_se_suma_a_su_grupo(cliente, yahoo_conoce, sin_sync_ni_logo):
+    yahoo_conoce("MSFT")
+    respuesta = cliente.post(
+        "/api/tickers_extra", json={"ticker": "MSFT", "grupo": "cedears"}
+    )
+    assert respuesta.status_code == 201
+    grupos = cliente.get("/api/tickers").json()
+    assert "MSFT" in grupos["cedears"]
+    assert "agregados" not in grupos
+
+
+def test_endpoint_crea_grupos_indices_y_cripto(cliente, yahoo_conoce, sin_sync_ni_logo):
+    yahoo_conoce("^MERV", "BTC-USD")
+    cliente.post("/api/tickers_extra", json={"ticker": "MERV", "grupo": "indices"})
+    cliente.post("/api/tickers_extra", json={"ticker": "BTC", "grupo": "cripto"})
+    grupos = cliente.get("/api/tickers").json()
+    assert grupos["indices"] == ["MERV"]
+    assert grupos["cripto"] == ["BTC"]
+
+
+def test_endpoint_rechaza_invalido(cliente, yahoo_conoce, sin_sync_ni_logo):
+    yahoo_conoce()
+    respuesta = cliente.post(
+        "/api/tickers_extra", json={"ticker": "ZZZZ", "grupo": "cedears"}
+    )
+    assert respuesta.status_code == 422
+
+
+def test_endpoint_elimina(cliente, conexion, yahoo_conoce, sin_sync_ni_logo):
+    yahoo_conoce("MSFT")
+    cliente.post("/api/tickers_extra", json={"ticker": "MSFT", "grupo": "cedears"})
+    assert cliente.delete("/api/tickers_extra/msft").status_code == 200
+    assert listar(conexion) == []
+    assert cliente.delete("/api/tickers_extra/MSFT").status_code == 404
+
+
+def test_ticker_agregado_vale_para_categorias_y_velas(
+    cliente, yahoo_conoce, sin_sync_ni_logo
+):
+    yahoo_conoce("MSFT")
+    cliente.post("/api/tickers_extra", json={"ticker": "MSFT", "grupo": "cedears"})
+
+    id_cat = cliente.post("/api/categorias", json={"nombre": "Tech"}).json()["id"]
+    assert (
+        cliente.post(f"/api/categorias/{id_cat}/tickers", json={"ticker": "MSFT"}).status_code
+        == 201
+    )
+    # /api/velas lo reconoce (sin datos todavía, pero ya no es "desconocido")
+    assert cliente.get("/api/velas?ticker=MSFT").status_code == 200

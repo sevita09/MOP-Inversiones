@@ -8,12 +8,14 @@ from pydantic import BaseModel
 from app.config import CEDEARS, TICKERS_DOLAR, tickers_byma
 from app.db import conexion_api
 from app.repositorios import categorias as repo
+from app.repositorios.tickers_extra import listar as listar_tickers_extra
 
 router = APIRouter(prefix="/api")
 
 
-def _tickers_validos() -> set[str]:
-    return set(tickers_byma() + CEDEARS + TICKERS_DOLAR)
+def _tickers_validos(conexion: sqlite3.Connection) -> set[str]:
+    extras = {e["ticker"] for e in listar_tickers_extra(conexion)}
+    return set(tickers_byma() + CEDEARS + TICKERS_DOLAR) | extras
 
 
 class CategoriaPeticion(BaseModel):
@@ -62,7 +64,7 @@ def agregar_ticker(
     conexion: sqlite3.Connection = Depends(conexion_api),
 ):
     ticker = body.ticker.upper()
-    if ticker not in _tickers_validos():
+    if ticker not in _tickers_validos(conexion):
         raise HTTPException(422, f"Ticker desconocido: {ticker}")
     if not repo.agregar_ticker(conexion, id_categoria, ticker):
         raise HTTPException(404, "Categoría no encontrada")
@@ -90,7 +92,7 @@ def listar_favoritos(conexion: sqlite3.Connection = Depends(conexion_api)):
 def guardar_favoritos(
     body: FavoritosPeticion, conexion: sqlite3.Connection = Depends(conexion_api)
 ):
-    validos = _tickers_validos()
+    validos = _tickers_validos(conexion)
     tickers = [t.upper() for t in body.tickers if t.upper() in validos]
     repo.reemplazar_favoritos(conexion, tickers)
     return {"tickers": tickers}
