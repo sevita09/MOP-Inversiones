@@ -131,6 +131,13 @@ export function quitarTickerDeCategoria(id: number, ticker: string): Promise<voi
   return fetchJson('/api/categorias/' + id + '/tickers/' + ticker, { method: 'DELETE' })
 }
 
+export function agregarTickerNuevo(ticker: string, grupo: string): Promise<{ ticker: string }> {
+  return fetchJson<{ ticker: string }>('/api/tickers_extra', {
+    method: 'POST',
+    body: JSON.stringify({ ticker, grupo }),
+  })
+}
+
 export function obtenerFavoritos(): Promise<{ tickers: string[] }> {
   return obtenerJson<{ tickers: string[] }>('/api/favoritos')
 }

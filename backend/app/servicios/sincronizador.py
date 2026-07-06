@@ -48,18 +48,20 @@ def sincronizar_ticker(
     ticker: str,
     temporalidad: str,
     ahora: Optional[datetime] = None,
+    simbolo: Optional[str] = None,
 ) -> int:
     """Sincroniza un ticker/temporalidad si está vencido. Devuelve velas guardadas.
 
     La primera vez baja toda la historia configurada; después solo el delta
     desde la última vela guardada (inclusive, para refrescar la vela en curso).
+    `simbolo` fuerza el símbolo de Yahoo (tickers agregados por el usuario).
     """
     ahora = ahora or datetime.now(timezone.utc)
     if not esta_vencido(obtener_ultima_sync(conexion, ticker, temporalidad), temporalidad, ahora):
         return 0
 
     desde = obtener_ultimo_ts(conexion, ticker, temporalidad)
-    velas = descargar_velas(ticker, temporalidad, desde=desde)
+    velas = descargar_velas(ticker, temporalidad, desde=desde, simbolo=simbolo)
     guardadas = guardar_velas(conexion, velas) if velas else 0
     registrar_sync(conexion, ticker, temporalidad, ahora.isoformat())
     return guardadas
@@ -129,10 +131,15 @@ def sincronizar_todo(
         "velas_refrescadas": 0,
         "errores": [],
     }
-    for ticker in todos_los_tickers():
+    # Universo fijo de config + tickers agregados por el usuario (con su símbolo)
+    from app.repositorios.tickers_extra import listar as listar_extras
+
+    pares = [(t, None) for t in todos_los_tickers()]
+    pares += [(e["ticker"], e["simbolo_yf"]) for e in listar_extras(conexion)]
+    for ticker, simbolo in pares:
         for temporalidad in TEMPORALIDADES:
             try:
-                guardadas = sincronizar_ticker(conexion, ticker, temporalidad, ahora)
+                guardadas = sincronizar_ticker(conexion, ticker, temporalidad, ahora, simbolo)
             except Exception as error:
                 resumen["errores"].append(f"{ticker}/{temporalidad}: {error}")
                 continue

@@ -52,6 +52,12 @@ CREATE TABLE IF NOT EXISTS favoritos (
     ticker TEXT PRIMARY KEY
 );
 
+CREATE TABLE IF NOT EXISTS tickers_extra (
+    ticker     TEXT PRIMARY KEY,   -- como se muestra en la app
+    simbolo_yf TEXT NOT NULL,      -- símbolo resuelto en Yahoo Finance
+    grupo      TEXT NOT NULL DEFAULT 'cedears',  -- panel del sidebar al que pertenece
+    agregado   TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 CREATE TABLE IF NOT EXISTS dibujos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,6 +86,13 @@ def obtener_conexion(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> sqlite3.Connection:
 def inicializar_base(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> None:
     with obtener_conexion(ruta) as conexion:
         conexion.executescript(ESQUEMA)
+        # Migración suave: bases creadas antes de que tickers_extra tuviera grupo
+        try:
+            conexion.execute(
+                "ALTER TABLE tickers_extra ADD COLUMN grupo TEXT NOT NULL DEFAULT 'cedears'"
+            )
+        except sqlite3.OperationalError:
+            pass  # la columna ya existe
 
 
 def conexion_api():

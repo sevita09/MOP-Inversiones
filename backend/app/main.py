@@ -17,6 +17,7 @@ from app.routers import (
     niveles,
     reparacion,
     sincronizacion,
+    tickers_extra,
 )
 from app.servicios.logos import asegurar_logos_en_background
 from app.servicios.respaldos import respaldar_base
@@ -44,6 +45,7 @@ app.include_router(mercado.router)
 app.include_router(niveles.router)
 app.include_router(reparacion.router)
 app.include_router(sincronizacion.router)
+app.include_router(tickers_extra.router)
 
 app.add_middleware(
     CORSMiddleware,
