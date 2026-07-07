@@ -33,8 +33,16 @@ function Sidebar() {
   const { categorias, eliminar } = usarCategorias()
   const { ticker: activo, elegirTicker } = usarTicker()
   const [pestana, setPestana] = usarEstadoPersistente<Pestana>('mop.sidebar.pestana', 'tickers')
+  const [colapsados, setColapsados] = usarEstadoPersistente<string[]>(
+    'mop.sidebar.colapsados',
+    [],
+  )
   const [listaAbierta, setListaAbierta] = useState<Categoria | null>(null)
   const [borrando, setBorrando] = useState<Categoria | null>(null)
+
+  const colapsado = (id: string) => colapsados.includes(id)
+  const alternarColapso = (id: string) =>
+    setColapsados(colapsado(id) ? colapsados.filter((x) => x !== id) : [...colapsados, id])
 
   const fila = (simbolo: string) => (
     <FilaTicker
@@ -46,6 +54,18 @@ function Sidebar() {
       alElegir={elegirTicker}
       alAlternarFavorito={alternar}
     />
+  )
+
+  // Encabezado de grupo colapsable: chevron + título + cantidad
+  const encabezado = (id: string, titulo: string, cantidad: number, extra?: React.ReactNode) => (
+    <h2 className={extra ? 'grupo-titulo con-borrar' : 'grupo-titulo'}>
+      <button className="titulo-colapsable" onClick={() => alternarColapso(id)}>
+        <span className="chevron">{colapsado(id) ? '▸' : '▾'}</span>
+        <span className="nombre-grupo">{titulo}</span>
+        <span className="conteo-grupo">{cantidad}</span>
+      </button>
+      {extra}
+    </h2>
   )
 
   return (
@@ -80,16 +100,16 @@ function Sidebar() {
           <>
             {favoritos.length > 0 && (
               <section className="grupo-tickers">
-                <h2 className="grupo-titulo">Favoritos</h2>
-                {favoritos.map(fila)}
+                {encabezado('favoritos', 'Favoritos', favoritos.length)}
+                {!colapsado('favoritos') && favoritos.map(fila)}
               </section>
             )}
             {paneles &&
               GRUPOS.map(({ clave, titulo }) =>
                 paneles[clave].length > 0 ? (
                   <section key={clave} className="grupo-tickers">
-                    <h2 className="grupo-titulo">{titulo}</h2>
-                    {paneles[clave].map(fila)}
+                    {encabezado(clave, titulo, paneles[clave].length)}
+                    {!colapsado(clave) && paneles[clave].map(fila)}
                   </section>
                 ) : null,
               )}
@@ -103,36 +123,42 @@ function Sidebar() {
                 Creá tu primera lista de seguimiento con el botón +
               </p>
             )}
-            {categorias.map((categoria) => (
-              <section key={categoria.id} className="grupo-tickers">
-                <h2 className="grupo-titulo con-borrar">
-                  {categoria.nombre}
-                  <span className="acciones-lista">
-                    <button
-                      type="button"
-                      className="armar-lista"
-                      title={`Agregar o quitar tickers de ${categoria.nombre}`}
-                      onClick={() => setListaAbierta(categoria)}
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      className="borrar-categoria"
-                      title={`Borrar la lista ${categoria.nombre}`}
-                      onClick={() => setBorrando(categoria)}
-                    >
-                      ×
-                    </button>
-                  </span>
-                </h2>
-                {categoria.tickers.length > 0 ? (
-                  categoria.tickers.map(fila)
-                ) : (
-                  <p className="categoria-vacia">Sumá tickers con el botón +</p>
-                )}
-              </section>
-            ))}
+            {categorias.map((categoria) => {
+              const id = `lista-${categoria.id}`
+              return (
+                <section key={categoria.id} className="grupo-tickers">
+                  {encabezado(
+                    id,
+                    categoria.nombre,
+                    categoria.tickers.length,
+                    <span className="acciones-lista">
+                      <button
+                        type="button"
+                        className="armar-lista"
+                        title={`Agregar o quitar tickers de ${categoria.nombre}`}
+                        onClick={() => setListaAbierta(categoria)}
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        className="borrar-categoria"
+                        title={`Borrar la lista ${categoria.nombre}`}
+                        onClick={() => setBorrando(categoria)}
+                      >
+                        ×
+                      </button>
+                    </span>,
+                  )}
+                  {!colapsado(id) &&
+                    (categoria.tickers.length > 0 ? (
+                      categoria.tickers.map(fila)
+                    ) : (
+                      <p className="categoria-vacia">Sumá tickers con el botón +</p>
+                    ))}
+                </section>
+              )
+            })}
           </>
         )}
       </div>
