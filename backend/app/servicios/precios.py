@@ -4,10 +4,16 @@ from __future__ import annotations
 import sqlite3
 from typing import Optional
 
-from app.config import tickers_byma
+from app.config import ADR, SUFIJO_ADR, tickers_byma
 from app.repositorios.tickers_extra import listar as listar_tickers_extra
 from app.repositorios.velas import obtener_ultimas_velas
 from app.servicios.dolar import serie_ccl, tasa_ccl_para_ts
+
+
+def _variacion(cierre: float, previo: Optional[float]) -> Optional[float]:
+    if previo:
+        return round((cierre - previo) / previo * 100, 2)
+    return None
 
 
 def _tickers_convertibles(conexion: sqlite3.Connection) -> set:
@@ -44,6 +50,15 @@ def precio_de_ticker(
     convertibles: Optional[set] = None,
 ) -> Optional[dict]:
     """Último cierre y variación % contra el cierre anterior, en la moneda pedida."""
+    # En USD, las acciones con ADR muestran el precio del ADR (no la acción ÷ CCL)
+    if moneda == "USD" and ticker in ADR:
+        velas = obtener_ultimas_velas(conexion, f"{ticker}{SUFIJO_ADR}", "D", 2)
+        if not velas:
+            return None
+        cierre = velas[-1]["cierre"]
+        previo = velas[0]["cierre"] if len(velas) == 2 else None
+        return {"cierre": round(cierre, 4), "variacion_pct": _variacion(cierre, previo)}
+
     if convertibles is None:
         convertibles = _tickers_convertibles(conexion)
     velas = obtener_ultimas_velas(conexion, ticker, "D", 2)

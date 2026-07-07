@@ -1,5 +1,7 @@
 """Configuración central: universo de tickers, temporalidades y EMAs."""
 
+from typing import Optional
+
 PANEL_LIDER = [
     "ALUA", "BMA", "BYMA", "CEPU", "COME", "CRES", "EDN", "GGAL", "LOMA",
     "MIRG", "PAMP", "SUPV", "TECO2", "TGNO4", "TGSU2", "TRAN", "TXAR",
@@ -39,6 +41,27 @@ TICKER_CCL_BASE = "GGALD"
 
 # Tickers sintéticos de dólar (se generan en v0.5)
 TICKERS_DOLAR = ["DOLARCCL", "DOLAROF"]
+
+# Acciones locales que además cotizan en el exterior como ADR.
+# byma -> (símbolo del ADR en Yahoo, acciones locales por cada ADR).
+# En USD estas se muestran con el precio real del ADR (no la acción ÷ CCL).
+ADR = {
+    "GGAL": ("GGAL", 10), "YPFD": ("YPF", 1), "BMA": ("BMA", 10),
+    "SUPV": ("SUPV", 5), "PAMP": ("PAM", 25), "TGSU2": ("TGS", 5),
+    "CEPU": ("CEPU", 10), "EDN": ("EDN", 20), "LOMA": ("LOMA", 5),
+    "TECO2": ("TEO", 5), "CRES": ("CRESY", 10), "IRSA": ("IRS", 10),
+}
+# La serie del ADR se guarda bajo "{byma}.ADR" (el símbolo del ADR suele
+# coincidir con el de la acción local, p.ej. SUPV, y chocaría en la base).
+SUFIJO_ADR = ".ADR"
+
+
+def adr_de(ticker: str) -> Optional[dict]:
+    """Info del ADR de una acción local: {simbolo, ratio}, o None si no tiene."""
+    if ticker in ADR:
+        simbolo, ratio = ADR[ticker]
+        return {"simbolo": simbolo, "ratio": ratio}
+    return None
 
 # Temporalidades: H = hora, D = día, S = semana, M = mes
 # Código yfinance equivalente, solo para la descarga

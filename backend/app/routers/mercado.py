@@ -11,12 +11,12 @@ from app.config import (
     PANEL_LIDER,
     TEMPORALIDADES,
     TICKERS_DOLAR,
+    adr_de,
     todos_los_tickers,
 )
 from app.db import conexion_api
 from app.repositorios.tickers_extra import listar as listar_tickers_extra
-from app.repositorios.velas import obtener_velas
-from app.servicios.dolar import convertir_velas_a_usd
+from app.servicios.dolar import velas_para_vista
 from app.servicios.precios import calcular_precios
 
 MONEDAS = ("ARS", "USD")
@@ -45,6 +45,12 @@ def tickers(conexion: sqlite3.Connection = Depends(conexion_api)):
     }
 
 
+@router.get("/adr")
+def adr(ticker: str):
+    """Info del ADR de una acción (estático): {simbolo, ratio} o null."""
+    return {"adr": adr_de(ticker.upper())}
+
+
 @router.get("/precios")
 def precios(
     moneda: str = "ARS",
@@ -71,12 +77,11 @@ def velas(
         raise HTTPException(422, f"Moneda inválida: {moneda} (usar ARS o USD)")
     if ticker not in _tickers_validos(conexion):
         raise HTTPException(404, f"Ticker desconocido: {ticker}")
-    velas = obtener_velas(conexion, ticker, temporalidad, desde, hasta)
-    if moneda == "USD":
-        velas = convertir_velas_a_usd(conexion, ticker, velas)
+    velas = velas_para_vista(conexion, ticker, temporalidad, moneda, desde, hasta)
     return {
         "ticker": ticker,
         "temporalidad": temporalidad,
         "moneda": moneda,
         "velas": velas,
+        "adr": adr_de(ticker),  # {simbolo, ratio} si la acción tiene ADR, si no None
     }

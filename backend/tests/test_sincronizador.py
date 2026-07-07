@@ -121,6 +121,7 @@ def test_sincronizar_todo_acumula_errores_sin_frenar(conexion):
 
     with patch.object(sincronizador, "todos_los_tickers", return_value=["GGAL", "YPFD"]), \
          patch.object(sincronizador, "TEMPORALIDADES", ["D"]), \
+         patch("app.config.ADR", {}), \
          patch.object(sincronizador, "descargar_velas", descarga_con_fallo):
         resumen = sincronizar_todo(conexion, AHORA)
 

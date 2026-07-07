@@ -140,10 +140,12 @@ def sincronizar_todo(
         "velas_refrescadas": 0,
         "errores": [],
     }
-    # Universo fijo de config + tickers agregados por el usuario (con su símbolo)
+    # Universo fijo de config + series ADR + tickers agregados por el usuario
+    from app.config import ADR, SUFIJO_ADR
     from app.repositorios.tickers_extra import listar as listar_extras
 
     pares = [(t, None) for t in todos_los_tickers()]
+    pares += [(f"{byma}{SUFIJO_ADR}", None) for byma in ADR]  # simbolo_yahoo lo resuelve
     pares += [(e["ticker"], e["simbolo_yf"]) for e in listar_extras(conexion)]
     for ticker, simbolo in pares:
         for temporalidad in TEMPORALIDADES:

@@ -101,13 +101,14 @@ def test_bandas_usan_la_ema_central_de_cada_temporalidad(cliente, conexion):
 
 
 def test_indicadores_en_usd_usan_precios_convertidos(cliente, conexion):
-    cargar(conexion, [8000.0, 8000.0, 8000.0])
+    # ALUA no tiene ADR: en USD se convierte por CCL
+    cargar(conexion, [8000.0, 8000.0, 8000.0], ticker="ALUA")
     guardar_tasas(conexion, [{"fecha": "1970-01-02", "tipo": CCL, "valor": 1000.0}])
     ars = cliente.get(
-        "/api/indicadores", params={"ticker": "GGAL", "incluir": "ema", "moneda": "ARS"}
+        "/api/indicadores", params={"ticker": "ALUA", "incluir": "ema", "moneda": "ARS"}
     ).json()
     usd = cliente.get(
-        "/api/indicadores", params={"ticker": "GGAL", "incluir": "ema", "moneda": "USD"}
+        "/api/indicadores", params={"ticker": "ALUA", "incluir": "ema", "moneda": "USD"}
     ).json()
     # La EMA en USD es la de ARS dividida por el CCL (8000 → 8.0)
     assert ars["indicadores"]["ema"]["ema"][-1] == 8000.0

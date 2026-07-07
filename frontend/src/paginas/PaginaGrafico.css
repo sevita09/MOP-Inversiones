@@ -27,6 +27,18 @@
   color: #e6edf3;
 }
 
+.adr-overlay {
+  position: absolute;
+  top: 10px;
+  right: 82px;
+  z-index: 2;
+  color: #3fb950;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .separador-barra {
   width: 1px;
   align-self: stretch;

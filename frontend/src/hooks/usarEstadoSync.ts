@@ -6,6 +6,7 @@ import { obtenerEstadoSync } from '../api/cliente'
 export const EVENTO_DATOS = 'mop:datos-actualizados'
 
 const DIEZ_SEG = 10 * 1000
+const TREINTA_SEG = 30 * 1000
 const QUINCE_MIN = 15 * 60 * 1000
 const UNA_HORA = 60 * 60 * 1000
 
@@ -36,6 +37,7 @@ export interface EstadoSync {
 export function usarEstadoSync(): EstadoSync {
   const [estado, setEstado] = useState<EstadoSync>({ enCurso: false, ultimaSync: null })
   const previa = useRef<string | null>(null)
+  const enCursoRef = useRef(false)
 
   useEffect(() => {
     let activo = true
@@ -45,6 +47,7 @@ export function usarEstadoSync(): EstadoSync {
       obtenerEstadoSync()
         .then(({ en_curso, ultima_sync }) => {
           if (!activo) return
+          enCursoRef.current = en_curso
           setEstado({ enCurso: en_curso, ultimaSync: ultima_sync })
           if (previa.current !== null && ultima_sync && ultima_sync !== previa.current) {
             window.dispatchEvent(new Event(EVENTO_DATOS))
@@ -55,8 +58,14 @@ export function usarEstadoSync(): EstadoSync {
           timer = setTimeout(consultar, en_curso ? DIEZ_SEG : proximoIntervaloMs())
         })
         .catch(() => {
-          // Backend caído: lo informa usarEstadoBackend; reintentar con la cadencia normal
-          if (activo) timer = setTimeout(consultar, proximoIntervaloMs())
+          if (!activo) return
+          // La consulta puede fallar justo durante un sync (SQLite escribiendo):
+          // si estábamos esperando que termine, reintentar enseguida — si no,
+          // el cartel "sincronizando…" queda congelado hasta el próximo ciclo
+          timer = setTimeout(
+            consultar,
+            enCursoRef.current ? TREINTA_SEG : proximoIntervaloMs(),
+          )
         })
     }
 

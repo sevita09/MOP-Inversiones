@@ -6,8 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import TEMPORALIDADES
 from app.db import conexion_api
-from app.repositorios.velas import obtener_velas
-from app.servicios.dolar import convertir_velas_a_usd
+from app.servicios.dolar import velas_para_vista
 from app.servicios.tickers_extra import universo_completo
 from app.servicios.niveles_swing import SUPERIORES, combinar
 
@@ -34,10 +33,7 @@ def niveles_swing(
     temporalidades = [temporalidad] + SUPERIORES.get(temporalidad, [])
     velas_por: dict[str, list[dict]] = {}
     for t in temporalidades:
-        velas = obtener_velas(conexion, ticker, t)
-        if moneda == "USD":
-            velas = convertir_velas_a_usd(conexion, ticker, velas)
-        velas_por[t] = velas
+        velas_por[t] = velas_para_vista(conexion, ticker, t, moneda)
 
     return {
         "ticker": ticker,
