@@ -20,11 +20,17 @@ export interface Vela {
   es_faltante: number
 }
 
+export interface InfoAdr {
+  simbolo: string
+  ratio: number
+}
+
 export interface RespuestaVelas {
   ticker: string
   temporalidad: string
   moneda: Moneda
   velas: Vela[]
+  adr: InfoAdr | null
 }
 
 export interface Paneles {

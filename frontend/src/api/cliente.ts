@@ -1,6 +1,7 @@
 import type {
   Categoria,
   EstadoActualizacion,
+  InfoAdr,
   Moneda,
   Paneles,
   Precios,
@@ -34,6 +35,10 @@ export function obtenerVelas(
 
 export function obtenerDolar(): Promise<RespuestaDolar> {
   return obtenerJson<RespuestaDolar>('/api/dolar')
+}
+
+export function obtenerAdr(ticker: string): Promise<{ adr: InfoAdr | null }> {
+  return obtenerJson<{ adr: InfoAdr | null }>(`/api/adr?ticker=${ticker}`)
 }
 
 export function obtenerActualizacion(): Promise<EstadoActualizacion> {

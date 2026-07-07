@@ -19,6 +19,7 @@ import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
 import { usarMonedaEfectiva } from '../hooks/usarMonedaEfectiva'
+import { usarAdr } from '../hooks/usarAdr'
 import { usarTicker } from '../contextos/TickerContext'
 import { usarAtajosTeclado } from '../hooks/usarAtajosTeclado'
 import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
@@ -36,6 +37,7 @@ function esTickerDolar(ticker: string): boolean {
 function PaginaGrafico() {
   const { moneda } = usarMonedaEfectiva()
   const { ticker } = usarTicker()
+  const adr = usarAdr(ticker)
   const [temporalidad, setTemporalidad] = usarEstadoPersistente<Temporalidad>('mop.temporalidad', 'D')
   usarAtajosTeclado(setTemporalidad)
   const [tipo, setTipo] = usarEstadoPersistente<TipoGrafico>('mop.tipo', 'velas')
@@ -120,6 +122,11 @@ function PaginaGrafico() {
           <div className="escala-overlay">
             <SelectorEscala escala={escala} alCambiar={setEscala} />
           </div>
+          {moneda === 'USD' && adr && (
+            <span className="adr-overlay">
+              ADR {adr.simbolo} · {adr.ratio}:1
+            </span>
+          )}
         </div>
         {ORDEN_OSCILADORES.filter((n) => osciladores.has(n)).map((nombre) => (
           <PanelOscilador

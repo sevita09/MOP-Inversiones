@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { obtenerVelas } from '../api/cliente'
 import { usarRefrescoDatos } from './usarEstadoSync'
-import type { Moneda, Temporalidad, Vela } from '../api/tipos'
+import type { InfoAdr, Moneda, Temporalidad, Vela } from '../api/tipos'
 
 interface EstadoVelas {
   velas: Vela[]
+  adr: InfoAdr | null
   cargando: boolean
   error: string | null
 }
@@ -16,6 +17,7 @@ export function usarVelas(
 ): EstadoVelas {
   const [estado, setEstado] = useState<EstadoVelas>({
     velas: [],
+    adr: null,
     cargando: true,
     error: null,
   })
@@ -28,13 +30,14 @@ export function usarVelas(
 
     obtenerVelas(ticker, temporalidad, moneda)
       .then((respuesta) => {
-        if (activo) setEstado({ velas: respuesta.velas, cargando: false, error: null })
+        if (activo)
+          setEstado({ velas: respuesta.velas, adr: respuesta.adr, cargando: false, error: null })
       })
       .catch((err: unknown) => {
         if (activo) {
           const mensaje = err instanceof Error ? err.message : 'Error al cargar velas'
           // Conservar las velas previas: un fallo transitorio no borra el gráfico
-          setEstado((previo) => ({ velas: previo.velas, cargando: false, error: mensaje }))
+          setEstado((previo) => ({ ...previo, cargando: false, error: mensaje }))
         }
       })
 
