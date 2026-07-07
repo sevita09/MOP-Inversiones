@@ -44,8 +44,8 @@ def test_ticker_sin_velas_devuelve_none(conexion):
 
 
 def test_variacion_en_usd_usa_el_ccl_de_cada_dia(conexion):
-    # ARS sube 10% (100→110) pero el dólar también: la variación en USD difiere
-    guardar_velas(conexion, [vela("GGAL", UN_DIA, 100.0), vela("GGAL", 2 * UN_DIA, 110.0)])
+    # ALUA no tiene ADR: en USD se convierte por CCL. ARS sube 10% pero el dólar también
+    guardar_velas(conexion, [vela("ALUA", UN_DIA, 100.0), vela("ALUA", 2 * UN_DIA, 110.0)])
     guardar_tasas(
         conexion,
         [
@@ -55,7 +55,7 @@ def test_variacion_en_usd_usa_el_ccl_de_cada_dia(conexion):
     )
     fechas = ["1970-01-02", "1970-01-03"]
     valores = [1000.0, 1100.0]
-    dato = precio_de_ticker(conexion, "GGAL", "USD", fechas, valores)
+    dato = precio_de_ticker(conexion, "ALUA", "USD", fechas, valores)
     # cierre USD = 110/1100 = 0.1 ; previo USD = 100/1000 = 0.1 → 0% en dólares
     assert dato["cierre"] == 0.1
     assert dato["variacion_pct"] == 0.0

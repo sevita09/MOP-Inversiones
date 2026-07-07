@@ -12,9 +12,9 @@ from app.repositorios.velas import guardar_velas
 UN_DIA = 86400
 
 
-def vela(ts, cierre=100.0):
+def vela(ts, cierre=100.0, ticker="GGAL"):
     return {
-        "ticker": "GGAL",
+        "ticker": ticker,
         "temporalidad": "D",
         "ts": ts,
         "apertura": cierre,
@@ -65,9 +65,10 @@ def test_velas_rechaza_ticker_desconocido(cliente):
 
 
 def test_velas_en_usd_divide_por_el_ccl(cliente, conexion):
+    # ALUA no tiene ADR: en USD se convierte por CCL (las que tienen ADR usan el ADR)
     guardar_tasas(conexion, [{"fecha": "1970-01-02", "tipo": CCL, "valor": 1000.0}])
-    guardar_velas(conexion, [vela(UN_DIA, cierre=8000.0)])
-    datos = cliente.get("/api/velas", params={"ticker": "GGAL", "moneda": "USD"}).json()
+    guardar_velas(conexion, [vela(UN_DIA, cierre=8000.0, ticker="ALUA")])
+    datos = cliente.get("/api/velas", params={"ticker": "ALUA", "moneda": "USD"}).json()
     assert datos["moneda"] == "USD"
     assert datos["velas"][0]["cierre"] == 8.0
 

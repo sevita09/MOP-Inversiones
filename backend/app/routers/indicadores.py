@@ -9,8 +9,7 @@ from app.config import (
     periodo_ema_central,
 )
 from app.db import conexion_api
-from app.repositorios.velas import obtener_velas
-from app.servicios.dolar import convertir_velas_a_usd
+from app.servicios.dolar import velas_para_vista
 from app.servicios.tickers_extra import universo_completo
 from app.servicios.indicadores import calcular
 
@@ -38,9 +37,7 @@ def indicadores(
     if ticker not in universo_completo(conexion):
         raise HTTPException(404, f"Ticker desconocido: {ticker}")
 
-    velas = obtener_velas(conexion, ticker, temporalidad)
-    if moneda == "USD":
-        velas = convertir_velas_a_usd(conexion, ticker, velas)
+    velas = velas_para_vista(conexion, ticker, temporalidad, moneda)
 
     nombres = [n.strip() for n in incluir.split(",") if n.strip()]
     resultado: dict[str, dict] = {}

@@ -190,6 +190,29 @@ def tasa_ccl_para_ts(
     return valores[posicion - 1] if posicion > 0 else None
 
 
+def velas_para_vista(
+    conexion: sqlite3.Connection,
+    ticker: str,
+    temporalidad: str,
+    moneda: str,
+    desde=None,
+    hasta=None,
+) -> list[dict]:
+    """Velas del ticker en la moneda pedida.
+
+    En USD: si la acción tiene ADR, devuelve la serie del ADR (precio real en el
+    exterior, sin pasar por el CCL); si no, convierte la serie local por CCL.
+    """
+    from app.config import ADR, SUFIJO_ADR
+
+    if moneda == "USD" and ticker in ADR:
+        return obtener_velas(conexion, f"{ticker}{SUFIJO_ADR}", temporalidad, desde, hasta)
+    velas = obtener_velas(conexion, ticker, temporalidad, desde, hasta)
+    if moneda == "USD":
+        velas = convertir_velas_a_usd(conexion, ticker, velas)
+    return velas
+
+
 def convertir_velas_a_usd(
     conexion: sqlite3.Connection, ticker: str, velas: list[dict]
 ) -> list[dict]:
