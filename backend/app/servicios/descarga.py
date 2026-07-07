@@ -16,11 +16,18 @@ from app.config import (
 # Dólar oficial mayorista en Yahoo Finance
 SIMBOLO_DOLAR_OFICIAL = "USDARS=X"
 
+# CEDEARs cuyo símbolo propio (el de BYMA) difiere del de Yahoo Finance
+YAHOO_OVERRIDE = {
+    "DISN": "DIS",     # Disney en la Bolsa argentina es DISN
+    "BRKB": "BRK-B",   # Berkshire clase B
+}
+
 
 def simbolo_yahoo(ticker: str) -> str:
     """Convierte el ticker propio al símbolo de Yahoo Finance.
 
-    Los BYMA llevan sufijo .BA; GGALD es el ADR de GGAL en NYSE (sin sufijo).
+    Los BYMA llevan sufijo .BA; GGALD es el ADR de GGAL en NYSE (sin sufijo);
+    algunos CEDEARs usan otro símbolo allá (ver YAHOO_OVERRIDE).
     """
     if ticker == TICKER_CCL_BASE:
         return "GGAL"
@@ -28,7 +35,7 @@ def simbolo_yahoo(ticker: str) -> str:
         return SIMBOLO_DOLAR_OFICIAL
     if ticker in tickers_byma():
         return f"{ticker}.BA"
-    return ticker
+    return YAHOO_OVERRIDE.get(ticker, ticker)
 
 
 def descargar_velas(

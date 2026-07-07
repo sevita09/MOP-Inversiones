@@ -12,7 +12,27 @@ PANEL_GENERAL = [
     "MOLA", "MOLI", "MORI", "OEST", "SAMI",
 ]
 
-CEDEARS = ["AAPL"]
+# CEDEARs: subyacentes del exterior (cotizan en su moneda de origen, sin conversión).
+# Validados contra Yahoo Finance. Algunos usan un símbolo distinto allá: ver
+# YAHOO_OVERRIDE en servicios/descarga.py (DISN→DIS, BRKB→BRK-B, PETR3→.SA, etc.).
+CEDEARS = [
+    "AAPL", "MU", "SPY", "VIST", "MSFT", "MSTR", "KO", "NVDA", "QQQ", "MELI",
+    "ORCL", "NU", "META", "AMD", "SNDK", "SPCX", "V", "RKLB", "IBIT", "GOOGL",
+    "AMZN", "TSLA", "GLD", "IREN", "INTC", "NOW", "BRKB", "IBM", "NBIS", "KEEL",
+    "HUT", "EWZ", "ASTS", "PLTR", "MCD", "GLOB", "NFLX", "PBR", "AVGO", "MA",
+    "COIN", "TSM", "BABA", "CRM", "WFC", "SATL", "XLV", "LAR", "SMH", "RGTI",
+    "JPM", "WMT", "EEM", "QCOM", "STNE", "XLF", "XP", "SLV", "ADBE", "PAGS",
+    "XLE", "CRWV", "ASML", "COPX", "GPRK", "VST", "AMAT", "GLW", "ARCO", "RSP",
+    "ETHA", "JNJ", "DIA", "IVV", "UBER", "UNH", "RACE", "ACWI", "PFE", "LLY",
+    "NKE", "PANW", "RIOT", "XLP", "SPCE", "AXP", "ALAB", "MRVL", "PEP", "ANF",
+    "RBLX", "B", "VEA", "CEG", "CVX", "CAT", "EBAY", "BBD", "HMY",
+    "TQQQ", "PG", "HIMS", "MRNA", "SH", "XLU", "BAK", "GDX", "C", "OKLO", "VZ",
+    "UPST", "NIO", "MO", "IVE", "ABT", "ACN", "ANET", "UL", "AMX", "URA", "BA",
+    "PAAS", "BB", "LMT", "FXI", "O", "UGP", "CIBR", "TRIP", "ROKU", "CSCO",
+    "FSLR", "TEN", "LRCX", "TEAM", "IWM", "TM", "TWLO", "BIDU", "XLK",
+    "EWY", "T", "SPOT", "VIG", "AAL", "ONDS", "JD", "VALE", "HOOD",
+    "GT", "RTX", "ARM", "KMB", "DISN",
+]
 
 # ADR de GGAL en NYSE: solo se usa para calcular la tasa CCL, no se muestra en la UI
 TICKER_CCL_BASE = "GGALD"
