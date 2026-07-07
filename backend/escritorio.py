@@ -55,7 +55,9 @@ def main() -> None:
         height=900,
         min_size=(900, 600),
     )
-    webview.start()  # bloquea hasta que se cierra la ventana
+    # private_mode=False: pywebview arranca en modo privado por defecto y el
+    # localStorage (toggles de indicadores, preferencias) moría con la ventana
+    webview.start(private_mode=False)  # bloquea hasta que se cierra la ventana
     server.should_exit = True  # frena el backend (el hilo es daemon igual)
 
 
