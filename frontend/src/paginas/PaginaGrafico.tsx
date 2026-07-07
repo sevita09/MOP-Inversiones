@@ -59,6 +59,8 @@ function PaginaGrafico() {
   const pantalla = usarPantallaCompleta(paginaRef)
   // Un único sincronizador mantiene el precio y los osciladores con el mismo zoom
   const [sincronizador] = useState(crearSincronizadorTiempo)
+  // ts bajo el crosshair, compartido: cada panel muestra su valor en ese punto
+  const [tsActivo, setTsActivo] = useState<number | null>(null)
   const obtenerChart = useCallback(() => panelRef.current?.obtenerChart() ?? null, [])
   const obtenerSerie = useCallback(() => panelRef.current?.obtenerSerie() ?? null, [])
 
@@ -113,6 +115,8 @@ function PaginaGrafico() {
             mostrarBollinger={mostrarBollinger}
             mostrarNiveles={mostrarNiveles}
             sincronizador={sincronizador}
+            tsActivo={tsActivo}
+            alMoverCrosshair={setTsActivo}
           />
           <CapaDibujos
             ticker={ticker}
@@ -136,6 +140,8 @@ function PaginaGrafico() {
             temporalidad={temporalidad}
             moneda={moneda}
             sincronizador={sincronizador}
+            tsActivo={tsActivo}
+            alMoverCrosshair={setTsActivo}
           />
         ))}
       </div>

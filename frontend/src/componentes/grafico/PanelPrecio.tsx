@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 import { createChart, PriceScaleMode } from 'lightweight-charts'
 import type {
   CandlestickData,
@@ -76,6 +76,19 @@ function datosVolumen(velas: Vela[]) {
   }))
 }
 
+// Valor de una serie de indicador en el índice del crosshair. Verifica que el ts
+// coincida (velas e indicadores vienen del mismo query y alinean por índice).
+function valorEnIndice(
+  datos: { ts: number[]; series: Record<string, (number | null)[]> } | null,
+  clave: string,
+  indice: number,
+  tsEsperado: number | undefined,
+): number | null {
+  if (!datos || tsEsperado == null || datos.ts[indice] !== tsEsperado) return null
+  const arr = datos.series[clave]
+  return arr ? arr[indice] ?? null : null
+}
+
 interface Props {
   ticker: string
   temporalidad: Temporalidad
@@ -88,6 +101,9 @@ interface Props {
   mostrarBollinger: boolean
   mostrarNiveles: boolean
   sincronizador?: SincronizadorTiempo
+  // Crosshair compartido: el ts bajo el mouse en cualquier panel, y cómo reportarlo
+  tsActivo?: number | null
+  alMoverCrosshair?: (ts: number | null) => void
 }
 
 export interface PanelPrecioHandle {
@@ -111,6 +127,8 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     mostrarBollinger,
     mostrarNiveles,
     sincronizador,
+    tsActivo = null,
+    alMoverCrosshair,
   },
   ref,
 ) {
@@ -131,17 +149,15 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const niveles = usarNivelesSwing(ticker, temporalidad, moneda, mostrarNiveles)
   const bandasRef = useRef(bandas)
   bandasRef.current = bandas
-  // Índice de la vela bajo el crosshair; null = ninguna (se muestra la última)
-  const [indiceActivo, setIndiceActivo] = useState<number | null>(null)
+  // El crosshair vive arriba (PaginaGrafico): reportamos el ts al moverlo
+  const alMoverRef = useRef(alMoverCrosshair)
+  alMoverRef.current = alMoverCrosshair
 
   const indicePorTs = useMemo(() => {
     const mapa = new Map<number, number>()
     velas.forEach((vela, indice) => mapa.set(vela.ts, indice))
     return mapa
   }, [velas])
-  // El handler del crosshair se crea una sola vez; el ref le da siempre el mapa actual
-  const indicePorTsRef = useRef(indicePorTs)
-  indicePorTsRef.current = indicePorTs
   const velasRef = useRef(velas)
   velasRef.current = velas
 
@@ -173,7 +189,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
 
     const alMover = (parametros: MouseEventParams) => {
       const ts = parametros.time as number | undefined
-      setIndiceActivo(ts != null ? indicePorTsRef.current.get(ts) ?? null : null)
+      alMoverRef.current?.(ts ?? null)
     }
     chart.subscribeCrosshairMove(alMover)
     const liberar = sincronizador?.registrar(chart)
@@ -322,6 +338,8 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     }
   }, [velas, claveVista, tipo])
 
+  // El índice bajo el crosshair sale del ts compartido; sin crosshair, la última vela
+  const indiceActivo = tsActivo != null ? indicePorTs.get(tsActivo) ?? null : null
   const indiceMostrado = indiceActivo ?? velas.length - 1
   const velaMostrada = velas[indiceMostrado] ?? null
   const velaPrevia = indiceMostrado > 0 ? velas[indiceMostrado - 1] : null
@@ -329,10 +347,38 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const sinDatos = !cargando && !error && !hayVelas
   const zBandas = zEnIndice(bandas, velaMostrada, indiceMostrado)
 
+  // Valores de EMA / bandas σ / Bollinger bajo el crosshair (solo si su toggle está)
+  const tsMostrado = velaMostrada?.ts
+  const emaValor = mostrarEma ? valorEnIndice(bandas, 'media', indiceMostrado, tsMostrado) : null
+  const bandasValores = mostrarBandas
+    ? {
+        inf1: valorEnIndice(bandas, 'inf1', indiceMostrado, tsMostrado),
+        sup1: valorEnIndice(bandas, 'sup1', indiceMostrado, tsMostrado),
+        inf2: valorEnIndice(bandas, 'inf2', indiceMostrado, tsMostrado),
+        sup2: valorEnIndice(bandas, 'sup2', indiceMostrado, tsMostrado),
+        inf3: valorEnIndice(bandas, 'inf3', indiceMostrado, tsMostrado),
+        sup3: valorEnIndice(bandas, 'sup3', indiceMostrado, tsMostrado),
+      }
+    : null
+  const bollingerValores = mostrarBollinger
+    ? {
+        inferior: valorEnIndice(bollinger, 'inferior', indiceMostrado, tsMostrado),
+        media: valorEnIndice(bollinger, 'media', indiceMostrado, tsMostrado),
+        superior: valorEnIndice(bollinger, 'superior', indiceMostrado, tsMostrado),
+      }
+    : null
+
   return (
     <div className="panel-precio">
       {velaMostrada && (
-        <LeyendaOHLC vela={velaMostrada} velaPrevia={velaPrevia} z={zBandas} />
+        <LeyendaOHLC
+          vela={velaMostrada}
+          velaPrevia={velaPrevia}
+          z={zBandas}
+          ema={emaValor}
+          bandas={bandasValores}
+          bollinger={bollingerValores}
+        />
       )}
       <div ref={contenedor} className="grafico" />
       {cargando && !hayVelas && (
