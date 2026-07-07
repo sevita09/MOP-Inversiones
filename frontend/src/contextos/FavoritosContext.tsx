@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { guardarFavoritos, obtenerFavoritos } from '../api/cliente'
+import { desmarcarFavorito, guardarFavoritos, marcarFavorito, obtenerFavoritos } from '../api/cliente'
 
 interface ContextoFavoritos {
   favoritos: string[]
@@ -59,12 +59,14 @@ export function ProveedorFavoritos({ children }: { children: ReactNode }) {
 
   const alternar = useCallback((simbolo: string) => {
     setFavoritos((previos) => {
-      const siguientes = previos.includes(simbolo)
-        ? previos.filter((s) => s !== simbolo)
-        : [...previos, simbolo]
-      // Optimista: la UI cambia ya; si falla el guardado, el próximo load lo corrige
-      guardarFavoritos(siguientes).catch(() => {})
-      return siguientes
+      const estaba = previos.includes(simbolo)
+      // De a un ticker: aunque la lista todavía no haya cargado, marcar o
+      // desmarcar temprano nunca puede pisar los favoritos guardados
+      const pedido = estaba ? desmarcarFavorito(simbolo) : marcarFavorito(simbolo)
+      pedido
+        .then(({ tickers }) => setFavoritos(tickers))
+        .catch(() => {})
+      return estaba ? previos.filter((s) => s !== simbolo) : [...previos, simbolo]
     })
   }, [])
 

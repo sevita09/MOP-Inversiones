@@ -92,7 +92,24 @@ def listar_favoritos(conexion: sqlite3.Connection = Depends(conexion_api)):
 def guardar_favoritos(
     body: FavoritosPeticion, conexion: sqlite3.Connection = Depends(conexion_api)
 ):
+    """Reemplaza la lista completa. Solo para la migración desde localStorage."""
     validos = _tickers_validos(conexion)
     tickers = [t.upper() for t in body.tickers if t.upper() in validos]
     repo.reemplazar_favoritos(conexion, tickers)
     return {"tickers": tickers}
+
+
+@router.post("/favoritos/{ticker}", status_code=201)
+def marcar_favorito(ticker: str, conexion: sqlite3.Connection = Depends(conexion_api)):
+    """De a uno: marcar temprano no puede pisar la lista entera."""
+    ticker = ticker.upper()
+    if ticker not in _tickers_validos(conexion):
+        raise HTTPException(422, f"Ticker desconocido: {ticker}")
+    repo.agregar_favorito(conexion, ticker)
+    return {"tickers": repo.listar_favoritos(conexion)}
+
+
+@router.delete("/favoritos/{ticker}")
+def desmarcar_favorito(ticker: str, conexion: sqlite3.Connection = Depends(conexion_api)):
+    repo.quitar_favorito(conexion, ticker.upper())
+    return {"tickers": repo.listar_favoritos(conexion)}

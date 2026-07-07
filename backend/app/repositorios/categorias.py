@@ -82,3 +82,14 @@ def reemplazar_favoritos(conexion: sqlite3.Connection, tickers: list[str]) -> No
         [(t,) for t in tickers],
     )
     conexion.commit()
+
+
+def agregar_favorito(conexion: sqlite3.Connection, ticker: str) -> None:
+    conexion.execute("INSERT OR IGNORE INTO favoritos (ticker) VALUES (?)", (ticker,))
+    conexion.commit()
+
+
+def quitar_favorito(conexion: sqlite3.Connection, ticker: str) -> bool:
+    cursor = conexion.execute("DELETE FROM favoritos WHERE ticker = ?", (ticker,))
+    conexion.commit()
+    return cursor.rowcount > 0

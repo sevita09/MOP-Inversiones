@@ -101,3 +101,25 @@ def test_guardar_favoritos_reemplaza_la_lista(cliente):
     cliente.put("/api/favoritos", json={"tickers": ["GGAL", "BMA"]})
     cliente.put("/api/favoritos", json={"tickers": ["ALUA"]})
     assert cliente.get("/api/favoritos").json() == {"tickers": ["ALUA"]}
+
+
+def test_marcar_favorito_de_a_uno_no_pisa_la_lista(cliente):
+    cliente.put("/api/favoritos", json={"tickers": ["GGAL", "BMA"]})
+    # Marcar uno nuevo (la lista previa sigue intacta)
+    respuesta = cliente.post("/api/favoritos/SUPV")
+    assert respuesta.status_code == 201
+    assert respuesta.json() == {"tickers": ["GGAL", "BMA", "SUPV"]}
+    # Marcarlo de nuevo es idempotente
+    cliente.post("/api/favoritos/SUPV")
+    assert cliente.get("/api/favoritos").json()["tickers"] == ["GGAL", "BMA", "SUPV"]
+
+
+def test_desmarcar_favorito_individual(cliente):
+    cliente.put("/api/favoritos", json={"tickers": ["GGAL", "BMA"]})
+    respuesta = cliente.delete("/api/favoritos/ggal")
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"tickers": ["BMA"]}
+
+
+def test_marcar_favorito_desconocido_es_invalido(cliente):
+    assert cliente.post("/api/favoritos/NOEXISTE").status_code == 422
