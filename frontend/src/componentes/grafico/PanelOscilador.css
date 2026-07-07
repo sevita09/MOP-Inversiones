@@ -18,13 +18,28 @@
   height: calc(100% - 5px);
 }
 
-.oscilador-titulo {
+.oscilador-leyenda {
   position: absolute;
   top: 11px;
   left: 12px;
   z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   font-size: 11px;
+  pointer-events: none;
+}
+
+.oscilador-titulo {
   font-weight: 500;
   color: #8b949e;
-  pointer-events: none;
+}
+
+.oscilador-valor {
+  font-variant-numeric: tabular-nums;
+}
+
+.oscilador-valor b {
+  font-weight: 600;
 }

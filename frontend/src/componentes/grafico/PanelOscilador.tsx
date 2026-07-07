@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createChart, LineStyle } from 'lightweight-charts'
 import type {
   IChartApi,
   ISeriesApi,
   LineData,
+  MouseEventParams,
   SeriesType,
   UTCTimestamp,
   WhitespaceData,
@@ -43,20 +44,47 @@ interface Props {
   temporalidad: Temporalidad
   moneda: Moneda
   sincronizador: SincronizadorTiempo
+  tsActivo?: number | null
+  alMoverCrosshair?: (ts: number | null) => void
+}
+
+function formatearValor(valor: number | null): string {
+  if (valor == null) return '—'
+  return valor.toLocaleString('es-AR', { maximumFractionDigits: 2 })
 }
 
 const ALTURA_MIN = 60
 const ALTURA_MAX = 350
 const ALTURA_INICIAL = 130
 
-function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }: Props) {
+function PanelOscilador({
+  config,
+  ticker,
+  temporalidad,
+  moneda,
+  sincronizador,
+  tsActivo = null,
+  alMoverCrosshair,
+}: Props) {
   const contenedor = useRef<HTMLDivElement>(null)
   const grafico = useRef<IChartApi | null>(null)
   const series = useRef<Map<string, ISeriesApi<SeriesType>>>(new Map())
   const datos = usarIndicador(ticker, temporalidad, moneda, config.nombre, true)
   const datosRef = useRef(datos)
   datosRef.current = datos
+  const alMoverRef = useRef(alMoverCrosshair)
+  alMoverRef.current = alMoverCrosshair
   const [altura, setAltura] = useState(ALTURA_INICIAL)
+
+  // Valor de cada serie bajo el crosshair (ts compartido); sin crosshair, el último
+  const indicePorTs = useMemo(() => {
+    const mapa = new Map<number, number>()
+    datos?.ts.forEach((t, i) => mapa.set(t, i))
+    return mapa
+  }, [datos])
+  const indice =
+    (tsActivo != null ? indicePorTs.get(tsActivo) : undefined) ??
+    (datos ? datos.ts.length - 1 : -1)
 
   const alArrastrar = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -119,8 +147,15 @@ function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }:
     sincronizador.volcarYSincronizar(chart, () => volcar(series.current, datosRef.current, config))
     const liberar = sincronizador.registrar(chart)
 
+    const alMover = (parametros: MouseEventParams) => {
+      const ts = parametros.time as number | undefined
+      alMoverRef.current?.(ts ?? null)
+    }
+    chart.subscribeCrosshairMove(alMover)
+
     return () => {
       liberar()
+      chart.unsubscribeCrosshairMove(alMover)
       chart.remove()
       grafico.current = null
       series.current.clear()
@@ -142,7 +177,14 @@ function PanelOscilador({ config, ticker, temporalidad, moneda, sincronizador }:
   return (
     <div className="panel-oscilador" style={{ height: altura }}>
       <div className="oscilador-handle" onMouseDown={alArrastrar} />
-      <span className="oscilador-titulo">{config.titulo}</span>
+      <span className="oscilador-leyenda">
+        <span className="oscilador-titulo">{config.titulo}</span>
+        {config.series.map((def) => (
+          <span key={def.clave} className="oscilador-valor" style={{ color: def.color }}>
+            {def.etiqueta} <b>{formatearValor(datos?.series[def.clave]?.[indice] ?? null)}</b>
+          </span>
+        ))}
+      </span>
       <div ref={contenedor} className="oscilador-grafico" />
     </div>
   )
