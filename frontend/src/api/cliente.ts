@@ -160,6 +160,14 @@ export function guardarFavoritos(tickers: string[]): Promise<{ tickers: string[]
   })
 }
 
+export function marcarFavorito(ticker: string): Promise<{ tickers: string[] }> {
+  return fetchJson<{ tickers: string[] }>('/api/favoritos/' + ticker, { method: 'POST' })
+}
+
+export function desmarcarFavorito(ticker: string): Promise<{ tickers: string[] }> {
+  return fetchJson<{ tickers: string[] }>('/api/favoritos/' + ticker, { method: 'DELETE' })
+}
+
 // --- Niveles de swing (soporte/resistencia) ---
 
 export interface NivelSwing {
