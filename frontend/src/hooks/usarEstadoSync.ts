@@ -5,6 +5,7 @@ import { obtenerEstadoSync } from '../api/cliente'
 // datos (velas, precios, indicadores) lo escuchan y se refrescan solos.
 export const EVENTO_DATOS = 'mop:datos-actualizados'
 
+const DIEZ_SEG = 10 * 1000
 const QUINCE_MIN = 15 * 60 * 1000
 const UNA_HORA = 60 * 60 * 1000
 
@@ -38,6 +39,7 @@ export function usarEstadoSync(): EstadoSync {
 
   useEffect(() => {
     let activo = true
+    let timer: ReturnType<typeof setTimeout>
 
     const consultar = () => {
       obtenerEstadoSync()
@@ -48,22 +50,17 @@ export function usarEstadoSync(): EstadoSync {
             window.dispatchEvent(new Event(EVENTO_DATOS))
           }
           previa.current = ultima_sync
+          // Con un sync en curso, mirar seguido hasta verlo terminar;
+          // en reposo rige la cadencia de la rueda
+          timer = setTimeout(consultar, en_curso ? DIEZ_SEG : proximoIntervaloMs())
         })
         .catch(() => {
-          // Backend caído: lo informa usarEstadoBackend, acá no hay nada que hacer
+          // Backend caído: lo informa usarEstadoBackend; reintentar con la cadencia normal
+          if (activo) timer = setTimeout(consultar, proximoIntervaloMs())
         })
-    }
-
-    let timer: ReturnType<typeof setTimeout>
-    const programar = () => {
-      timer = setTimeout(() => {
-        consultar()
-        programar()
-      }, proximoIntervaloMs())
     }
 
     consultar()
-    programar()
     return () => {
       activo = false
       clearTimeout(timer)
