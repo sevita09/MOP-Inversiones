@@ -7,8 +7,10 @@ from typing import Optional
 import yfinance as yf
 
 from app.config import (
+    ADR,
     HISTORIA_POR_TEMPORALIDAD,
     INTERVALO_YFINANCE,
+    SUFIJO_ADR,
     TICKER_CCL_BASE,
     tickers_byma,
 )
@@ -33,6 +35,8 @@ def simbolo_yahoo(ticker: str) -> str:
         return "GGAL"
     if ticker == "DOLAROF":
         return SIMBOLO_DOLAR_OFICIAL
+    if ticker.endswith(SUFIJO_ADR):
+        return ADR[ticker[: -len(SUFIJO_ADR)]][0]  # serie del ADR
     if ticker in tickers_byma():
         return f"{ticker}.BA"
     return YAHOO_OVERRIDE.get(ticker, ticker)
