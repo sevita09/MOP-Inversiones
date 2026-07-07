@@ -79,24 +79,60 @@
 
 .grupo-titulo {
   margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.titulo-colapsable {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
+  border: none;
+  background: none;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: #484f58;
+  text-align: left;
+  cursor: pointer;
 }
 
-.grupo-titulo.con-borrar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.titulo-colapsable:hover {
+  color: #8b949e;
+}
+
+.chevron {
+  width: 9px;
+  font-size: 8px;
+  color: #6e7681;
+}
+
+.nombre-grupo {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conteo-grupo {
+  color: #6e7681;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grupo-titulo.con-borrar .titulo-colapsable {
+  padding-right: 4px;
 }
 
 .acciones-lista {
   display: flex;
   align-items: center;
   gap: 2px;
+  padding-right: 12px;
 }
 
 .armar-lista {
