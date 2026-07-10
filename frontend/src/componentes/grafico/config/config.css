@@ -1,0 +1,216 @@
+/* Tuerca de la barra para abrir la config (mismo tamaño que los demás botones) */
+.boton-tuerca {
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8b949e;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.boton-tuerca:hover {
+  color: #e6edf3;
+  background: #1c2128;
+}
+
+.fondo-config {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 18vh;
+  background-color: rgba(1, 4, 9, 0.5);
+}
+
+.dialogo-config {
+  width: 320px;
+  padding: 14px 16px;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  background-color: #161b22;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  color: #e6edf3;
+}
+
+.cabecera-config {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.cerrar-config {
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cerrar-config:hover {
+  color: #e6edf3;
+}
+
+.pestanas-config {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #30363d;
+}
+
+.pestana-config {
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pestana-config:hover {
+  color: #e6edf3;
+}
+
+.pestana-config.activa {
+  color: #58a6ff;
+  box-shadow: inset 0 -2px 0 #388bfd;
+}
+
+.seccion-config {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #21262d;
+}
+
+.seccion-config:last-of-type {
+  border-bottom: none;
+}
+
+.etiqueta-seccion {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 8px;
+}
+
+.campo-config {
+  margin-bottom: 12px;
+}
+
+.etiqueta-config {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8b949e;
+  margin-bottom: 6px;
+}
+
+/* SelectorColor */
+.selector-color {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.muestra {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.muestra.activa {
+  box-shadow: 0 0 0 2px #58a6ff;
+}
+
+.muestra-custom {
+  width: 22px;
+  height: 22px;
+  border: 1px dashed #484f58;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.muestra-custom input {
+  position: absolute;
+  inset: -4px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* SelectorLinea */
+.selector-linea {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grupo-linea {
+  display: flex;
+  gap: 6px;
+}
+
+.boton-linea {
+  padding: 4px 10px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: none;
+  color: #8b949e;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.boton-linea:hover {
+  color: #e6edf3;
+}
+
+.boton-linea.activa {
+  border-color: #1f6feb;
+  background-color: rgba(31, 111, 235, 0.15);
+  color: #58a6ff;
+}
+
+/* Recomendado en gris (por sección) */
+.recomendado-config {
+  font-size: 11px;
+  color: #6e7681;
+}
+
+/* Pie: botón volver */
+.pie-config {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #30363d;
+}
+
+.volver-config {
+  border: none;
+  background: none;
+  color: #58a6ff;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.volver-config:disabled {
+  color: #484f58;
+  cursor: default;
+}

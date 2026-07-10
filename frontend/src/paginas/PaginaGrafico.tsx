@@ -18,6 +18,12 @@ import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
 import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
+import DialogoConfig from '../componentes/grafico/config/DialogoConfig'
+import BotonTuerca from '../componentes/grafico/config/BotonTuerca'
+import {
+  APERTURA_PRECIO,
+  type AperturaConfig,
+} from '../componentes/grafico/config/estilosIndicadores'
 import { usarMonedaEfectiva } from '../hooks/usarMonedaEfectiva'
 import { usarAdr } from '../hooks/usarAdr'
 import { usarTicker } from '../contextos/TickerContext'
@@ -61,6 +67,8 @@ function PaginaGrafico() {
   const [sincronizador] = useState(crearSincronizadorTiempo)
   // ts bajo el crosshair, compartido: cada panel muestra su valor en ese punto
   const [tsActivo, setTsActivo] = useState<number | null>(null)
+  // Config de estilo abierta (tuerca de la barra o de un oscilador); null = cerrada
+  const [configEstilo, setConfigEstilo] = useState<AperturaConfig | null>(null)
   const obtenerChart = useCallback(() => panelRef.current?.obtenerChart() ?? null, [])
   const obtenerSerie = useCallback(() => panelRef.current?.obtenerSerie() ?? null, [])
 
@@ -89,12 +97,20 @@ function PaginaGrafico() {
         <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
         <span className="separador-barra" />
         <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />
+        <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />
         <SelectorEma mostrar={mostrarEma} temporalidad={temporalidad} alCambiar={setMostrarEma} />
         <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
         <SelectorBollinger mostrar={mostrarBollinger} alCambiar={setMostrarBollinger} />
-        <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />
+        <BotonTuerca
+          titulo="Configurar EMA, σ y Bollinger"
+          alTocar={() => setConfigEstilo(APERTURA_PRECIO)}
+        />
         <span className="separador-barra" />
-        <MenuIndicadores activos={osciladores} alAlternar={alternarOscilador} />
+        <MenuIndicadores
+          activos={osciladores}
+          alAlternar={alternarOscilador}
+          alConfigurar={setConfigEstilo}
+        />
         <span className="separador-barra" />
         <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
         <InterruptorMoneda />
@@ -145,6 +161,9 @@ function PaginaGrafico() {
           />
         ))}
       </div>
+      {configEstilo && (
+        <DialogoConfig apertura={configEstilo} alCerrar={() => setConfigEstilo(null)} />
+      )}
     </div>
   )
 }

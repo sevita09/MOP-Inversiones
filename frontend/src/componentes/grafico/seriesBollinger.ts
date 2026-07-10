@@ -8,17 +8,20 @@ import type {
 } from 'lightweight-charts'
 import { LineStyle } from 'lightweight-charts'
 import type { DatosBollinger } from '../../hooks/usarBollinger'
+import { aLineStyle, type Estilo } from '../../contextos/EstilosContext'
 
-// Gris para distinguirlo de la EMA (dorada) y las bandas σ (azules)
-const COLOR_BOLLINGER = '#8b949e'
 const CLAVES = ['inferior', 'media', 'superior'] as const
 
-const BASE: LineSeriesPartialOptions = {
-  color: COLOR_BOLLINGER,
-  lineWidth: 1,
-  priceLineVisible: false,
-  lastValueVisible: false,
-  crosshairMarkerVisible: false,
+function opciones(clave: string, estilo: Estilo): LineSeriesPartialOptions {
+  return {
+    color: estilo.color,
+    lineWidth: (estilo.ancho ?? 1) as LineSeriesPartialOptions['lineWidth'],
+    // La media respeta el tipo elegido; las bandas van sólidas para distinguirse
+    lineStyle: clave === 'media' ? aLineStyle(estilo.tipoLinea) : LineStyle.Solid,
+    priceLineVisible: false,
+    lastValueVisible: false,
+    crosshairMarkerVisible: false,
+  }
 }
 
 function datosSerie(ts: number[], valores: (number | null)[]): (LineData | WhitespaceData)[] {
@@ -30,16 +33,24 @@ function datosSerie(ts: number[], valores: (number | null)[]): (LineData | White
   })
 }
 
-export function crearSeriesBollinger(chart: IChartApi): Map<string, ISeriesApi<'Line'>> {
+export function crearSeriesBollinger(
+  chart: IChartApi,
+  estilo: Estilo,
+): Map<string, ISeriesApi<'Line'>> {
   const series = new Map<string, ISeriesApi<'Line'>>()
   for (const clave of CLAVES) {
-    // La media va punteada; las bandas, sólidas
-    series.set(clave, chart.addLineSeries({
-      ...BASE,
-      lineStyle: clave === 'media' ? LineStyle.Dashed : LineStyle.Solid,
-    }))
+    series.set(clave, chart.addLineSeries(opciones(clave, estilo)))
   }
   return series
+}
+
+export function aplicarEstiloBollinger(
+  series: Map<string, ISeriesApi<'Line'>>,
+  estilo: Estilo,
+): void {
+  for (const [clave, serie] of series) {
+    serie.applyOptions(opciones(clave, estilo))
+  }
 }
 
 export function volcarBollinger(

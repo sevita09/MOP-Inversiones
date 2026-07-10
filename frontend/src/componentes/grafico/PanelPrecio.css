@@ -28,6 +28,13 @@
   font-weight: 500;
 }
 
+/* Los campos de indicadores capturan el doble click (la leyenda es pointer-events:none) */
+.leyenda-configurable {
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
 .leyenda-z .z-neutro {
   color: #e6edf3;
 }

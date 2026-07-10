@@ -7,6 +7,7 @@ import { ProveedorMoneda } from './contextos/MonedaContext.tsx'
 import { ProveedorTicker } from './contextos/TickerContext.tsx'
 import { ProveedorFavoritos } from './contextos/FavoritosContext.tsx'
 import { ProveedorCategorias } from './contextos/CategoriasContext.tsx'
+import { ProveedorEstilos } from './contextos/EstilosContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -15,7 +16,9 @@ createRoot(document.getElementById('root')!).render(
         <ProveedorTicker>
           <ProveedorFavoritos>
             <ProveedorCategorias>
-              <App />
+              <ProveedorEstilos>
+                <App />
+              </ProveedorEstilos>
             </ProveedorCategorias>
           </ProveedorFavoritos>
         </ProveedorTicker>

@@ -8,7 +8,8 @@ import type {
 } from 'lightweight-charts'
 import type { Vela } from '../../api/tipos'
 import type { DatosBandas } from '../../hooks/usarBandas'
-import { COLOR_EMA_CENTRAL, COLORES_BANDAS } from './configGrafico'
+import { aLineStyle, conOpacidad, type Estilo } from '../../contextos/EstilosContext'
+import { OPACIDAD_SIGMA } from './config/estilosIndicadores'
 
 // Las 6 bandas σ (sin la media). Orden de creación = orden de dibujo.
 const CLAVES_BANDAS = ['inf3', 'inf2', 'inf1', 'sup1', 'sup2', 'sup3'] as const
@@ -30,17 +31,52 @@ function datosSerie(ts: number[], valores: (number | null)[]): (LineData | White
   })
 }
 
-export function crearSerieEma(chart: IChartApi): ISeriesApi<'Line'> {
-  return chart.addLineSeries({ ...BASE, color: COLOR_EMA_CENTRAL, lineWidth: 2 })
+function opcionesEma(estilo: Estilo): LineSeriesPartialOptions {
+  return {
+    ...BASE,
+    color: estilo.color,
+    lineWidth: (estilo.ancho ?? 2) as LineSeriesPartialOptions['lineWidth'],
+    lineStyle: aLineStyle(estilo.tipoLinea),
+  }
 }
 
-export function crearSeriesBandas(chart: IChartApi): Map<string, ISeriesApi<'Line'>> {
+function opcionesBanda(nivel: 1 | 2 | 3, estilo: Estilo): LineSeriesPartialOptions {
+  return {
+    ...BASE,
+    color: conOpacidad(estilo.color ?? '#388bfd', OPACIDAD_SIGMA[nivel]),
+    lineWidth: (estilo.ancho ?? 1) as LineSeriesPartialOptions['lineWidth'],
+    lineStyle: aLineStyle(estilo.tipoLinea),
+  }
+}
+
+export function crearSerieEma(chart: IChartApi, estilo: Estilo): ISeriesApi<'Line'> {
+  return chart.addLineSeries(opcionesEma(estilo))
+}
+
+export function aplicarEstiloEma(serie: ISeriesApi<'Line'>, estilo: Estilo): void {
+  serie.applyOptions(opcionesEma(estilo))
+}
+
+export function crearSeriesBandas(
+  chart: IChartApi,
+  estilo: Estilo,
+): Map<string, ISeriesApi<'Line'>> {
   const series = new Map<string, ISeriesApi<'Line'>>()
   for (const clave of CLAVES_BANDAS) {
     const sigma = Number(clave.slice(-1)) as 1 | 2 | 3
-    series.set(clave, chart.addLineSeries({ ...BASE, color: COLORES_BANDAS[sigma], lineWidth: 1 }))
+    series.set(clave, chart.addLineSeries(opcionesBanda(sigma, estilo)))
   }
   return series
+}
+
+export function aplicarEstiloBandas(
+  series: Map<string, ISeriesApi<'Line'>>,
+  estilo: Estilo,
+): void {
+  for (const [clave, serie] of series) {
+    const sigma = Number(clave.slice(-1)) as 1 | 2 | 3
+    serie.applyOptions(opcionesBanda(sigma, estilo))
+  }
 }
 
 export function volcarEma(serie: ISeriesApi<'Line'>, datos: DatosBandas | null): void {
