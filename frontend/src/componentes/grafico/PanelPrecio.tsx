@@ -22,7 +22,9 @@ import { usarVelas } from '../../hooks/usarVelas'
 import { usarBandas } from '../../hooks/usarBandas'
 import { usarBollinger } from '../../hooks/usarBollinger'
 import { usarNivelesSwing } from '../../hooks/usarNivelesSwing'
-import { crearSeriesBollinger, volcarBollinger } from './seriesBollinger'
+import { usarEstilos } from '../../contextos/EstilosContext'
+import { REC_EMA, REC_BANDAS, REC_BOLLINGER } from './config/estilosIndicadores'
+import { crearSeriesBollinger, volcarBollinger, aplicarEstiloBollinger } from './seriesBollinger'
 import { dibujarNiveles, quitarNiveles } from './seriesNiveles'
 import {
   MARGENES_VOLUMEN,
@@ -39,6 +41,8 @@ import {
   volcarBandas,
   volcarEma,
   zEnIndice,
+  aplicarEstiloEma,
+  aplicarEstiloBandas,
 } from './seriesBandas'
 import type { SincronizadorTiempo } from './sincronizadorTiempo'
 import LeyendaOHLC from './LeyendaOHLC'
@@ -153,6 +157,18 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const alMoverRef = useRef(alMoverCrosshair)
   alMoverRef.current = alMoverCrosshair
 
+  // Estilo efectivo (recomendado + override del usuario) de los indicadores del panel
+  const { estiloDe } = usarEstilos()
+  const estEma = estiloDe('ema', REC_EMA)
+  const estBandas = estiloDe('bandas', REC_BANDAS)
+  const estBoll = estiloDe('bollinger', REC_BOLLINGER)
+  const estEmaRef = useRef(estEma)
+  estEmaRef.current = estEma
+  const estBandasRef = useRef(estBandas)
+  estBandasRef.current = estBandas
+  const estBollRef = useRef(estBoll)
+  estBollRef.current = estBoll
+
   const indicePorTs = useMemo(() => {
     const mapa = new Map<number, number>()
     velas.forEach((vela, indice) => mapa.set(vela.ts, indice))
@@ -253,7 +269,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   useEffect(() => {
     const chart = grafico.current
     if (!chart || !mostrarEma) return
-    const s = crearSerieEma(chart)
+    const s = crearSerieEma(chart, estEmaRef.current)
     serieEma.current = s
     volcarEma(s, bandasRef.current)
     return () => {
@@ -270,7 +286,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   useEffect(() => {
     const chart = grafico.current
     if (!chart || !mostrarBandas) return
-    const s = crearSeriesBandas(chart)
+    const s = crearSeriesBandas(chart, estBandasRef.current)
     seriesBandas.current = s
     volcarBandas(s, bandasRef.current)
     return () => {
@@ -289,7 +305,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   useEffect(() => {
     const chart = grafico.current
     if (!chart || !mostrarBollinger) return
-    const s = crearSeriesBollinger(chart)
+    const s = crearSeriesBollinger(chart, estBollRef.current)
     seriesBollinger.current = s
     volcarBollinger(s, bollingerRef.current)
     return () => {
@@ -313,6 +329,23 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   useEffect(() => {
     if (seriesBollinger.current) volcarBollinger(seriesBollinger.current, bollinger)
   }, [bollinger])
+
+  // Aplicar el estilo del usuario en vivo (doble click → cambia color/línea).
+  // Se depende de los campos, no del objeto (estiloDe devuelve uno nuevo por render).
+  useEffect(() => {
+    if (serieEma.current) aplicarEstiloEma(serieEma.current, estEma)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estEma.color, estEma.ancho, estEma.tipoLinea])
+
+  useEffect(() => {
+    if (seriesBandas.current) aplicarEstiloBandas(seriesBandas.current, estBandas)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estBandas.color, estBandas.ancho, estBandas.tipoLinea])
+
+  useEffect(() => {
+    if (seriesBollinger.current) aplicarEstiloBollinger(seriesBollinger.current, estBoll)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estBoll.color, estBoll.ancho, estBoll.tipoLinea])
 
   // Niveles S/R como líneas de precio sobre la serie principal. Se redibujan al
   // cambiar los datos o el tipo de gráfico (que recrea la serie). Sin cleanup:

@@ -11,6 +11,7 @@ import type {
 } from 'lightweight-charts'
 import type { Moneda, SerieIndicador, Temporalidad } from '../../api/tipos'
 import { usarIndicador } from '../../hooks/usarIndicador'
+import { usarEstilos, aLineStyle, type Estilo } from '../../contextos/EstilosContext'
 import { COLORES, OPCIONES_GRAFICO } from './configGrafico'
 import type { ConfigOscilador } from './configOsciladores'
 import type { SincronizadorTiempo } from './sincronizadorTiempo'
@@ -76,6 +77,22 @@ function PanelOscilador({
   alMoverRef.current = alMoverCrosshair
   const [altura, setAltura] = useState(ALTURA_INICIAL)
 
+  // Estilo efectivo (recomendado + override del usuario) de cada serie del oscilador
+  const { estiloDe } = usarEstilos()
+  const estilos: Record<string, Estilo> = {}
+  for (const def of config.series) {
+    estilos[def.clave] = estiloDe(`osc.${config.nombre}.${def.clave}`, {
+      color: def.color,
+      ancho: 1,
+      tipoLinea: 'solid',
+    })
+  }
+  const estilosRef = useRef(estilos)
+  estilosRef.current = estilos
+  const firmaEstilos = config.series
+    .map((d) => `${estilos[d.clave].color}|${estilos[d.clave].ancho}|${estilos[d.clave].tipoLinea}`)
+    .join(',')
+
   // Valor de cada serie bajo el crosshair (ts compartido); sin crosshair, el último
   const indicePorTs = useMemo(() => {
     const mapa = new Map<number, number>()
@@ -117,12 +134,14 @@ function PanelOscilador({
       : undefined
 
     config.series.forEach((def, indice) => {
+      const est = estilosRef.current[def.clave]
       const serie =
         def.tipo === 'histograma'
-          ? chart.addHistogramSeries({ color: def.color, priceLineVisible: false })
+          ? chart.addHistogramSeries({ color: est.color, priceLineVisible: false })
           : chart.addLineSeries({
-              color: def.color,
-              lineWidth: 1,
+              color: est.color,
+              lineWidth: (est.ancho ?? 1) as 1 | 2 | 3 | 4,
+              lineStyle: aLineStyle(est.tipoLinea),
               priceLineVisible: false,
               lastValueVisible: false,
               autoscaleInfoProvider: proveedor,
@@ -174,13 +193,32 @@ function PanelOscilador({
     }
   }, [datos, config, sincronizador])
 
+  // Aplicar el estilo del usuario en vivo (doble click en la leyenda del oscilador)
+  useEffect(() => {
+    for (const def of config.series) {
+      const serie = series.current.get(def.clave)
+      if (!serie) continue
+      const est = estilosRef.current[def.clave]
+      serie.applyOptions(
+        def.tipo === 'histograma'
+          ? { color: est.color }
+          : { color: est.color, lineWidth: (est.ancho ?? 1) as 1 | 2 | 3 | 4, lineStyle: aLineStyle(est.tipoLinea) },
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaEstilos])
+
   return (
     <div className="panel-oscilador" style={{ height: altura }}>
       <div className="oscilador-handle" onMouseDown={alArrastrar} />
       <span className="oscilador-leyenda">
         <span className="oscilador-titulo">{config.titulo}</span>
         {config.series.map((def) => (
-          <span key={def.clave} className="oscilador-valor" style={{ color: def.color }}>
+          <span
+            key={def.clave}
+            className="oscilador-valor"
+            style={{ color: estilos[def.clave].color }}
+          >
             {def.etiqueta} <b>{formatearValor(datos?.series[def.clave]?.[indice] ?? null)}</b>
           </span>
         ))}

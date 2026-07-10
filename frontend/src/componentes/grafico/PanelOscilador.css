@@ -40,6 +40,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.oscilador-configurable {
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
 .oscilador-valor b {
   font-weight: 600;
 }

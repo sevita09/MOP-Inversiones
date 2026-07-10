@@ -1,5 +1,6 @@
 import type { Vela } from '../../api/tipos'
-import { COLOR_EMA_CENTRAL, COLORES_BANDAS } from './configGrafico'
+import { usarEstilos, conOpacidad } from '../../contextos/EstilosContext'
+import { REC_EMA, REC_BANDAS, OPACIDAD_SIGMA } from './config/estilosIndicadores'
 
 export interface ValoresBandas {
   inf1: number | null
@@ -47,6 +48,11 @@ function claseZ(z: number): string {
 }
 
 function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger }: Props) {
+  // Colores efectivos (para que la leyenda coincida con las líneas del gráfico)
+  const { estiloDe } = usarEstilos()
+  const colorEma = estiloDe('ema', REC_EMA).color
+  const colorBandas = estiloDe('bandas', REC_BANDAS).color ?? '#388bfd'
+
   // Variación contra el cierre anterior (estilo TradingView); si no hay, contra la apertura
   const base = velaPrevia ? velaPrevia.cierre : vela.apertura
   const cambio = vela.cierre - base
@@ -75,7 +81,7 @@ function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger }: Props) {
       <span className="leyenda-campo">Vol <b>{formatearVolumen(vela.volumen)}</b></span>
       {ema !== null && (
         <span className="leyenda-campo">
-          EMA <b style={{ color: COLOR_EMA_CENTRAL }}>{formatearPrecio(ema)}</b>
+          EMA <b style={{ color: colorEma }}>{formatearPrecio(ema)}</b>
         </span>
       )}
       {z !== null && (
@@ -84,7 +90,11 @@ function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger }: Props) {
         </span>
       )}
       {sigmas.map(({ nivel, inf, sup }) => (
-        <span className="leyenda-campo" key={nivel} style={{ color: COLORES_BANDAS[nivel] }}>
+        <span
+          className="leyenda-campo"
+          key={nivel}
+          style={{ color: conOpacidad(colorBandas, OPACIDAD_SIGMA[nivel]) }}
+        >
           {nivel}σ <b>{formatearPrecio(inf)}·{formatearPrecio(sup)}</b>
         </span>
       ))}
