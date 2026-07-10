@@ -41,17 +41,41 @@
 .menu-indicadores-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 4px 8px 4px 12px;
   font-size: 12px;
   color: #e6edf3;
-  cursor: pointer;
 }
 
 .menu-indicadores-item:hover {
   background: #1c2128;
 }
 
-.menu-indicadores-item input[type="checkbox"] {
+.menu-indicadores-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.menu-indicadores-check input[type="checkbox"] {
   accent-color: #388bfd;
+}
+
+.menu-indicadores-tuerca {
+  border: none;
+  background: none;
+  color: #6e7681;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.menu-indicadores-tuerca:hover {
+  color: #e6edf3;
+  background: #30363d;
 }

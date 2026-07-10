@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { OSCILADORES, ORDEN_OSCILADORES } from './configOsciladores'
 import type { NombreOscilador } from './configOsciladores'
+import { aperturaOscilador, type AperturaConfig } from './config/estilosIndicadores'
 import './MenuIndicadores.css'
 
 interface Props {
   activos: Set<NombreOscilador>
   alAlternar: (nombre: NombreOscilador, activo: boolean) => void
+  alConfigurar: (apertura: AperturaConfig) => void
 }
 
-function MenuIndicadores({ activos, alAlternar }: Props) {
+function MenuIndicadores({ activos, alAlternar, alConfigurar }: Props) {
   const [abierto, setAbierto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -33,18 +35,27 @@ function MenuIndicadores({ activos, alAlternar }: Props) {
       {abierto && (
         <div className="menu-indicadores-lista">
           {ORDEN_OSCILADORES.map((nombre) => (
-            <label
-              key={nombre}
-              className="menu-indicadores-item"
-              title={OSCILADORES[nombre].descripcion}
-            >
-              <input
-                type="checkbox"
-                checked={activos.has(nombre)}
-                onChange={(e) => alAlternar(nombre, e.target.checked)}
-              />
-              {OSCILADORES[nombre].titulo}
-            </label>
+            <div key={nombre} className="menu-indicadores-item">
+              <label className="menu-indicadores-check" title={OSCILADORES[nombre].descripcion}>
+                <input
+                  type="checkbox"
+                  checked={activos.has(nombre)}
+                  onChange={(e) => alAlternar(nombre, e.target.checked)}
+                />
+                {OSCILADORES[nombre].titulo}
+              </label>
+              <button
+                type="button"
+                className="menu-indicadores-tuerca"
+                title={`Configurar ${OSCILADORES[nombre].titulo}`}
+                onClick={() => {
+                  setAbierto(false)
+                  alConfigurar(aperturaOscilador(nombre))
+                }}
+              >
+                ⚙
+              </button>
+            </div>
           ))}
         </div>
       )}
