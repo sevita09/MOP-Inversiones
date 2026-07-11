@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { obtenerIndicadores } from '../api/cliente'
 import { usarRefrescoDatos } from './usarEstadoSync'
+import { usarEstilos } from '../contextos/EstilosContext'
+import { paramsQueryDe } from '../componentes/grafico/config/paramsIndicadores'
 import type { Moneda, SerieIndicador, Temporalidad } from '../api/tipos'
 
 export interface DatosIndicador {
@@ -19,6 +21,11 @@ export function usarIndicador(
 ): DatosIndicador | null {
   const [datos, setDatos] = useState<DatosIndicador | null>(null)
   const refresco = usarRefrescoDatos()
+  const { paramsDe } = usarEstilos()
+  const params = useMemo(
+    () => paramsQueryDe(nombre, paramsDe(nombre), temporalidad),
+    [paramsDe, nombre, temporalidad],
+  )
 
   useEffect(() => {
     if (!activo) {
@@ -26,7 +33,7 @@ export function usarIndicador(
       return
     }
     let vigente = true
-    obtenerIndicadores(ticker, temporalidad, moneda, nombre)
+    obtenerIndicadores(ticker, temporalidad, moneda, nombre, params)
       .then((respuesta) => {
         if (vigente) setDatos({ ts: respuesta.ts, series: respuesta.indicadores[nombre] })
       })
@@ -37,7 +44,7 @@ export function usarIndicador(
     return () => {
       vigente = false
     }
-  }, [ticker, temporalidad, moneda, nombre, activo, refresco])
+  }, [ticker, temporalidad, moneda, nombre, activo, refresco, params])
 
   return datos
 }

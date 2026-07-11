@@ -92,18 +92,20 @@ export function volcarBandas(
   }
 }
 
-// Posición del precio respecto a la EMA central, en desvíos σ (z = banda ±k).
+// Posición del precio respecto a la EMA central, en desvíos σ. La banda 1 está a
+// `desvio1`·σ de la media (por default 1, configurable), así que σ = (sup1−media)/desvio1.
 // velas y bandas vienen del mismo query → alinean por índice; se verifica el ts.
 export function zEnIndice(
   datos: DatosBandas | null,
   vela: Vela | null,
   indice: number,
+  desvio1 = 1,
 ): number | null {
   if (!datos || !vela || datos.ts[indice] !== vela.ts) return null
   const media = datos.series.media[indice]
   const sup1 = datos.series.sup1[indice]
   if (media == null || sup1 == null) return null
-  const sigma = sup1 - media
+  const sigma = (sup1 - media) / desvio1
   if (sigma === 0) return null
   return (vela.cierre - media) / sigma
 }
