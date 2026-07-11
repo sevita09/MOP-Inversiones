@@ -6,13 +6,13 @@ import type {
   SeriesType,
   Time,
 } from 'lightweight-charts'
-import { LineStyle } from 'lightweight-charts'
 import type { Dibujo } from '../../../api/cliente'
+import { aLineStyle } from '../../../contextos/EstilosContext'
 import { PrimitivaTendencia } from './primitivaTendencia'
 import { PrimitivaFibonacci, NIVELES_FIBONACCI } from './primitivaFibonacci'
 import { PrimitivaMedicion } from './primitivaMedicion'
+import { RECOMENDADO_DIBUJO, estiloDeDibujo, type EstiloDibujo } from './estiloDibujo'
 
-const COLOR_DIBUJO = '#e3b341'
 const COLOR_SELECCION = '#ffffff'
 const TOLERANCIA_CLICK = 6 // px de margen para detectar el dibujo tocado
 
@@ -26,6 +26,7 @@ interface Punto {
 interface PrimitivaDibujo extends ISeriesPrimitive {
   actualizar(p1: Punto, p2: Punto): void
   actualizarPixel(x: number, y: number): void
+  actualizarEstilo(estilo: EstiloDibujo): void
   seleccionar(sel: boolean): void
 }
 
@@ -55,7 +56,7 @@ interface PrimitivaActiva {
 
 export interface RenderizadorDibujos {
   sincronizar(dibujos: Dibujo[]): void
-  previsualizar(tipo: string, p1: Punto, x: number, y: number): void
+  previsualizar(tipo: string, p1: Punto, x: number, y: number, estilo?: EstiloDibujo): void
   limpiarPrevisualizacion(): void
   dibujoEn(x: number, y: number): number | null
   seleccionar(id: number | null): void
@@ -80,10 +81,11 @@ export function crearRenderizadorDibujos(
     p1: Punto,
     p2: Punto,
     punteada: boolean,
+    estilo: EstiloDibujo,
   ): PrimitivaDibujo | null {
-    if (tipo === 'tendencia') return new PrimitivaTendencia(chart, serie, p1, p2, punteada)
-    if (tipo === 'fibonacci') return new PrimitivaFibonacci(chart, serie, p1, p2, punteada)
-    if (tipo === 'medicion') return new PrimitivaMedicion(chart, serie, p1, p2, punteada)
+    if (tipo === 'tendencia') return new PrimitivaTendencia(chart, serie, p1, p2, punteada, estilo)
+    if (tipo === 'fibonacci') return new PrimitivaFibonacci(chart, serie, p1, p2, punteada, estilo)
+    if (tipo === 'medicion') return new PrimitivaMedicion(chart, serie, p1, p2, punteada, estilo)
     return null
   }
 
@@ -119,17 +121,20 @@ export function crearRenderizadorDibujos(
 
   function sincronizarHorizontal(dibujo: Dibujo) {
     const precio = dibujo.datos.precio as number
-    const color = (dibujo.datos.color as string) ?? COLOR_DIBUJO
+    const estilo = estiloDeDibujo(dibujo.datos)
+    const opciones = {
+      price: precio,
+      color: estilo.color ?? RECOMENDADO_DIBUJO.color!,
+      lineWidth: (estilo.ancho ?? 1) as 1 | 2 | 3 | 4,
+      lineStyle: aLineStyle(estilo.tipoLinea),
+    }
     const existente = lineas.get(dibujo.id)
     if (existente) {
-      existente.priceLine.applyOptions({ price: precio, color })
+      existente.priceLine.applyOptions(opciones)
       return
     }
     const priceLine = serie.createPriceLine({
-      price: precio,
-      color,
-      lineWidth: 1,
-      lineStyle: LineStyle.Solid,
+      ...opciones,
       axisLabelVisible: true,
       title: '',
     })
@@ -140,21 +145,23 @@ export function crearRenderizadorDibujos(
     const p1 = dibujo.datos.p1 as Punto
     const p2 = dibujo.datos.p2 as Punto
     if (!p1 || !p2) return
+    const estilo = estiloDeDibujo(dibujo.datos)
     const existente = primitivas.get(dibujo.id)
     if (existente) {
+      existente.primitiva.actualizarEstilo(estilo)
       existente.primitiva.actualizar(p1, p2)
       return
     }
-    const primitiva = crearPrimitiva(dibujo.tipo, p1, p2, false)
+    const primitiva = crearPrimitiva(dibujo.tipo, p1, p2, false, estilo)
     if (!primitiva) return
     serie.attachPrimitive(primitiva)
     primitivas.set(dibujo.id, { dibujoId: dibujo.id, primitiva })
   }
 
-  function previsualizar(tipo: string, p1: Punto, x: number, y: number) {
+  function previsualizar(tipo: string, p1: Punto, x: number, y: number, estilo: EstiloDibujo = {}) {
     if (!previa || previaTipo !== tipo) {
       limpiarPrevisualizacion()
-      const primitiva = crearPrimitiva(tipo, p1, p1, true)
+      const primitiva = crearPrimitiva(tipo, p1, p1, true, estilo)
       if (!primitiva) return
       previa = primitiva
       previaTipo = tipo
@@ -232,10 +239,11 @@ export function crearRenderizadorDibujos(
     const linea = lineas.get(id)
     if (linea) {
       const d = dibujosActuales.find((x) => x.id === id)
-      const colorBase = (d?.datos.color as string) ?? COLOR_DIBUJO
+      const estilo = d ? estiloDeDibujo(d.datos) : RECOMENDADO_DIBUJO
+      const ancho = (estilo.ancho ?? 1) as 1 | 2 | 3 | 4
       linea.priceLine.applyOptions({
-        color: sel ? COLOR_SELECCION : colorBase,
-        lineWidth: sel ? 2 : 1,
+        color: sel ? COLOR_SELECCION : estilo.color ?? RECOMENDADO_DIBUJO.color!,
+        lineWidth: (sel ? Math.min(ancho + 1, 4) : ancho) as 1 | 2 | 3 | 4,
       })
       return
     }
