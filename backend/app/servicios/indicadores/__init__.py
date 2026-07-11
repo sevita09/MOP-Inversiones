@@ -1,5 +1,6 @@
 from app.servicios.indicadores.registro import (
     calcular,
+    defaults_de,
     disponibles,
     registrar,
     velas_a_df,
@@ -8,4 +9,4 @@ from app.servicios.indicadores.registro import (
 # Importar los módulos registra sus indicadores en el registro al cargar el paquete
 from app.servicios.indicadores import momento, tendencia, volatilidad  # noqa: E402,F401
 
-__all__ = ["calcular", "disponibles", "registrar", "velas_a_df"]
+__all__ = ["calcular", "defaults_de", "disponibles", "registrar", "velas_a_df"]
