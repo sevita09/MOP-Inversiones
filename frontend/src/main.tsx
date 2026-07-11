@@ -8,6 +8,7 @@ import { ProveedorTicker } from './contextos/TickerContext.tsx'
 import { ProveedorFavoritos } from './contextos/FavoritosContext.tsx'
 import { ProveedorCategorias } from './contextos/CategoriasContext.tsx'
 import { ProveedorEstilos } from './contextos/EstilosContext.tsx'
+import { ProveedorEmasExtra } from './contextos/EmasExtraContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -17,7 +18,9 @@ createRoot(document.getElementById('root')!).render(
           <ProveedorFavoritos>
             <ProveedorCategorias>
               <ProveedorEstilos>
-                <App />
+                <ProveedorEmasExtra>
+                  <App />
+                </ProveedorEmasExtra>
               </ProveedorEstilos>
             </ProveedorCategorias>
           </ProveedorFavoritos>
