@@ -1,14 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { IChartApi, ISeriesApi, MouseEventParams, SeriesType } from 'lightweight-charts'
 import { usarDibujos } from '../../../hooks/usarDibujos'
+import { usarEstilos, type Estilo } from '../../../contextos/EstilosContext'
 import { crearRenderizadorDibujos, type RenderizadorDibujos } from './renderizadorDibujos'
 import BarraHerramientas from './BarraHerramientas'
+import DialogoEstiloDibujo from './DialogoEstiloDibujo'
+import {
+  RECOMENDADO_DIBUJO,
+  estiloDeDibujo,
+  camposDibujo,
+  idHerramienta,
+} from './estiloDibujo'
 import type { TipoHerramienta, PuntoDibujo } from './tipos'
 
 interface Props {
   ticker: string
   obtenerChart: () => IChartApi | null
   obtenerSerie: () => ISeriesApi<SeriesType> | null
+}
+
+const TITULO_HERRAMIENTA: Record<string, string> = {
+  horizontal: 'Línea horizontal',
+  tendencia: 'Tendencia',
+  fibonacci: 'Fibonacci',
+  medicion: 'Medición',
 }
 
 function extraerPunto(
@@ -23,10 +38,14 @@ function extraerPunto(
 
 function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
   const { dibujos, agregar, actualizar, eliminar } = usarDibujos(ticker)
+  const { estiloDe, guardar, volver, overrideDe } = usarEstilos()
   const [herramienta, setHerramienta] = useState<TipoHerramienta>(null)
+  const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null)
+  const [configId, setConfigId] = useState<number | null>(null)
   const renderizador = useRef<RenderizadorDibujos | null>(null)
   const herramientaRef = useRef(herramienta)
   const agregarRef = useRef(agregar)
+  const estiloDeRef = useRef(estiloDe)
   const primerPunto = useRef<PuntoDibujo | null>(null)
   const seleccionado = useRef<number | null>(null)
 
@@ -34,7 +53,30 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
   useEffect(() => {
     herramientaRef.current = herramienta
     agregarRef.current = agregar
+    estiloDeRef.current = estiloDe
   })
+
+  // Seleccionar un dibujo: ref (para los handlers) + estado (para mostrar la tuerca)
+  const seleccionar = useCallback((id: number | null) => {
+    seleccionado.current = id
+    setIdSeleccionado(id)
+    renderizador.current?.seleccionar(id)
+  }, [])
+
+  // Estilo con el que nace un dibujo nuevo: el default de esa herramienta
+  const estiloNuevo = useCallback(
+    (tipo: string): Estilo => estiloDeRef.current(idHerramienta(tipo), RECOMENDADO_DIBUJO),
+    [],
+  )
+
+  // Activar una herramienta suelta la selección (en el handler, no en un effect)
+  const activarHerramienta = useCallback(
+    (tipo: TipoHerramienta) => {
+      setHerramienta(tipo)
+      if (tipo) seleccionar(null)
+    },
+    [seleccionar],
+  )
 
   useEffect(() => {
     const chart = obtenerChart()
@@ -50,19 +92,16 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
 
   useEffect(() => {
     renderizador.current?.sincronizar(dibujos)
-    if (seleccionado.current != null && !dibujos.some((d) => d.id === seleccionado.current)) {
-      seleccionado.current = null
-    }
   }, [dibujos])
 
-  // Al activar una herramienta, soltar la selección y resetear el primer punto
+  // Si el dibujo seleccionado se borró (p.ej. "borrar todo"), la selección queda
+  // obsoleta: se deriva su validez para la tuerca en vez de setear estado en un effect.
+  const seleccionValida = idSeleccionado != null && dibujos.some((d) => d.id === idSeleccionado)
+
+  // Al cambiar de herramienta, resetear el primer punto y la previsualización
   useEffect(() => {
     primerPunto.current = null
     renderizador.current?.limpiarPrevisualizacion()
-    if (herramienta) {
-      seleccionado.current = null
-      renderizador.current?.seleccionar(null)
-    }
   }, [herramienta])
 
   // Borrar el dibujo seleccionado con Supr / Backspace
@@ -75,11 +114,11 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       e.preventDefault()
       eliminar(id)
-      seleccionado.current = null
+      seleccionar(null)
     }
     window.addEventListener('keydown', alTecla)
     return () => window.removeEventListener('keydown', alTecla)
-  }, [eliminar])
+  }, [eliminar, seleccionar])
 
   useEffect(() => {
     const chart = obtenerChart()
@@ -92,8 +131,7 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       if (!tipo) {
         if (!params.point) return
         const id = renderizador.current?.dibujoEn(params.point.x, params.point.y) ?? null
-        seleccionado.current = id
-        renderizador.current?.seleccionar(id)
+        seleccionar(id)
         return
       }
 
@@ -103,7 +141,7 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       if (tipo === 'horizontal') {
         const punto = extraerPunto(params, serie)
         if (!punto) return
-        agregarRef.current('horizontal', { precio: punto.precio })
+        agregarRef.current('horizontal', { precio: punto.precio, estilo: estiloNuevo('horizontal') })
         setHerramienta(null)
         return
       }
@@ -120,28 +158,37 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       const p1 = primerPunto.current
       primerPunto.current = null
       renderizador.current?.limpiarPrevisualizacion()
-      agregarRef.current(tipo, { p1, p2: punto })
+      agregarRef.current(tipo, { p1, p2: punto, estilo: estiloNuevo(tipo) })
       setHerramienta(null)
     }
 
-    // Mientras hay un primer punto pendiente, la línea sigue al mouse.
-    // Se usa la posición en píxeles (params.point), continua y fluida, en vez
-    // de params.time, que se imanta al centro de cada vela.
+    // Mientras hay un primer punto pendiente, la línea sigue al mouse (en píxeles).
     const alMover = (params: MouseEventParams) => {
       const tipo = herramientaRef.current
       if (!tipo || tipo === 'horizontal') return
       const p1 = primerPunto.current
       if (!p1 || !params.point) return
-      renderizador.current?.previsualizar(tipo, p1, params.point.x, params.point.y)
+      renderizador.current?.previsualizar(tipo, p1, params.point.x, params.point.y, estiloNuevo(tipo))
+    }
+
+    // Doble click sobre un dibujo: abre su configuración de estilo
+    const alDobleClick = (params: MouseEventParams) => {
+      if (!params.point) return
+      const id = renderizador.current?.dibujoEn(params.point.x, params.point.y) ?? null
+      if (id == null) return
+      seleccionar(id)
+      setConfigId(id)
     }
 
     chart.subscribeClick(alClick)
     chart.subscribeCrosshairMove(alMover)
+    chart.subscribeDblClick(alDobleClick)
     return () => {
       chart.unsubscribeClick(alClick)
       chart.unsubscribeCrosshairMove(alMover)
+      chart.unsubscribeDblClick(alDobleClick)
     }
-  }, [obtenerChart, obtenerSerie])
+  }, [obtenerChart, obtenerSerie, seleccionar, estiloNuevo])
 
   const borrarTodo = useCallback(async () => {
     for (const d of dibujos) {
@@ -149,12 +196,49 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
     }
   }, [dibujos, eliminar])
 
+  const dibujoConfig = configId != null ? dibujos.find((d) => d.id === configId) ?? null : null
+
   return (
-    <BarraHerramientas
-      activa={herramienta}
-      alSeleccionar={setHerramienta}
-      alBorrarTodo={borrarTodo}
-    />
+    <>
+      <BarraHerramientas
+        activa={herramienta}
+        alSeleccionar={activarHerramienta}
+        alBorrarTodo={borrarTodo}
+        haySeleccion={seleccionValida}
+        alConfigurar={() => {
+          if (idSeleccionado != null) setConfigId(idSeleccionado)
+        }}
+      />
+      {dibujoConfig && (
+        <DialogoEstiloDibujo
+          titulo={`Estilo · ${TITULO_HERRAMIENTA[dibujoConfig.tipo] ?? dibujoConfig.tipo}`}
+          campos={camposDibujo(dibujoConfig.tipo)}
+          estilo={estiloDeDibujo(dibujoConfig.datos)}
+          recomendado={RECOMENDADO_DIBUJO}
+          hayOverride={
+            Object.keys((dibujoConfig.datos.estilo as Estilo) ?? {}).length > 0 ||
+            dibujoConfig.datos.color != null ||
+            Object.keys(overrideDe(idHerramienta(dibujoConfig.tipo))).length > 0
+          }
+          alCambiar={(cambios) => {
+            const estiloPrevio = (dibujoConfig.datos.estilo as Estilo) ?? {}
+            actualizar(dibujoConfig.id, {
+              ...dibujoConfig.datos,
+              estilo: { ...estiloPrevio, ...cambios },
+            })
+            guardar(idHerramienta(dibujoConfig.tipo), cambios)
+          }}
+          alVolver={() => {
+            const resto = { ...dibujoConfig.datos }
+            delete resto.color
+            delete resto.estilo
+            actualizar(dibujoConfig.id, resto)
+            volver(idHerramienta(dibujoConfig.tipo))
+          }}
+          alCerrar={() => setConfigId(null)}
+        />
+      )}
+    </>
   )
 }
 

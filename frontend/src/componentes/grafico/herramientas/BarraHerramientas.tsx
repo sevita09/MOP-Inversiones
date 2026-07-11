@@ -26,9 +26,11 @@ interface Props {
   activa: TipoHerramienta
   alSeleccionar: (tipo: TipoHerramienta) => void
   alBorrarTodo: () => void
+  haySeleccion: boolean
+  alConfigurar: () => void
 }
 
-function BarraHerramientas({ activa, alSeleccionar, alBorrarTodo }: Props) {
+function BarraHerramientas({ activa, alSeleccionar, alBorrarTodo, haySeleccion, alConfigurar }: Props) {
   return (
     <div className="barra-herramientas">
       {HERRAMIENTAS.map((h) => {
@@ -46,6 +48,16 @@ function BarraHerramientas({ activa, alSeleccionar, alBorrarTodo }: Props) {
           </button>
         )
       })}
+      {haySeleccion && (
+        <button
+          type="button"
+          title="Estilo del dibujo seleccionado"
+          className="boton-herramienta"
+          onClick={alConfigurar}
+        >
+          ⚙
+        </button>
+      )}
       <div className="separador-herramientas" />
       <button
         type="button"
