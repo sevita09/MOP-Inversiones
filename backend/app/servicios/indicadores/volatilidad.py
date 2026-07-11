@@ -9,30 +9,45 @@ from app.servicios.indicadores.registro import registrar
 DESVIOS_BANDA = (1, 2, 3)
 
 
+def media_movil(cierre: pd.Series, periodo: int, tipo: str = "exp") -> pd.Series:
+    """Media móvil del cierre: exponencial (EMA, default) o simple (SMA)."""
+    if tipo == "simple":
+        return cierre.rolling(window=periodo).mean()
+    return cierre.ewm(span=periodo, adjust=False).mean()
+
+
 def bandas(
-    df: pd.DataFrame, periodo: int = 200, std_periodo: int | None = None
+    df: pd.DataFrame,
+    periodo: int = 200,
+    std_periodo: int | None = None,
+    tipo: str = "exp",
+    desvio1: float = 1.0,
+    desvio2: float = 2.0,
+    desvio3: float = 3.0,
 ) -> dict[str, pd.Series]:
-    """EMA central y bandas ±1σ/2σ/3σ — el indicador principal de la metodología.
+    """Media central (EMA o SMA) y tres bandas ±kσ — el indicador principal.
 
-    La σ es la distancia RMS del precio a la EMA: raíz del promedio (rolling) de
-    (precio − EMA)², medida ALREDEDOR DE LA EMA (cero), no alrededor de la media
-    de la distancia. Es la dispersión correcta para bandas centradas en la EMA:
-    así el precio cae dentro de ±2σ ~95% del tiempo. Usar rolling.std() sería un
-    error acá — resta el offset de la distancia (la EMA va atrasada) y deja la σ
-    demasiado chica, con el precio casi siempre fuera de las bandas.
+    La σ es la distancia RMS del precio a la media: raíz del promedio (rolling) de
+    (precio − media)², medida ALREDEDOR DE LA MEDIA (cero), no alrededor del
+    promedio de la distancia. Es la dispersión correcta para bandas centradas en
+    la media: así el precio cae dentro de ±2σ ~95% del tiempo. Usar rolling.std()
+    sería un error acá — resta el offset de la distancia (la media va atrasada) y
+    deja la σ demasiado chica, con el precio casi siempre fuera de las bandas.
 
-    El período de la EMA depende de la temporalidad (D=200, S=50, M=12, H=200);
-    el router lo inyecta desde EMA_POR_TEMPORALIDAD.
+    `tipo` elige exponencial (default) o simple. `desvio1/2/3` son los múltiplos de
+    σ de cada banda (por default 1/2/3, configurables por el usuario). El período
+    de la EMA depende de la temporalidad (D=200, S=50, M=12, H=200); el router lo
+    inyecta desde EMA_POR_TEMPORALIDAD salvo que el usuario lo overridee.
     """
     if std_periodo is None:
         std_periodo = periodo
-    media = df["cierre"].ewm(span=periodo, adjust=False).mean()
+    media = media_movil(df["cierre"], periodo, tipo)
     distancia = df["cierre"] - media
     sigma = (distancia**2).rolling(window=std_periodo).mean() ** 0.5
     salida = {"media": media}
-    for k in DESVIOS_BANDA:
-        salida[f"sup{k}"] = media + k * sigma
-        salida[f"inf{k}"] = media - k * sigma
+    for nivel, k in zip(DESVIOS_BANDA, (desvio1, desvio2, desvio3)):
+        salida[f"sup{nivel}"] = media + k * sigma
+        salida[f"inf{nivel}"] = media - k * sigma
     return salida
 
 
@@ -118,7 +133,11 @@ def percentil_distancia(
     }
 
 
-registrar("bandas", bandas, {"periodo": 200})
+registrar(
+    "bandas",
+    bandas,
+    {"periodo": 200, "tipo": "exp", "desvio1": 1.0, "desvio2": 2.0, "desvio3": 3.0},
+)
 registrar("bollinger", bollinger, {"periodo": 20, "desvios": 2.0})
 registrar("atr", atr, {"periodo": 14})
 registrar("porcentaje_b", porcentaje_b, {"periodo": 20, "desvios": 2.0})

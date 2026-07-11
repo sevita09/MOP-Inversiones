@@ -128,6 +128,34 @@ def test_bandas_warmup_sin_sigma_es_none_pero_media_existe():
     assert b["inf3"] == [None, None, None]
 
 
+def test_bandas_tipo_simple_es_media_movil_simple():
+    cierres = [10, 12, 11, 13, 15, 14, 16]
+    b = calcular("bandas", velas(cierres), periodo=3, tipo="simple")
+    # SMA de período 3: los dos primeros None (ventana incompleta), luego el promedio
+    assert b["media"][0] is None and b["media"][1] is None
+    assert b["media"][2] == round((10 + 12 + 11) / 3, 6)
+    assert b["media"][3] == round((12 + 11 + 13) / 3, 6)
+
+
+def test_bandas_tipo_exp_es_el_default():
+    cierres = [10, 12, 11, 13, 15, 14, 16]
+    assert calcular("bandas", velas(cierres), periodo=3) == calcular(
+        "bandas", velas(cierres), periodo=3, tipo="exp"
+    )
+
+
+def test_bandas_multiplicadores_sigma_configurables():
+    cierres = [10, 12, 11, 13, 15, 14, 16, 18, 17, 20]
+    b = calcular("bandas", velas(cierres), periodo=3, desvio1=0.5, desvio2=1.5, desvio3=2.5)
+    for i, media in enumerate(b["media"]):
+        if b["sup1"][i] is None:
+            continue
+        sigma = b["sup1"][i] / 0.5 - media / 0.5  # sup1 = media + 0.5σ → σ = (sup1−media)/0.5
+        for k, mult in ((1, 0.5), (2, 1.5), (3, 2.5)):
+            assert abs((b[f"sup{k}"][i] - media) - mult * sigma) < 1e-5
+            assert abs((media - b[f"inf{k}"][i]) - mult * sigma) < 1e-5
+
+
 # --- RSI ---
 
 
