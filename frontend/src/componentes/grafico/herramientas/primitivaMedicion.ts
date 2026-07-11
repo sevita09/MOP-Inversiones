@@ -9,6 +9,7 @@ import type {
   Time,
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
+import { dashDe, type EstiloDibujo } from './estiloDibujo'
 
 const VERDE = '#3fb950'
 const ROJO = '#f85149'
@@ -34,10 +35,16 @@ class RendererMedicion implements ISeriesPrimitivePaneRenderer {
   private _texto = ''
   private _sube = true
   private _punteada: boolean
+  private _estilo: EstiloDibujo
   private _seleccionado = false
 
-  constructor(punteada: boolean) {
+  constructor(estilo: EstiloDibujo, punteada: boolean) {
+    this._estilo = estilo
     this._punteada = punteada
+  }
+
+  setEstilo(estilo: EstiloDibujo) {
+    this._estilo = estilo
   }
 
   actualizar(x1: number, y1: number, x2: number, y2: number, texto: string, sube: boolean) {
@@ -64,9 +71,10 @@ class RendererMedicion implements ISeriesPrimitivePaneRenderer {
       ctx.fillStyle = this._sube ? RELLENO_VERDE : RELLENO_ROJO
       ctx.fillRect(izq, arr, der - izq, aba - arr)
 
+      const anchoLinea = this._estilo.ancho ?? 1
       ctx.strokeStyle = color
-      ctx.lineWidth = this._seleccionado ? 2 : 1
-      ctx.setLineDash(this._punteada ? [4, 4] : [])
+      ctx.lineWidth = this._seleccionado ? anchoLinea + 1 : anchoLinea
+      ctx.setLineDash(this._punteada ? [4, 4] : dashDe(this._estilo.tipoLinea))
       ctx.strokeRect(izq, arr, der - izq, aba - arr)
       ctx.setLineDash([])
 
@@ -99,12 +107,17 @@ class VistaMedicion implements ISeriesPrimitivePaneView {
     p1: Punto,
     p2: Punto,
     punteada: boolean,
+    estilo: EstiloDibujo,
   ) {
     this._chart = chart
     this._serie = serie
     this.p1 = p1
     this.p2 = p2
-    this._renderer = new RendererMedicion(punteada)
+    this._renderer = new RendererMedicion(estilo, punteada)
+  }
+
+  setEstilo(estilo: EstiloDibujo) {
+    this._renderer.setEstilo(estilo)
   }
 
   update() {
@@ -161,8 +174,14 @@ export class PrimitivaMedicion implements ISeriesPrimitive {
     p1: Punto,
     p2: Punto,
     punteada = false,
+    estilo: EstiloDibujo = {},
   ) {
-    this._vista = new VistaMedicion(chart, serie, p1, p2, punteada)
+    this._vista = new VistaMedicion(chart, serie, p1, p2, punteada, estilo)
+  }
+
+  actualizarEstilo(estilo: EstiloDibujo) {
+    this._vista.setEstilo(estilo)
+    this._requestUpdate?.()
   }
 
   attached(param: SeriesAttachedParameter<Time>) {

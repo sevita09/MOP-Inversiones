@@ -9,8 +9,8 @@ import type {
   Time,
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
+import { RECOMENDADO_DIBUJO, dashDe, type EstiloDibujo } from './estiloDibujo'
 
-const COLOR = '#e3b341'
 const COLOR_SELECCION = '#ffffff'
 
 interface Punto {
@@ -29,9 +29,11 @@ class RendererTendencia implements ISeriesPrimitivePaneRenderer {
   private _p2x = 0
   private _p2y = 0
   private _punteada: boolean
+  private _estilo: EstiloDibujo
   private _seleccionado = false
 
-  constructor(punteada: boolean) {
+  constructor(estilo: EstiloDibujo, punteada: boolean) {
+    this._estilo = estilo
     this._punteada = punteada
   }
 
@@ -42,16 +44,22 @@ class RendererTendencia implements ISeriesPrimitivePaneRenderer {
     this._p2y = p2y
   }
 
+  setEstilo(estilo: EstiloDibujo) {
+    this._estilo = estilo
+  }
+
   seleccionar(sel: boolean) {
     this._seleccionado = sel
   }
 
   draw(target: CanvasRenderingTarget2D) {
     target.useMediaCoordinateSpace(({ context: ctx }) => {
+      const ancho = this._estilo.ancho ?? 1
       ctx.beginPath()
-      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : COLOR
-      ctx.lineWidth = this._seleccionado ? 2 : 1
-      ctx.setLineDash(this._punteada ? [4, 4] : [])
+      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : this._estilo.color ?? RECOMENDADO_DIBUJO.color!
+      ctx.lineWidth = this._seleccionado ? ancho + 1 : ancho
+      // Preview (mientras se dibuja) siempre punteado; ya colocado, el tipo elegido
+      ctx.setLineDash(this._punteada ? [4, 4] : dashDe(this._estilo.tipoLinea))
       ctx.moveTo(this._p1x, this._p1y)
       ctx.lineTo(this._p2x, this._p2y)
       ctx.stroke()
@@ -75,12 +83,17 @@ class VistaTendencia implements ISeriesPrimitivePaneView {
     p1: Punto,
     p2: Punto,
     punteada: boolean,
+    estilo: EstiloDibujo,
   ) {
     this._chart = chart
     this._serie = serie
     this.p1 = p1
     this.p2 = p2
-    this._renderer = new RendererTendencia(punteada)
+    this._renderer = new RendererTendencia(estilo, punteada)
+  }
+
+  setEstilo(estilo: EstiloDibujo) {
+    this._renderer.setEstilo(estilo)
   }
 
   update() {
@@ -125,8 +138,14 @@ export class PrimitivaTendencia implements ISeriesPrimitive {
     p1: Punto,
     p2: Punto,
     punteada = false,
+    estilo: EstiloDibujo = {},
   ) {
-    this._vista = new VistaTendencia(chart, serie, p1, p2, punteada)
+    this._vista = new VistaTendencia(chart, serie, p1, p2, punteada, estilo)
+  }
+
+  actualizarEstilo(estilo: EstiloDibujo) {
+    this._vista.setEstilo(estilo)
+    this._requestUpdate?.()
   }
 
   attached(param: SeriesAttachedParameter<Time>) {

@@ -9,9 +9,9 @@ import type {
   Time,
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
+import { RECOMENDADO_DIBUJO, dashDe, type EstiloDibujo } from './estiloDibujo'
 
 export const NIVELES_FIBONACCI = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1]
-const COLOR = '#e3b341'
 const COLOR_SELECCION = '#ffffff'
 const COLOR_TEXTO = '#e6edf3'
 
@@ -35,9 +35,11 @@ class RendererFibonacci implements ISeriesPrimitivePaneRenderer {
   private _x2 = 0
   private _niveles: NivelDibujo[] = []
   private _punteada: boolean
+  private _estilo: EstiloDibujo
   private _seleccionado = false
 
-  constructor(punteada: boolean) {
+  constructor(estilo: EstiloDibujo, punteada: boolean) {
+    this._estilo = estilo
     this._punteada = punteada
   }
 
@@ -45,6 +47,10 @@ class RendererFibonacci implements ISeriesPrimitivePaneRenderer {
     this._x1 = x1
     this._x2 = x2
     this._niveles = niveles
+  }
+
+  setEstilo(estilo: EstiloDibujo) {
+    this._estilo = estilo
   }
 
   seleccionar(sel: boolean) {
@@ -55,12 +61,13 @@ class RendererFibonacci implements ISeriesPrimitivePaneRenderer {
     target.useMediaCoordinateSpace(({ context: ctx }) => {
       const izq = Math.min(this._x1, this._x2)
       const der = Math.max(this._x1, this._x2)
-      ctx.lineWidth = this._seleccionado ? 2 : 1
-      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : COLOR
+      const ancho = this._estilo.ancho ?? 1
+      ctx.lineWidth = this._seleccionado ? ancho + 1 : ancho
+      ctx.strokeStyle = this._seleccionado ? COLOR_SELECCION : this._estilo.color ?? RECOMENDADO_DIBUJO.color!
       ctx.fillStyle = COLOR_TEXTO
       ctx.font = '11px sans-serif'
       ctx.textBaseline = 'middle'
-      ctx.setLineDash(this._punteada ? [4, 4] : [])
+      ctx.setLineDash(this._punteada ? [4, 4] : dashDe(this._estilo.tipoLinea))
       for (const n of this._niveles) {
         ctx.beginPath()
         ctx.moveTo(izq, n.y)
@@ -87,12 +94,17 @@ class VistaFibonacci implements ISeriesPrimitivePaneView {
     p1: Punto,
     p2: Punto,
     punteada: boolean,
+    estilo: EstiloDibujo,
   ) {
     this._chart = chart
     this._serie = serie
     this.p1 = p1
     this.p2 = p2
-    this._renderer = new RendererFibonacci(punteada)
+    this._renderer = new RendererFibonacci(estilo, punteada)
+  }
+
+  setEstilo(estilo: EstiloDibujo) {
+    this._renderer.setEstilo(estilo)
   }
 
   update() {
@@ -146,8 +158,14 @@ export class PrimitivaFibonacci implements ISeriesPrimitive {
     p1: Punto,
     p2: Punto,
     punteada = false,
+    estilo: EstiloDibujo = {},
   ) {
-    this._vista = new VistaFibonacci(chart, serie, p1, p2, punteada)
+    this._vista = new VistaFibonacci(chart, serie, p1, p2, punteada, estilo)
+  }
+
+  actualizarEstilo(estilo: EstiloDibujo) {
+    this._vista.setEstilo(estilo)
+    this._requestUpdate?.()
   }
 
   attached(param: SeriesAttachedParameter<Time>) {
