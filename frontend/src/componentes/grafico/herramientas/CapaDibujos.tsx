@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { IChartApi, ISeriesApi, MouseEventParams, SeriesType } from 'lightweight-charts'
+import type { Moneda } from '../../../api/tipos'
 import { usarDibujos } from '../../../hooks/usarDibujos'
 import { usarEstilos, type Estilo } from '../../../contextos/EstilosContext'
 import { crearRenderizadorDibujos, type RenderizadorDibujos } from './renderizadorDibujos'
@@ -15,6 +16,7 @@ import type { TipoHerramienta, PuntoDibujo } from './tipos'
 
 interface Props {
   ticker: string
+  moneda: Moneda
   obtenerChart: () => IChartApi | null
   obtenerSerie: () => ISeriesApi<SeriesType> | null
 }
@@ -36,7 +38,7 @@ function extraerPunto(
   return { ts: params.time as number, precio: Math.round(precio * 100) / 100 }
 }
 
-function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
+function CapaDibujos({ ticker, moneda, obtenerChart, obtenerSerie }: Props) {
   const { dibujos, agregar, actualizar, eliminar } = usarDibujos(ticker)
   const { estiloDe, guardar, volver, overrideDe } = usarEstilos()
   const [herramienta, setHerramienta] = useState<TipoHerramienta>(null)
@@ -46,14 +48,23 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
   const herramientaRef = useRef(herramienta)
   const agregarRef = useRef(agregar)
   const estiloDeRef = useRef(estiloDe)
+  const monedaRef = useRef(moneda)
   const primerPunto = useRef<PuntoDibujo | null>(null)
   const seleccionado = useRef<number | null>(null)
+
+  // Un dibujo se ve solo en la moneda en que se creó (un precio en ARS no tiene
+  // sentido en la vista USD). Los viejos sin moneda registrada se muestran siempre.
+  const visibles = useMemo(
+    () => dibujos.filter((d) => d.datos.moneda == null || d.datos.moneda === moneda),
+    [dibujos, moneda],
+  )
 
   // Mantener los refs con el último valor sin reasignarlos durante el render
   useEffect(() => {
     herramientaRef.current = herramienta
     agregarRef.current = agregar
     estiloDeRef.current = estiloDe
+    monedaRef.current = moneda
   })
 
   // Seleccionar un dibujo: ref (para los handlers) + estado (para mostrar la tuerca)
@@ -91,12 +102,13 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
   }, [obtenerChart, obtenerSerie, actualizar, eliminar])
 
   useEffect(() => {
-    renderizador.current?.sincronizar(dibujos)
-  }, [dibujos])
+    renderizador.current?.sincronizar(visibles)
+  }, [visibles])
 
-  // Si el dibujo seleccionado se borró (p.ej. "borrar todo"), la selección queda
-  // obsoleta: se deriva su validez para la tuerca en vez de setear estado en un effect.
-  const seleccionValida = idSeleccionado != null && dibujos.some((d) => d.id === idSeleccionado)
+  // Si el dibujo seleccionado se borró o dejó de verse (cambió la moneda), la
+  // selección queda obsoleta: se deriva su validez para la tuerca en vez de setear
+  // estado en un effect.
+  const seleccionValida = idSeleccionado != null && visibles.some((d) => d.id === idSeleccionado)
 
   // Al cambiar de herramienta, resetear el primer punto y la previsualización
   useEffect(() => {
@@ -141,7 +153,11 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       if (tipo === 'horizontal') {
         const punto = extraerPunto(params, serie)
         if (!punto) return
-        agregarRef.current('horizontal', { precio: punto.precio, estilo: estiloNuevo('horizontal') })
+        agregarRef.current('horizontal', {
+          precio: punto.precio,
+          estilo: estiloNuevo('horizontal'),
+          moneda: monedaRef.current,
+        })
         setHerramienta(null)
         return
       }
@@ -158,7 +174,7 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
       const p1 = primerPunto.current
       primerPunto.current = null
       renderizador.current?.limpiarPrevisualizacion()
-      agregarRef.current(tipo, { p1, p2: punto, estilo: estiloNuevo(tipo) })
+      agregarRef.current(tipo, { p1, p2: punto, estilo: estiloNuevo(tipo), moneda: monedaRef.current })
       setHerramienta(null)
     }
 
@@ -190,13 +206,14 @@ function CapaDibujos({ ticker, obtenerChart, obtenerSerie }: Props) {
     }
   }, [obtenerChart, obtenerSerie, seleccionar, estiloNuevo])
 
+  // "Borrar todo" borra solo lo visible (los de la moneda actual)
   const borrarTodo = useCallback(async () => {
-    for (const d of dibujos) {
+    for (const d of visibles) {
       await eliminar(d.id)
     }
-  }, [dibujos, eliminar])
+  }, [visibles, eliminar])
 
-  const dibujoConfig = configId != null ? dibujos.find((d) => d.id === configId) ?? null : null
+  const dibujoConfig = configId != null ? visibles.find((d) => d.id === configId) ?? null : null
 
   return (
     <>

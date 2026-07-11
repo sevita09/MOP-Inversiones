@@ -136,6 +136,7 @@ function PaginaGrafico() {
           />
           <CapaDibujos
             ticker={ticker}
+            moneda={moneda}
             obtenerChart={obtenerChart}
             obtenerSerie={obtenerSerie}
           />
