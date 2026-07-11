@@ -1,6 +1,7 @@
 import type { Estilo } from '../../../contextos/EstilosContext'
 import { COLOR_EMA_CENTRAL } from '../configGrafico'
 import { OSCILADORES } from '../configOsciladores'
+import { CAMPOS_BANDAS, PARAMS_POR_INDICADOR, type CampoParam } from './paramsIndicadores'
 
 export type CampoEstilo = 'color' | 'linea'
 
@@ -13,10 +14,14 @@ export interface ElementoEstilo {
   recomendado: Estilo
 }
 
-// Grupo: un indicador puede tener una o varias líneas
+// Grupo: un indicador puede tener una o varias líneas. `indicador` es el nombre
+// backend (para los parámetros numéricos); `params` sus campos configurables.
 export interface GrupoConfig {
   titulo: string
   elementos: ElementoEstilo[]
+  indicador?: string
+  params?: CampoParam[]
+  emasExtra?: boolean // muestra la sección para agregar EMAs extra (solo EMA central)
 }
 
 // Lo que abre el diálogo: un título y uno o varios grupos (mostrados como pestañas)
@@ -33,16 +38,26 @@ export const REC_BOLLINGER: Estilo = { color: '#8b949e', ancho: 1, tipoLinea: 'd
 // Opacidad de cada banda σ sobre el color base (±1σ la más marcada, ±3σ la más sutil)
 export const OPACIDAD_SIGMA: Record<1 | 2 | 3, number> = { 1: 0.55, 2: 0.38, 3: 0.22 }
 
+// La EMA central y las bandas salen del mismo indicador backend 'bandas'. Sus
+// parámetros se reparten: período + tipo (exp/simple) en la pestaña EMA central,
+// los 3 multiplicadores σ en la de Bandas. Se envían todos juntos igual.
 export const GRUPO_EMA: GrupoConfig = {
   titulo: 'EMA central',
+  indicador: 'bandas',
+  params: CAMPOS_BANDAS.filter((c) => c.clave === 'periodo' || c.clave === 'tipo'),
+  emasExtra: true,
   elementos: [{ id: 'ema', etiqueta: 'Línea', campos: ['color', 'linea'], recomendado: REC_EMA }],
 }
 export const GRUPO_BANDAS: GrupoConfig = {
   titulo: 'Bandas σ',
+  indicador: 'bandas',
+  params: CAMPOS_BANDAS.filter((c) => c.clave.startsWith('desvio')),
   elementos: [{ id: 'bandas', etiqueta: 'Bandas', campos: ['color', 'linea'], recomendado: REC_BANDAS }],
 }
 export const GRUPO_BOLLINGER: GrupoConfig = {
   titulo: 'Bollinger',
+  indicador: 'bollinger',
+  params: PARAMS_POR_INDICADOR.bollinger,
   elementos: [{ id: 'bollinger', etiqueta: 'Líneas', campos: ['color', 'linea'], recomendado: REC_BOLLINGER }],
 }
 
@@ -51,6 +66,8 @@ export function grupoOscilador(nombre: string): GrupoConfig {
   const config = OSCILADORES[nombre]
   return {
     titulo: config.titulo,
+    indicador: nombre,
+    params: PARAMS_POR_INDICADOR[nombre],
     elementos: config.series.map((def) => ({
       id: `osc.${nombre}.${def.clave}`,
       etiqueta: def.etiqueta,
