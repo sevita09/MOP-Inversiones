@@ -17,6 +17,13 @@ export interface ValoresBollinger {
   superior: number | null
 }
 
+export interface ValorEmaExtra {
+  id: string
+  etiqueta: string
+  color: string
+  valor: number | null
+}
+
 interface Props {
   vela: Vela
   velaPrevia: Vela | null
@@ -25,6 +32,7 @@ interface Props {
   ema: number | null // valor de la EMA central bajo el crosshair (null = EMA apagada)
   bandas: ValoresBandas | null // las 6 bandas σ (null = σ apagadas)
   bollinger: ValoresBollinger | null // banda inferior/media/superior de Bollinger
+  emasExtra: ValorEmaExtra[] // EMAs extra del usuario (vacío = ninguna o EMA apagada)
 }
 
 function formatearPrecio(valor: number | null): string {
@@ -47,7 +55,7 @@ function claseZ(z: number): string {
   return z >= 0 ? 'z-alto' : 'z-bajo'
 }
 
-function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger }: Props) {
+function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger, emasExtra }: Props) {
   // Colores efectivos (para que la leyenda coincida con las líneas del gráfico)
   const { estiloDe } = usarEstilos()
   const colorEma = estiloDe('ema', REC_EMA).color
@@ -84,6 +92,11 @@ function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger }: Props) {
           EMA <b style={{ color: colorEma }}>{formatearPrecio(ema)}</b>
         </span>
       )}
+      {emasExtra.map((e) => (
+        <span className="leyenda-campo" key={e.id}>
+          {e.etiqueta} <b style={{ color: e.color }}>{formatearPrecio(e.valor)}</b>
+        </span>
+      ))}
       {z !== null && (
         <span className="leyenda-campo leyenda-z">
           Z: <b className={claseZ(z)}>{z >= 0 ? '+' : '−'}{Math.abs(z).toFixed(2)} σ</b>

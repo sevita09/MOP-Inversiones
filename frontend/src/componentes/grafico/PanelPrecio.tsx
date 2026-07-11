@@ -23,6 +23,15 @@ import { usarBandas } from '../../hooks/usarBandas'
 import { usarBollinger } from '../../hooks/usarBollinger'
 import { usarNivelesSwing } from '../../hooks/usarNivelesSwing'
 import { usarEstilos } from '../../contextos/EstilosContext'
+import {
+  usarEmasExtra,
+  periodoExtraDe,
+  tipoExtraDe,
+  ANCHO_EXTRA_DEFAULT,
+  TIPO_LINEA_EXTRA_DEFAULT,
+} from '../../contextos/EmasExtraContext'
+import { sincronizarEmasExtra, limpiarEmasExtra, type EmaCalculada } from './seriesEmasExtra'
+import { mediaMovil } from './mediaMovil'
 import { REC_EMA, REC_BANDAS, REC_BOLLINGER } from './config/estilosIndicadores'
 import { crearSeriesBollinger, volcarBollinger, aplicarEstiloBollinger } from './seriesBollinger'
 import { dibujarNiveles, quitarNiveles } from './seriesNiveles'
@@ -143,6 +152,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const serieEma = useRef<ISeriesApi<'Line'> | null>(null)
   const seriesBandas = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
   const seriesBollinger = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
+  const seriesEmasExtra = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
   const lineasNiveles = useRef<IPriceLine[]>([])
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
   // La media y las bandas salen del mismo indicador: basta con que alguno esté activo
@@ -157,8 +167,13 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const alMoverRef = useRef(alMoverCrosshair)
   alMoverRef.current = alMoverCrosshair
 
+  // EMAs extra del usuario (se calculan en el frontend desde las velas)
+  const { emas: emasExtra } = usarEmasExtra()
+
   // Estilo efectivo (recomendado + override del usuario) de los indicadores del panel
-  const { estiloDe } = usarEstilos()
+  const { estiloDe, paramsDe } = usarEstilos()
+  // Multiplicador σ de la banda 1 (para recuperar σ y calcular el z correcto)
+  const desvio1 = Number(paramsDe('bandas').desvio1 ?? 1) || 1
   const estEma = estiloDe('ema', REC_EMA)
   const estBandas = estiloDe('bandas', REC_BANDAS)
   const estBoll = estiloDe('bollinger', REC_BOLLINGER)
@@ -216,6 +231,8 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
       chart.remove()
       grafico.current = null
       serie.current = null
+      // El chart destruido se llevó sus series: el Map queda con refs muertas
+      seriesEmasExtra.current.clear()
     }
   }, [sincronizador])
 
@@ -320,6 +337,35 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     }
   }, [mostrarBollinger])
 
+  // EMAs extra resueltas para la temporalidad actual (valores + estilo + rótulo).
+  // Se calculan una vez y sirven para dibujar y para la leyenda del crosshair.
+  const emasCalculadas = useMemo<EmaCalculada[]>(() => {
+    const cierres = velas.map((v) => v.cierre)
+    return emasExtra.map((ema) => {
+      const periodo = periodoExtraDe(ema, temporalidad)
+      const tipo = tipoExtraDe(ema, temporalidad)
+      return {
+        id: ema.id,
+        etiqueta: `${tipo === 'simple' ? 'SMA' : 'EMA'} ${periodo}`,
+        color: ema.color,
+        ancho: ema.ancho ?? ANCHO_EXTRA_DEFAULT,
+        tipoLinea: ema.tipoLinea ?? TIPO_LINEA_EXTRA_DEFAULT,
+        valores: mediaMovil(cierres, periodo, tipo),
+      }
+    })
+  }, [emasExtra, velas, temporalidad])
+
+  // Dibujar las EMAs extra (comparten el toggle de la EMA central)
+  useEffect(() => {
+    const chart = grafico.current
+    if (!chart) return
+    if (mostrarEma) {
+      sincronizarEmasExtra(chart, seriesEmasExtra.current, emasCalculadas, velas)
+    } else {
+      limpiarEmasExtra(chart, seriesEmasExtra.current)
+    }
+  }, [mostrarEma, emasCalculadas, velas])
+
   // Volcar los datos cuando cambian (ticker/temporalidad/moneda)
   useEffect(() => {
     if (serieEma.current) volcarEma(serieEma.current, bandas)
@@ -378,7 +424,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const velaPrevia = indiceMostrado > 0 ? velas[indiceMostrado - 1] : null
   const hayVelas = velas.length > 0
   const sinDatos = !cargando && !error && !hayVelas
-  const zBandas = zEnIndice(bandas, velaMostrada, indiceMostrado)
+  const zBandas = zEnIndice(bandas, velaMostrada, indiceMostrado, desvio1)
 
   // Valores de EMA / bandas σ / Bollinger bajo el crosshair (solo si su toggle está)
   const tsMostrado = velaMostrada?.ts
@@ -400,6 +446,15 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
         superior: valorEnIndice(bollinger, 'superior', indiceMostrado, tsMostrado),
       }
     : null
+  // Valor de cada EMA extra bajo el crosshair (comparten el toggle de la EMA central)
+  const emasExtraValores = mostrarEma
+    ? emasCalculadas.map((e) => ({
+        id: e.id,
+        etiqueta: e.etiqueta,
+        color: e.color,
+        valor: e.valores[indiceMostrado] ?? null,
+      }))
+    : []
 
   return (
     <div className="panel-precio">
@@ -411,6 +466,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
           ema={emaValor}
           bandas={bandasValores}
           bollinger={bollingerValores}
+          emasExtra={emasExtraValores}
         />
       )}
       <div ref={contenedor} className="grafico" />

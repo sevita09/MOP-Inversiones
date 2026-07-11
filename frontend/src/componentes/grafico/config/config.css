@@ -27,13 +27,129 @@
 }
 
 .dialogo-config {
-  width: 320px;
+  width: 30vw;
+  max-width: 30vw;
+  min-width: 380px;
   padding: 14px 16px;
   border: 1px solid #30363d;
   border-radius: 12px;
   background-color: #161b22;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
   color: #e6edf3;
+}
+
+/* Cuerpo con scroll si no entra (MACD, muchas EMAs). Adentro: la fila de columnas
+   (diseño | datos) y, para la EMA central, la sección de EMAs extra debajo. */
+.cuerpo-config {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.columnas-config {
+  display: flex;
+  gap: 16px;
+}
+
+.columna-config {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.columna-datos {
+  border-left: 1px solid #21262d;
+  padding-left: 16px;
+}
+
+.titulo-columna {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8b949e;
+  margin-bottom: 10px;
+}
+
+.sin-params {
+  font-size: 11.5px;
+  color: #6e7681;
+}
+
+/* Sección de EMAs extra (pestaña EMA central) */
+.emas-extra {
+  border-top: 1px solid #21262d;
+  padding-top: 12px;
+}
+
+.ema-extra {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  background-color: #0d1117;
+}
+
+.ema-extra-cab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ema-extra-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ema-extra-nombre {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #e6edf3;
+  flex: 1;
+}
+
+.ema-extra-quitar {
+  border: none;
+  background: none;
+  color: #8b949e;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ema-extra-quitar:hover {
+  color: #f85149;
+}
+
+.ema-extra-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ema-extra-campos .campo-config {
+  flex: 1 1 60px;
+  margin-bottom: 0;
+}
+
+.agregar-ema {
+  width: 100%;
+  padding: 7px;
+  border: 1px dashed #30363d;
+  border-radius: 8px;
+  background: none;
+  color: #58a6ff;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.agregar-ema:hover {
+  border-color: #1f6feb;
+  background-color: rgba(31, 111, 235, 0.08);
 }
 
 .cabecera-config {
@@ -114,11 +230,14 @@
   margin-bottom: 6px;
 }
 
-/* SelectorColor */
+/* SelectorColor: dos filas centradas. El padding lateral evita que el overflow
+   del cuerpo recorte el borde azul de selección de las muestras de los extremos. */
 .selector-color {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
+  padding: 0 3px;
 }
 
 .muestra {
@@ -166,8 +285,11 @@
   gap: 6px;
 }
 
+/* flex:1 → los 3 botones de tipo ocupan el mismo ancho total que los 4 de ancho */
 .boton-linea {
-  padding: 4px 10px;
+  flex: 1;
+  padding: 4px 0;
+  text-align: center;
   border: 1px solid #30363d;
   border-radius: 6px;
   background: none;
@@ -189,6 +311,27 @@
 /* Recomendado en gris (por sección) */
 .recomendado-config {
   font-size: 11px;
+  color: #6e7681;
+}
+
+/* Parámetros numéricos */
+.input-param {
+  width: 100%;
+  box-sizing: border-box; /* el padding + las flechas del number no deben pasar la caja */
+  padding: 5px 6px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background-color: #0d1117;
+  color: #e6edf3;
+  font-size: 12.5px;
+}
+
+.input-param:focus {
+  outline: none;
+  border-color: #1f6feb;
+}
+
+.input-param::placeholder {
   color: #6e7681;
 }
 

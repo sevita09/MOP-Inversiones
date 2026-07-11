@@ -162,7 +162,11 @@ function PaginaGrafico() {
         ))}
       </div>
       {configEstilo && (
-        <DialogoConfig apertura={configEstilo} alCerrar={() => setConfigEstilo(null)} />
+        <DialogoConfig
+          apertura={configEstilo}
+          temporalidad={temporalidad}
+          alCerrar={() => setConfigEstilo(null)}
+        />
       )}
     </div>
   )

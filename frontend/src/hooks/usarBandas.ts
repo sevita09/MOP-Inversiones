@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { obtenerIndicadores } from '../api/cliente'
+import { usarEstilos } from '../contextos/EstilosContext'
+import { paramsQueryDe } from '../componentes/grafico/config/paramsIndicadores'
 import type { Moneda, SerieIndicador, Temporalidad } from '../api/tipos'
 
 export interface DatosBandas {
@@ -16,6 +18,11 @@ export function usarBandas(
   activo: boolean,
 ): DatosBandas | null {
   const [datos, setDatos] = useState<DatosBandas | null>(null)
+  const { paramsDe } = usarEstilos()
+  const params = useMemo(
+    () => paramsQueryDe('bandas', paramsDe('bandas'), temporalidad),
+    [paramsDe, temporalidad],
+  )
 
   useEffect(() => {
     if (!activo) {
@@ -23,7 +30,7 @@ export function usarBandas(
       return
     }
     let vigente = true
-    obtenerIndicadores(ticker, temporalidad, moneda, 'bandas')
+    obtenerIndicadores(ticker, temporalidad, moneda, 'bandas', params)
       .then((respuesta) => {
         if (vigente) setDatos({ ts: respuesta.ts, series: respuesta.indicadores.bandas })
       })
@@ -35,7 +42,7 @@ export function usarBandas(
     return () => {
       vigente = false
     }
-  }, [ticker, temporalidad, moneda, activo])
+  }, [ticker, temporalidad, moneda, activo, params])
 
   return datos
 }

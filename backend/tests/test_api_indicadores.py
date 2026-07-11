@@ -100,6 +100,73 @@ def test_bandas_usan_la_ema_central_de_cada_temporalidad(cliente, conexion):
     assert media_d != media_m  # cada temporalidad usa su propia ventana
 
 
+def test_periodo_custom_de_ema(cliente, conexion):
+    cierres = list(range(1, 40))
+    cargar(conexion, cierres)
+    datos = cliente.get(
+        "/api/indicadores",
+        params={"ticker": "GGAL", "incluir": "ema", "params": '{"ema": {"periodo": 5}}'},
+    ).json()
+    assert datos["indicadores"]["ema"]["ema"][-1] == round(ema_manual(cierres, 5)[-1], 6)
+
+
+def test_sin_params_es_el_comportamiento_actual(cliente, conexion):
+    # El default de la EMA sigue siendo 200 cuando no se manda params
+    cierres = list(range(1, 40))
+    cargar(conexion, cierres)
+    datos = cliente.get("/api/indicadores", params={"ticker": "GGAL", "incluir": "ema"}).json()
+    assert datos["indicadores"]["ema"]["ema"][-1] == round(ema_manual(cierres, 200)[-1], 6)
+
+
+def test_periodo_custom_de_bandas_pisa_la_ema_central(cliente, conexion):
+    # Sin override, la banda diaria usa EMA 200; con override, la que pida el usuario
+    cierres = list(range(1, 40))
+    cargar(conexion, cierres, temporalidad="D")
+    override = cliente.get(
+        "/api/indicadores",
+        params={
+            "ticker": "GGAL",
+            "temporalidad": "D",
+            "incluir": "bandas",
+            "params": '{"bandas": {"periodo": 12}}',
+        },
+    ).json()
+    assert override["indicadores"]["bandas"]["media"][-1] == round(ema_manual(cierres, 12)[-1], 6)
+
+
+def test_periodo_custom_de_rsi(cliente, conexion):
+    cargar(conexion, list(range(1, 40)))
+    corto = cliente.get(
+        "/api/indicadores",
+        params={"ticker": "GGAL", "incluir": "rsi", "params": '{"rsi": {"periodo": 2}}'},
+    ).json()
+    default = cliente.get(
+        "/api/indicadores", params={"ticker": "GGAL", "incluir": "rsi"}
+    ).json()
+    # Un RSI de período 2 tiene menos warmup (menos None al inicio) que el de 14
+    nones_corto = corto["indicadores"]["rsi"]["rsi"].count(None)
+    nones_default = default["indicadores"]["rsi"]["rsi"].count(None)
+    assert nones_corto < nones_default
+
+
+def test_params_json_invalido_es_422(cliente, conexion):
+    cargar(conexion, [10, 20])
+    assert cliente.get(
+        "/api/indicadores", params={"ticker": "GGAL", "incluir": "ema", "params": "{no-json"}
+    ).status_code == 422
+
+
+def test_parametro_desconocido_se_ignora(cliente, conexion):
+    cierres = list(range(1, 40))
+    cargar(conexion, cierres)
+    datos = cliente.get(
+        "/api/indicadores",
+        params={"ticker": "GGAL", "incluir": "ema", "params": '{"ema": {"vueltas": 9}}'},
+    ).json()
+    # 'vueltas' no es un parámetro de la EMA → se ignora, queda el default 200
+    assert datos["indicadores"]["ema"]["ema"][-1] == round(ema_manual(cierres, 200)[-1], 6)
+
+
 def test_indicadores_en_usd_usan_precios_convertidos(cliente, conexion):
     # ALUA no tiene ADR: en USD se convierte por CCL
     cargar(conexion, [8000.0, 8000.0, 8000.0], ticker="ALUA")

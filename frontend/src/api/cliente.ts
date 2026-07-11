@@ -62,8 +62,10 @@ export function obtenerIndicadores(
   temporalidad: Temporalidad,
   moneda: Moneda,
   incluir: string,
+  params = '',
 ): Promise<RespuestaIndicadores> {
   const parametros = new URLSearchParams({ ticker, temporalidad, moneda, incluir })
+  if (params) parametros.set('params', params)
   return obtenerJson<RespuestaIndicadores>(`/api/indicadores?${parametros}`)
 }
 

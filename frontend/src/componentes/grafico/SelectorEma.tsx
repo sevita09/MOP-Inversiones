@@ -1,8 +1,11 @@
 import type { Temporalidad } from '../../api/tipos'
+import { usarEstilos } from '../../contextos/EstilosContext'
+import {
+  PARAMS_POR_INDICADOR,
+  claveGuardada,
+  recomendadoDe,
+} from './config/paramsIndicadores'
 import './SelectorEma.css'
-
-// La EMA central depende de la temporalidad (misma metodología que el backend)
-const PERIODO_EMA: Record<Temporalidad, number> = { H: 200, D: 200, S: 50, M: 12 }
 
 interface Props {
   mostrar: boolean
@@ -10,8 +13,13 @@ interface Props {
   alCambiar: (mostrar: boolean) => void
 }
 
+// El período efectivo de la EMA central: el que el usuario haya fijado para esta
+// temporalidad, o el recomendado (D=200, S=50, M=12) si no lo cambió.
 function SelectorEma({ mostrar, temporalidad, alCambiar }: Props) {
-  const periodo = PERIODO_EMA[temporalidad]
+  const { paramsDe } = usarEstilos()
+  const campo = PARAMS_POR_INDICADOR.bandas[0]
+  const override = paramsDe('bandas')[claveGuardada(campo, temporalidad)]
+  const periodo = override ?? recomendadoDe(campo, temporalidad)
   return (
     <button
       type="button"

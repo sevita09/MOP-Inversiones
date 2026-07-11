@@ -19,6 +19,13 @@ export interface Estilo {
 // código; acá solo se guarda lo que el usuario cambió, y pisa al recomendado.
 type Overrides = Record<string, Estilo>
 
+// Parámetros del usuario por indicador (nombre backend → {clave: valor}). Casi
+// todos son numéricos; el tipo de media (exp/simple) es string. Mismo principio:
+// solo se guarda lo que el usuario cambió; el resto usa el default.
+export type ValorParam = number | string
+export type Params = Record<string, ValorParam>
+type ParamsPorIndicador = Record<string, Params>
+
 interface ContextoEstilos {
   // Estilo efectivo = recomendado con los campos que el usuario haya cambiado
   estiloDe: (id: string, recomendado: Estilo) => Estilo
@@ -26,9 +33,14 @@ interface ContextoEstilos {
   overrideDe: (id: string) => Estilo
   guardar: (id: string, cambios: Estilo) => void
   volver: (id: string) => void
+  // Parámetros numéricos overrideados del usuario para un indicador
+  paramsDe: (indicador: string) => Params
+  guardarParam: (indicador: string, clave: string, valor: ValorParam) => void
+  borrarParam: (indicador: string, clave: string) => void
 }
 
 const CLAVE = 'mop.estilos'
+const CLAVE_PARAMS = 'mop.params'
 const Contexto = createContext<ContextoEstilos | null>(null)
 
 function leer(): Overrides {
@@ -40,12 +52,27 @@ function leer(): Overrides {
   }
 }
 
+function leerParams(): ParamsPorIndicador {
+  try {
+    const crudo = localStorage.getItem(CLAVE_PARAMS)
+    return crudo ? (JSON.parse(crudo) as ParamsPorIndicador) : {}
+  } catch {
+    return {}
+  }
+}
+
 export function ProveedorEstilos({ children }: { children: ReactNode }) {
   const [overrides, setOverrides] = useState<Overrides>(leer)
+  const [params, setParams] = useState<ParamsPorIndicador>(leerParams)
 
   const persistir = useCallback((siguiente: Overrides) => {
     localStorage.setItem(CLAVE, JSON.stringify(siguiente))
     setOverrides(siguiente)
+  }, [])
+
+  const persistirParams = useCallback((siguiente: ParamsPorIndicador) => {
+    localStorage.setItem(CLAVE_PARAMS, JSON.stringify(siguiente))
+    setParams(siguiente)
   }, [])
 
   const guardar = useCallback(
@@ -71,9 +98,44 @@ export function ProveedorEstilos({ children }: { children: ReactNode }) {
 
   const overrideDe = useCallback((id: string): Estilo => overrides[id] ?? {}, [overrides])
 
+  const paramsDe = useCallback(
+    (indicador: string): Params => params[indicador] ?? {},
+    [params],
+  )
+
+  const guardarParam = useCallback(
+    (indicador: string, clave: string, valor: ValorParam) => {
+      persistirParams({
+        ...params,
+        [indicador]: { ...params[indicador], [clave]: valor },
+      })
+    },
+    [params, persistirParams],
+  )
+
+  const borrarParam = useCallback(
+    (indicador: string, clave: string) => {
+      const delIndicador = { ...params[indicador] }
+      delete delIndicador[clave]
+      const siguiente = { ...params }
+      if (Object.keys(delIndicador).length > 0) siguiente[indicador] = delIndicador
+      else delete siguiente[indicador]
+      persistirParams(siguiente)
+    },
+    [params, persistirParams],
+  )
+
   const valor = useMemo<ContextoEstilos>(
-    () => ({ estiloDe, overrideDe, guardar, volver }),
-    [estiloDe, overrideDe, guardar, volver],
+    () => ({
+      estiloDe,
+      overrideDe,
+      guardar,
+      volver,
+      paramsDe,
+      guardarParam,
+      borrarParam,
+    }),
+    [estiloDe, overrideDe, guardar, volver, paramsDe, guardarParam, borrarParam],
   )
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>

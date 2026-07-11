@@ -26,6 +26,13 @@ def disponibles() -> list[str]:
     return sorted(_REGISTRO)
 
 
+def defaults_de(nombre: str) -> dict:
+    """Parámetros por default de un indicador (para validar/coercer overrides)."""
+    if nombre not in _REGISTRO:
+        raise KeyError(f"Indicador desconocido: {nombre}")
+    return dict(_REGISTRO[nombre][1])
+
+
 def velas_a_df(velas: list[dict]) -> pd.DataFrame:
     columnas = ["ts", "apertura", "maximo", "minimo", "cierre", "volumen"]
     return pd.DataFrame(velas, columns=columnas)
