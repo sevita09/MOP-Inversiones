@@ -4,12 +4,15 @@ import type {
   ISeriesPrimitive,
   ISeriesPrimitivePaneRenderer,
   ISeriesPrimitivePaneView,
+  ITimeScaleApi,
+  Logical,
   SeriesAttachedParameter,
   SeriesType,
   Time,
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
 import { dashDe, type EstiloDibujo } from './estiloDibujo'
+import type { PuntoMedicion } from './tipos'
 
 const VERDE = '#3fb950'
 const ROJO = '#f85149'
@@ -17,14 +20,19 @@ const RELLENO_VERDE = 'rgba(63, 185, 80, 0.12)'
 const RELLENO_ROJO = 'rgba(248, 81, 73, 0.12)'
 const FONDO_ETIQUETA = '#0d1117'
 
-interface Punto {
-  ts: number
-  precio: number
-}
+type Punto = PuntoMedicion
 
 interface Pixel {
   x: number
   y: number
+}
+
+// Coordenada x de un ancla de medición: por su `logical` (libre) si lo tiene, o
+// por su `ts` (mediciones viejas, imantadas a la vela).
+function coordX(ts: ITimeScaleApi<Time>, p: Punto): number | null {
+  if (p.logical != null) return ts.logicalToCoordinate(p.logical as Logical)
+  if (p.ts != null) return ts.timeToCoordinate(p.ts as Time)
+  return null
 }
 
 class RendererMedicion implements ISeriesPrimitivePaneRenderer {
@@ -122,7 +130,7 @@ class VistaMedicion implements ISeriesPrimitivePaneView {
 
   update() {
     const ts = this._chart.timeScale()
-    const x1 = ts.timeToCoordinate(this.p1.ts as unknown as Time)
+    const x1 = coordX(ts, this.p1)
     const y1 = this._serie.priceToCoordinate(this.p1.precio)
     if (x1 == null || y1 == null) return
 
@@ -136,7 +144,7 @@ class VistaMedicion implements ISeriesPrimitivePaneView {
       if (pr == null) return
       precio2 = pr
     } else {
-      x2 = ts.timeToCoordinate(this.p2.ts as unknown as Time)
+      x2 = coordX(ts, this.p2)
       y2 = this._serie.priceToCoordinate(this.p2.precio)
       precio2 = this.p2.precio
     }

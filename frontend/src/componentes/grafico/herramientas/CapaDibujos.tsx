@@ -12,7 +12,7 @@ import {
   camposDibujo,
   idHerramienta,
 } from './estiloDibujo'
-import type { TipoHerramienta, PuntoDibujo } from './tipos'
+import type { TipoHerramienta, PuntoDibujo, PuntoMedicion } from './tipos'
 
 interface Props {
   ticker: string
@@ -38,6 +38,20 @@ function extraerPunto(
   return { ts: params.time as number, precio: Math.round(precio * 100) / 100 }
 }
 
+// La medición es una regla: ancla en coordenada lógica fraccional (cualquier punto,
+// no imantada al centro de una vela). No necesita `params.time`.
+function extraerPuntoLibre(
+  params: MouseEventParams,
+  chart: IChartApi,
+  serie: ISeriesApi<SeriesType>,
+): PuntoMedicion | null {
+  if (!params.point) return null
+  const logical = chart.timeScale().coordinateToLogical(params.point.x)
+  const precio = serie.coordinateToPrice(params.point.y)
+  if (logical == null || precio == null || !isFinite(precio)) return null
+  return { logical, precio: Math.round(precio * 100) / 100 }
+}
+
 function CapaDibujos({ ticker, moneda, obtenerChart, obtenerSerie }: Props) {
   const { dibujos, agregar, actualizar, eliminar } = usarDibujos(ticker)
   const { estiloDe, guardar, volver, overrideDe } = usarEstilos()
@@ -49,7 +63,7 @@ function CapaDibujos({ ticker, moneda, obtenerChart, obtenerSerie }: Props) {
   const agregarRef = useRef(agregar)
   const estiloDeRef = useRef(estiloDe)
   const monedaRef = useRef(moneda)
-  const primerPunto = useRef<PuntoDibujo | null>(null)
+  const primerPunto = useRef<PuntoMedicion | null>(null)
   const seleccionado = useRef<number | null>(null)
 
   // Un dibujo se ve solo en la moneda en que se creó (un precio en ARS no tiene
@@ -162,8 +176,12 @@ function CapaDibujos({ ticker, moneda, obtenerChart, obtenerSerie }: Props) {
         return
       }
 
-      // Herramientas de dos puntos: tendencia, fibonacci, medicion
-      const punto = extraerPunto(params, serie)
+      // Herramientas de dos puntos: tendencia y fibonacci se imantan a la vela;
+      // la medición ancla libre (regla) en coordenada lógica fraccional.
+      const punto =
+        tipo === 'medicion'
+          ? extraerPuntoLibre(params, chart, serie)
+          : extraerPunto(params, serie)
       if (!punto) return
 
       if (!primerPunto.current) {

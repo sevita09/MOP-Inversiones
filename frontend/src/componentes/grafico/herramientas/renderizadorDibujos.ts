@@ -3,6 +3,8 @@ import type {
   IPriceLine,
   ISeriesApi,
   ISeriesPrimitive,
+  ITimeScaleApi,
+  Logical,
   SeriesType,
   Time,
 } from 'lightweight-charts'
@@ -12,6 +14,7 @@ import { PrimitivaTendencia } from './primitivaTendencia'
 import { PrimitivaFibonacci, NIVELES_FIBONACCI } from './primitivaFibonacci'
 import { PrimitivaMedicion } from './primitivaMedicion'
 import { RECOMENDADO_DIBUJO, estiloDeDibujo, type EstiloDibujo } from './estiloDibujo'
+import type { PuntoMedicion } from './tipos'
 
 const COLOR_SELECCION = '#ffffff'
 const TOLERANCIA_CLICK = 6 // px de margen para detectar el dibujo tocado
@@ -21,10 +24,17 @@ interface Punto {
   precio: number
 }
 
+// Coordenada x de un punto: por su `logical` (medición libre) o su `ts` (imantado).
+function coordX(ts: ITimeScaleApi<Time>, p: PuntoMedicion): number | null {
+  if (p.logical != null) return ts.logicalToCoordinate(p.logical as Logical)
+  if (p.ts != null) return ts.timeToCoordinate(p.ts as Time)
+  return null
+}
+
 // Primitivas de dos puntos (tendencia, fibonacci, medición): comparten la
 // interfaz para crearlas, actualizarlas y previsualizarlas de forma uniforme.
 interface PrimitivaDibujo extends ISeriesPrimitive {
-  actualizar(p1: Punto, p2: Punto): void
+  actualizar(p1: PuntoMedicion, p2: PuntoMedicion): void
   actualizarPixel(x: number, y: number): void
   actualizarEstilo(estilo: EstiloDibujo): void
   seleccionar(sel: boolean): void
@@ -56,7 +66,7 @@ interface PrimitivaActiva {
 
 export interface RenderizadorDibujos {
   sincronizar(dibujos: Dibujo[]): void
-  previsualizar(tipo: string, p1: Punto, x: number, y: number, estilo?: EstiloDibujo): void
+  previsualizar(tipo: string, p1: PuntoMedicion, x: number, y: number, estilo?: EstiloDibujo): void
   limpiarPrevisualizacion(): void
   dibujoEn(x: number, y: number): number | null
   seleccionar(id: number | null): void
@@ -78,13 +88,16 @@ export function crearRenderizadorDibujos(
 
   function crearPrimitiva(
     tipo: string,
-    p1: Punto,
-    p2: Punto,
+    p1: PuntoMedicion,
+    p2: PuntoMedicion,
     punteada: boolean,
     estilo: EstiloDibujo,
   ): PrimitivaDibujo | null {
-    if (tipo === 'tendencia') return new PrimitivaTendencia(chart, serie, p1, p2, punteada, estilo)
-    if (tipo === 'fibonacci') return new PrimitivaFibonacci(chart, serie, p1, p2, punteada, estilo)
+    // Tendencia y fibonacci se anclan a la vela (ts); la medición, en coordenada libre.
+    const a = p1 as Punto
+    const b = p2 as Punto
+    if (tipo === 'tendencia') return new PrimitivaTendencia(chart, serie, a, b, punteada, estilo)
+    if (tipo === 'fibonacci') return new PrimitivaFibonacci(chart, serie, a, b, punteada, estilo)
     if (tipo === 'medicion') return new PrimitivaMedicion(chart, serie, p1, p2, punteada, estilo)
     return null
   }
@@ -142,8 +155,8 @@ export function crearRenderizadorDibujos(
   }
 
   function sincronizarPrimitiva(dibujo: Dibujo) {
-    const p1 = dibujo.datos.p1 as Punto
-    const p2 = dibujo.datos.p2 as Punto
+    const p1 = dibujo.datos.p1 as PuntoMedicion
+    const p2 = dibujo.datos.p2 as PuntoMedicion
     if (!p1 || !p2) return
     const estilo = estiloDeDibujo(dibujo.datos)
     const existente = primitivas.get(dibujo.id)
@@ -158,7 +171,7 @@ export function crearRenderizadorDibujos(
     primitivas.set(dibujo.id, { dibujoId: dibujo.id, primitiva })
   }
 
-  function previsualizar(tipo: string, p1: Punto, x: number, y: number, estilo: EstiloDibujo = {}) {
+  function previsualizar(tipo: string, p1: PuntoMedicion, x: number, y: number, estilo: EstiloDibujo = {}) {
     if (!previa || previaTipo !== tipo) {
       limpiarPrevisualizacion()
       const primitiva = crearPrimitiva(tipo, p1, p1, true, estilo)
@@ -193,12 +206,12 @@ export function crearRenderizadorDibujos(
       return yp != null && Math.abs(yp - y) <= TOLERANCIA_CLICK
     }
 
-    const p1 = d.datos.p1 as Punto | undefined
-    const p2 = d.datos.p2 as Punto | undefined
+    const p1 = d.datos.p1 as PuntoMedicion | undefined
+    const p2 = d.datos.p2 as PuntoMedicion | undefined
     if (!p1 || !p2) return false
     const ts = chart.timeScale()
-    const x1 = ts.timeToCoordinate(p1.ts as unknown as Time)
-    const x2 = ts.timeToCoordinate(p2.ts as unknown as Time)
+    const x1 = coordX(ts, p1)
+    const x2 = coordX(ts, p2)
     if (x1 == null || x2 == null) return false
     const izq = Math.min(x1, x2)
     const der = Math.max(x1, x2)
