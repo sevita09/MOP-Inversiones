@@ -28,9 +28,19 @@ interface Props {
   alBorrarTodo: () => void
   haySeleccion: boolean
   alConfigurar: () => void
+  iman: boolean
+  alAlternarIman: () => void
 }
 
-function BarraHerramientas({ activa, alSeleccionar, alBorrarTodo, haySeleccion, alConfigurar }: Props) {
+function BarraHerramientas({
+  activa,
+  alSeleccionar,
+  alBorrarTodo,
+  haySeleccion,
+  alConfigurar,
+  iman,
+  alAlternarIman,
+}: Props) {
   return (
     <div className="barra-herramientas">
       {HERRAMIENTAS.map((h) => {
@@ -48,6 +58,15 @@ function BarraHerramientas({ activa, alSeleccionar, alBorrarTodo, haySeleccion, 
           </button>
         )
       })}
+      <div className="separador-herramientas" />
+      <button
+        type="button"
+        title={`Imán: engancha los dibujos a la apertura/cierre de la vela (${iman ? 'activo' : 'inactivo'})`}
+        className={`boton-herramienta${iman ? ' activo' : ''}`}
+        onClick={alAlternarIman}
+      >
+        <span className="iman-glifo">🧲</span>
+      </button>
       {haySeleccion && (
         <button
           type="button"

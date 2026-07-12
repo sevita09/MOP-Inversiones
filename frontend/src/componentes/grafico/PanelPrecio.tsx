@@ -123,6 +123,8 @@ export interface PanelPrecioHandle {
   verRango: (meses: number | null) => void
   obtenerChart: () => IChartApi | null
   obtenerSerie: () => ISeriesApi<SeriesType> | null
+  // Imán: precio de la apertura o el cierre de la vela `ts`, el más cercano a `yPixel`
+  precioIman: (ts: number, yPixel: number) => number | null
 }
 
 const DIAS_POR_MES = 30 * 86400
@@ -210,6 +212,17 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     },
     obtenerChart: () => grafico.current,
     obtenerSerie: () => serie.current,
+    precioIman: (ts, yPixel) => {
+      const s = serie.current
+      const vela = velasRef.current.find((v) => v.ts === ts)
+      if (!s || !vela) return null
+      const yO = s.priceToCoordinate(vela.apertura)
+      const yC = s.priceToCoordinate(vela.cierre)
+      const dO = yO != null ? Math.abs(yO - yPixel) : Infinity
+      const dC = yC != null ? Math.abs(yC - yPixel) : Infinity
+      if (dO === Infinity && dC === Infinity) return null
+      return dO <= dC ? vela.apertura : vela.cierre
+    },
   }), [])
 
   // Crear el gráfico una sola vez; autoSize lo mantiene del tamaño del contenedor
