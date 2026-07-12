@@ -55,3 +55,11 @@
   margin: 2px 0;
   background: #30363d;
 }
+
+/* El imán es un emoji a color: lo pasamos a gris SOLO en el glifo (no en el botón),
+   así el fondo azul del estado activo no se griesa y marca la selección igual que
+   las demás herramientas. */
+.iman-glifo {
+  display: inline-block;
+  filter: grayscale(1);
+}

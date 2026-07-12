@@ -139,6 +139,7 @@ function PaginaGrafico() {
             moneda={moneda}
             obtenerChart={obtenerChart}
             obtenerSerie={obtenerSerie}
+            precioIman={(ts, y) => panelRef.current?.precioIman(ts, y) ?? null}
           />
           <div className="escala-overlay">
             <SelectorEscala escala={escala} alCambiar={setEscala} />
