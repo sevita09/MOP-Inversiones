@@ -5,13 +5,14 @@ interface ItemHerramienta {
   tipo: TipoHerramienta
   etiqueta: string
   icono: string
+  emoji?: boolean // emoji a color → se griesa para combinar con el resto
 }
 
 const HERRAMIENTAS: ItemHerramienta[] = [
   { tipo: 'horizontal', etiqueta: 'Línea horizontal', icono: '─' },
   { tipo: 'tendencia', etiqueta: 'Línea de tendencia', icono: '╱' },
   { tipo: 'fibonacci', etiqueta: 'Fibonacci', icono: 'Fib' },
-  { tipo: 'medicion', etiqueta: 'Medir rango', icono: '⇕' },
+  { tipo: 'medicion', etiqueta: 'Medir rango', icono: '📏', emoji: true },
 ]
 
 // Herramientas con renderizado implementado; el resto se muestra deshabilitado
@@ -54,7 +55,7 @@ function BarraHerramientas({
             className={`boton-herramienta${activa === h.tipo ? ' activo' : ''}`}
             onClick={() => alSeleccionar(activa === h.tipo ? null : h.tipo)}
           >
-            {h.icono}
+            {h.emoji ? <span className="glifo-gris">{h.icono}</span> : h.icono}
           </button>
         )
       })}
@@ -65,7 +66,7 @@ function BarraHerramientas({
         className={`boton-herramienta${iman ? ' activo' : ''}`}
         onClick={alAlternarIman}
       >
-        <span className="iman-glifo">🧲</span>
+        <span className="glifo-gris">🧲</span>
       </button>
       {haySeleccion && (
         <button

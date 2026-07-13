@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import InterruptorMoneda from '../componentes/InterruptorMoneda'
+import InterruptorMoneda, { CotizacionCCL } from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
 import PanelOscilador from '../componentes/grafico/PanelOscilador'
 import CapaDibujos from '../componentes/grafico/herramientas/CapaDibujos'
 import MenuIndicadores from '../componentes/grafico/MenuIndicadores'
+import BarraOverflow from '../componentes/grafico/BarraOverflow'
 import { OSCILADORES, ORDEN_OSCILADORES } from '../componentes/grafico/configOsciladores'
 import type { NombreOscilador } from '../componentes/grafico/configOsciladores'
 import { crearSincronizadorTiempo } from '../componentes/grafico/sincronizadorTiempo'
@@ -18,7 +19,6 @@ import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
 import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
 import SelectorVPVR from '../componentes/grafico/SelectorVPVR'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
-import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
 import DialogoConfig from '../componentes/grafico/config/DialogoConfig'
 import BotonTuerca from '../componentes/grafico/config/BotonTuerca'
 import {
@@ -30,7 +30,6 @@ import { usarAdr } from '../hooks/usarAdr'
 import { usarTicker } from '../contextos/TickerContext'
 import { usarAtajosTeclado } from '../hooks/usarAtajosTeclado'
 import { usarEstadoPersistente } from '../hooks/usarEstadoPersistente'
-import { usarPantallaCompleta } from '../hooks/usarPantallaCompleta'
 import type { EscalaPrecio, Temporalidad, TipoGrafico } from '../api/tipos'
 import './PaginaGrafico.css'
 
@@ -63,8 +62,6 @@ function PaginaGrafico() {
     setOscActivos([...siguiente])
   }
   const panelRef = useRef<PanelPrecioHandle>(null)
-  const paginaRef = useRef<HTMLDivElement>(null)
-  const pantalla = usarPantallaCompleta(paginaRef)
   // Un único sincronizador mantiene el precio y los osciladores con el mismo zoom
   const [sincronizador] = useState(crearSincronizadorTiempo)
   // ts bajo el crosshair, compartido: cada panel muestra su valor en ese punto
@@ -84,41 +81,83 @@ function PaginaGrafico() {
   }, [disponibles, temporalidad, setTemporalidad])
 
   return (
-    <div className="pagina-grafico" ref={paginaRef}>
-      <div className="barra-grafico">
-        <span className="identidad-ticker">
-          <LogoTicker ticker={ticker} tamano={24} />
-          <span className="identidad-simbolo">{ticker}</span>
-        </span>
-        <SelectorTemporalidad
-          temporalidad={temporalidad}
-          alCambiar={setTemporalidad}
-          disponibles={disponibles}
-        />
-        <span className="separador-barra" />
-        <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
-        <span className="separador-barra" />
-        <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />
-        <SelectorVPVR mostrar={mostrarVpvr} alCambiar={setMostrarVpvr} />
-        <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />
-        <SelectorEma mostrar={mostrarEma} temporalidad={temporalidad} alCambiar={setMostrarEma} />
-        <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
-        <SelectorBollinger mostrar={mostrarBollinger} alCambiar={setMostrarBollinger} />
-        <BotonTuerca
-          titulo="Configurar EMA, σ y Bollinger"
-          alTocar={() => setConfigEstilo(APERTURA_PRECIO)}
-        />
-        <span className="separador-barra" />
-        <MenuIndicadores
-          activos={osciladores}
-          alAlternar={alternarOscilador}
-          alConfigurar={setConfigEstilo}
-        />
-        <span className="separador-barra" />
-        <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />
-        <InterruptorMoneda />
-        <BotonPantallaCompleta activa={pantalla.activa} alAlternar={pantalla.alternar} />
-      </div>
+    <div className="pagina-grafico">
+      <BarraOverflow
+        izquierda={
+          <span className="identidad-ticker">
+            <LogoTicker ticker={ticker} tamano={24} />
+            <span className="identidad-simbolo">{ticker}</span>
+          </span>
+        }
+        derecha={[<CotizacionCCL key="ccl" />, <InterruptorMoneda key="moneda" />]}
+        unidades={[
+          {
+            clave: 'temporalidad',
+            grupoInicio: true,
+            nodo: (
+              <SelectorTemporalidad
+                temporalidad={temporalidad}
+                alCambiar={setTemporalidad}
+                disponibles={disponibles}
+              />
+            ),
+          },
+          {
+            clave: 'tipo',
+            grupoInicio: true,
+            nodo: <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />,
+          },
+          {
+            clave: 'volumen',
+            grupoInicio: true,
+            nodo: <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />,
+          },
+          { clave: 'vpvr', nodo: <SelectorVPVR mostrar={mostrarVpvr} alCambiar={setMostrarVpvr} /> },
+          {
+            clave: 'niveles',
+            nodo: <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />,
+          },
+          {
+            clave: 'ema',
+            nodo: (
+              <SelectorEma mostrar={mostrarEma} temporalidad={temporalidad} alCambiar={setMostrarEma} />
+            ),
+          },
+          {
+            clave: 'bandas',
+            nodo: <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />,
+          },
+          {
+            clave: 'bollinger',
+            nodo: <SelectorBollinger mostrar={mostrarBollinger} alCambiar={setMostrarBollinger} />,
+          },
+          {
+            clave: 'tuerca',
+            nodo: (
+              <BotonTuerca
+                titulo="Configurar EMA, σ y Bollinger"
+                alTocar={() => setConfigEstilo(APERTURA_PRECIO)}
+              />
+            ),
+          },
+          {
+            clave: 'indicadores',
+            grupoInicio: true,
+            nodo: (
+              <MenuIndicadores
+                activos={osciladores}
+                alAlternar={alternarOscilador}
+                alConfigurar={setConfigEstilo}
+              />
+            ),
+          },
+          {
+            clave: 'periodo',
+            grupoInicio: true,
+            nodo: <SelectorPeriodo alElegir={(meses) => panelRef.current?.verRango(meses)} />,
+          },
+        ]}
+      />
       <div className="pantalla-grafico">
         <div className="area-precio">
           <PanelPrecio

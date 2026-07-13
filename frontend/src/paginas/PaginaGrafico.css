@@ -6,18 +6,99 @@
   background: #0d1117;
 }
 
+/* Bordes fijos y compactos + medio distribuido. El espaciado de los bordes (6px)
+   sale de centrar el logo (24px) respecto de la barra de herramientas (37px):
+   (37 − 24) / 2 ≈ 6. */
 .barra-grafico {
+  --espacio-borde: 12px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 6px 12px;
+  padding: 6px 0;
   border-bottom: 1px solid #30363d;
+}
+
+/* Bloques de borde: no se encogen, espaciado constante de 12px entre piezas */
+.barra-borde {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-borde);
+  flex-shrink: 0;
+}
+
+/* 6px del borde de la ventana al logo (para centrarlo con la barra de herramientas) */
+.barra-izq {
+  padding-left: 6px;
+}
+
+.barra-der {
+  padding-right: var(--espacio-borde);
+}
+
+/* El medio se reparte parejo en el ancho restante, con aire también contra los
+   bordes (space-evenly). Al achicar se acercan hasta el mínimo y pasa al overflow. */
+.barra-medio {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Sin esto, al medir con todo renderizado los ítems se encogen (flex-shrink) en
+   vez de desbordar: la medición daría anchos comprimidos y la flecha no saldría. */
+.barra-medio > * {
+  flex-shrink: 0;
+}
+
+
+.mas-contenedor {
+  position: relative;
+  flex-shrink: 0;
+  margin-right: var(--espacio-borde); /* aire contra el pipe del CCL */
+}
+
+.boton-mas {
+  padding: 5px 8px;
+  font-size: 14px;
+  line-height: 1;
+  color: #8b949e;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.boton-mas:hover {
+  color: #e6edf3;
+  background: #1c2128;
+}
+
+.menu-mas {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.menu-mas-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .identidad-ticker {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px; /* logo · 12 · ticker */
 }
 
 .identidad-simbolo {
@@ -41,8 +122,9 @@
 
 .separador-barra {
   width: 1px;
-  align-self: stretch;
-  margin: 2px 0;
+  height: 20px;
+  flex-shrink: 0; /* en WKWebView (la app) un 1px sin esto colapsa a 0 y no se ve */
+  align-self: center;
   background: #30363d;
 }
 
