@@ -13,6 +13,7 @@ export interface Estilo {
   color?: string
   ancho?: number
   tipoLinea?: TipoLinea
+  opacidad?: number // 0..1 (histogramas y líneas que lo soporten, p.ej. VPVR)
 }
 
 // Overrides del usuario por elemento (id → estilo). El recomendado vive en el
@@ -65,31 +66,32 @@ export function ProveedorEstilos({ children }: { children: ReactNode }) {
   const [overrides, setOverrides] = useState<Overrides>(leer)
   const [params, setParams] = useState<ParamsPorIndicador>(leerParams)
 
-  const persistir = useCallback((siguiente: Overrides) => {
-    localStorage.setItem(CLAVE, JSON.stringify(siguiente))
-    setOverrides(siguiente)
+  // Updates funcionales: varios cambios en el mismo render (p.ej. "Volver" sobre
+  // un grupo de 3 elementos) no se pisan entre sí partiendo de un estado viejo.
+  const guardar = useCallback((id: string, cambios: Estilo) => {
+    setOverrides((prev) => {
+      const siguiente = { ...prev, [id]: { ...prev[id], ...cambios } }
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify(siguiente))
+      } catch {
+        /* almacenamiento no disponible: igual queda en memoria */
+      }
+      return siguiente
+    })
   }, [])
 
-  const persistirParams = useCallback((siguiente: ParamsPorIndicador) => {
-    localStorage.setItem(CLAVE_PARAMS, JSON.stringify(siguiente))
-    setParams(siguiente)
-  }, [])
-
-  const guardar = useCallback(
-    (id: string, cambios: Estilo) => {
-      persistir({ ...overrides, [id]: { ...overrides[id], ...cambios } })
-    },
-    [overrides, persistir],
-  )
-
-  const volver = useCallback(
-    (id: string) => {
-      const siguiente = { ...overrides }
+  const volver = useCallback((id: string) => {
+    setOverrides((prev) => {
+      const siguiente = { ...prev }
       delete siguiente[id]
-      persistir(siguiente)
-    },
-    [overrides, persistir],
-  )
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify(siguiente))
+      } catch {
+        /* almacenamiento no disponible */
+      }
+      return siguiente
+    })
+  }, [])
 
   const estiloDe = useCallback(
     (id: string, recomendado: Estilo): Estilo => ({ ...recomendado, ...overrides[id] }),
@@ -103,27 +105,33 @@ export function ProveedorEstilos({ children }: { children: ReactNode }) {
     [params],
   )
 
-  const guardarParam = useCallback(
-    (indicador: string, clave: string, valor: ValorParam) => {
-      persistirParams({
-        ...params,
-        [indicador]: { ...params[indicador], [clave]: valor },
-      })
-    },
-    [params, persistirParams],
-  )
+  const guardarParam = useCallback((indicador: string, clave: string, valor: ValorParam) => {
+    setParams((prev) => {
+      const siguiente = { ...prev, [indicador]: { ...prev[indicador], [clave]: valor } }
+      try {
+        localStorage.setItem(CLAVE_PARAMS, JSON.stringify(siguiente))
+      } catch {
+        /* almacenamiento no disponible */
+      }
+      return siguiente
+    })
+  }, [])
 
-  const borrarParam = useCallback(
-    (indicador: string, clave: string) => {
-      const delIndicador = { ...params[indicador] }
+  const borrarParam = useCallback((indicador: string, clave: string) => {
+    setParams((prev) => {
+      const delIndicador = { ...prev[indicador] }
       delete delIndicador[clave]
-      const siguiente = { ...params }
+      const siguiente = { ...prev }
       if (Object.keys(delIndicador).length > 0) siguiente[indicador] = delIndicador
       else delete siguiente[indicador]
-      persistirParams(siguiente)
-    },
-    [params, persistirParams],
-  )
+      try {
+        localStorage.setItem(CLAVE_PARAMS, JSON.stringify(siguiente))
+      } catch {
+        /* almacenamiento no disponible */
+      }
+      return siguiente
+    })
+  }, [])
 
   const valor = useMemo<ContextoEstilos>(
     () => ({

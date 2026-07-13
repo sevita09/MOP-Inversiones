@@ -34,7 +34,14 @@ import { sincronizarEmasExtra, limpiarEmasExtra, type EmaCalculada } from './ser
 import { mediaMovil } from './mediaMovil'
 import { calcularVPVR } from './vpvr'
 import { PrimitivaVPVR } from './primitivaVPVR'
-import { REC_EMA, REC_BANDAS, REC_BOLLINGER } from './config/estilosIndicadores'
+import {
+  REC_EMA,
+  REC_BANDAS,
+  REC_BOLLINGER,
+  REC_VPVR_SUBE,
+  REC_VPVR_BAJA,
+  REC_VPVR_POC,
+} from './config/estilosIndicadores'
 import { crearSeriesBollinger, volcarBollinger, aplicarEstiloBollinger } from './seriesBollinger'
 import { dibujarNiveles, quitarNiveles } from './seriesNiveles'
 import {
@@ -190,6 +197,15 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   estBandasRef.current = estBandas
   const estBollRef = useRef(estBoll)
   estBollRef.current = estBoll
+  // Estilos del VPVR (histogramas + línea POC); la firma detecta cambios profundos
+  const estVpvr = {
+    sube: estiloDe('vpvr.sube', REC_VPVR_SUBE),
+    baja: estiloDe('vpvr.baja', REC_VPVR_BAJA),
+    poc: estiloDe('vpvr.poc', REC_VPVR_POC),
+  }
+  const firmaVpvr = JSON.stringify(estVpvr)
+  const estVpvrRef = useRef(estVpvr)
+  estVpvrRef.current = estVpvr
 
   const indicePorTs = useMemo(() => {
     const mapa = new Map<number, number>()
@@ -305,6 +321,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     const prim = new PrimitivaVPVR(s)
     vpvrPrim.current = prim
     s.attachPrimitive(prim)
+    prim.setEstilos(estVpvrRef.current)
     recomputarVpvr()
     let temporizador: number | undefined
     const alCambiarRango = () => {
@@ -331,6 +348,11 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   useEffect(() => {
     if (vpvrPrim.current) recomputarVpvr()
   }, [velas, recomputarVpvr])
+
+  // Aplicar en vivo el estilo del VPVR cuando el usuario lo cambia en el diálogo
+  useEffect(() => {
+    vpvrPrim.current?.setEstilos(estVpvrRef.current)
+  }, [firmaVpvr])
 
   // Serie de volumen (histograma overlay anclado al fondo del panel)
   useEffect(() => {

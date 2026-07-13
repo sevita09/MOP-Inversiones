@@ -3,7 +3,7 @@ import { COLOR_EMA_CENTRAL } from '../configGrafico'
 import { OSCILADORES } from '../configOsciladores'
 import { CAMPOS_BANDAS, PARAMS_POR_INDICADOR, type CampoParam } from './paramsIndicadores'
 
-export type CampoEstilo = 'color' | 'linea'
+export type CampoEstilo = 'color' | 'linea' | 'opacidad'
 
 // Un elemento configurable (una línea/serie): su id de estilo, su rótulo, qué
 // campos ofrece y su estilo recomendado (default del código).
@@ -34,6 +34,11 @@ export interface AperturaConfig {
 export const REC_EMA: Estilo = { color: COLOR_EMA_CENTRAL, ancho: 2, tipoLinea: 'solid' }
 export const REC_BANDAS: Estilo = { color: '#388bfd', ancho: 1, tipoLinea: 'solid' }
 export const REC_BOLLINGER: Estilo = { color: '#8b949e', ancho: 1, tipoLinea: 'dashed' }
+
+// VPVR: histogramas alcista/bajista (color + opacidad) y línea del POC
+export const REC_VPVR_SUBE: Estilo = { color: '#3fb950', opacidad: 0.45 }
+export const REC_VPVR_BAJA: Estilo = { color: '#f85149', opacidad: 0.45 }
+export const REC_VPVR_POC: Estilo = { color: '#f85149', ancho: 2, tipoLinea: 'solid', opacidad: 1 }
 
 // Opacidad de cada banda σ sobre el color base (±1σ la más marcada, ±3σ la más sutil)
 export const OPACIDAD_SIGMA: Record<1 | 2 | 3, number> = { 1: 0.55, 2: 0.38, 3: 0.22 }
@@ -77,10 +82,19 @@ export function grupoOscilador(nombre: string): GrupoConfig {
   }
 }
 
-// La tuerca única de la barra abre EMA / σ / BB en pestañas
+export const GRUPO_VPVR: GrupoConfig = {
+  titulo: 'VPVR',
+  elementos: [
+    { id: 'vpvr.sube', etiqueta: 'Vol. alcista', campos: ['color', 'opacidad'], recomendado: REC_VPVR_SUBE },
+    { id: 'vpvr.baja', etiqueta: 'Vol. bajista', campos: ['color', 'opacidad'], recomendado: REC_VPVR_BAJA },
+    { id: 'vpvr.poc', etiqueta: 'Línea POC', campos: ['color', 'linea', 'opacidad'], recomendado: REC_VPVR_POC },
+  ],
+}
+
+// La tuerca única de la barra abre EMA / σ / BB / VPVR en pestañas
 export const APERTURA_PRECIO: AperturaConfig = {
   titulo: 'Indicadores del precio',
-  grupos: [GRUPO_EMA, GRUPO_BANDAS, GRUPO_BOLLINGER],
+  grupos: [GRUPO_EMA, GRUPO_BANDAS, GRUPO_BOLLINGER, GRUPO_VPVR],
 }
 
 // La tuerca de un oscilador abre solo ese indicador (una sola pestaña)

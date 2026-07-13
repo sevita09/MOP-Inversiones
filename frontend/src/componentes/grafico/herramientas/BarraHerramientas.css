@@ -1,7 +1,8 @@
+/* Pegada a la barra superior: nace en el borde del chart, sin flotar */
 .barra-herramientas {
   position: absolute;
-  top: 36px;
-  left: 4px;
+  top: 0;
+  left: 0;
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -9,7 +10,9 @@
   padding: 4px;
   background: #161b22;
   border: 1px solid #30363d;
-  border-radius: 6px;
+  border-top: none;
+  border-left: none;
+  border-radius: 0 0 6px 0;
 }
 
 .boton-herramienta {
@@ -56,10 +59,10 @@
   background: #30363d;
 }
 
-/* El imán es un emoji a color: lo pasamos a gris SOLO en el glifo (no en el botón),
-   así el fondo azul del estado activo no se griesa y marca la selección igual que
-   las demás herramientas. */
-.iman-glifo {
+/* Emojis a color (imán, regla): los pasamos a gris SOLO en el glifo (no en el
+   botón), así el fondo azul del estado activo no se griesa y marca la selección
+   igual que las demás herramientas. */
+.glifo-gris {
   display: inline-block;
   filter: grayscale(1);
 }
