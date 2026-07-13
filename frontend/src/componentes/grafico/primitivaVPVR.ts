@@ -9,11 +9,26 @@ import type {
 } from 'lightweight-charts'
 import type { CanvasRenderingTarget2D } from 'fancy-canvas'
 import type { PerfilVPVR } from './vpvr'
+import { conOpacidad, type Estilo } from '../../contextos/EstilosContext'
+import { dashDe } from './herramientas/estiloDibujo'
+import {
+  REC_VPVR_BAJA,
+  REC_VPVR_POC,
+  REC_VPVR_SUBE,
+} from './config/estilosIndicadores'
 
-const COLOR_SUBE = 'rgba(63, 185, 80, 0.45)' // volumen de velas alcistas
-const COLOR_BAJA = 'rgba(248, 81, 73, 0.45)' // volumen de velas bajistas
-const COLOR_POC = '#f85149' // línea del POC (nivel de mayor volumen)
 const ANCHO_MAX_FRAC = 0.15 // ancho de la barra más larga = 15% del panel
+
+// Estilo efectivo de cada pieza del VPVR (histogramas + línea del POC)
+export interface EstilosVPVR {
+  sube: Estilo
+  baja: Estilo
+  poc: Estilo
+}
+
+function colorCon(estilo: Estilo, rec: Estilo): string {
+  return conOpacidad(estilo.color ?? rec.color!, estilo.opacidad ?? rec.opacidad ?? 1)
+}
 
 interface BarraPixel {
   yTop: number
@@ -26,9 +41,16 @@ interface BarraPixel {
 
 class RendererBarras implements ISeriesPrimitivePaneRenderer {
   private _barras: BarraPixel[] = []
+  private _colorSube = colorCon(REC_VPVR_SUBE, REC_VPVR_SUBE)
+  private _colorBaja = colorCon(REC_VPVR_BAJA, REC_VPVR_BAJA)
 
   setBarras(barras: BarraPixel[]) {
     this._barras = barras
+  }
+
+  setColores(sube: string, baja: string) {
+    this._colorSube = sube
+    this._colorBaja = baja
   }
 
   draw(target: CanvasRenderingTarget2D) {
@@ -39,10 +61,10 @@ class RendererBarras implements ISeriesPrimitivePaneRenderer {
         const alto = Math.max(1, b.yBot - b.yTop - 1) // -1px de separación entre barras
         const subeW = b.subeFrac * anchoMax
         const bajaW = b.bajaFrac * anchoMax
-        // Alcista (verde) pegado a la derecha; bajista (rojo) a su izquierda
-        ctx.fillStyle = COLOR_SUBE
+        // Alcista pegado a la derecha; bajista a su izquierda
+        ctx.fillStyle = this._colorSube
         ctx.fillRect(der - subeW, b.yTop, subeW, alto)
-        ctx.fillStyle = COLOR_BAJA
+        ctx.fillStyle = this._colorBaja
         ctx.fillRect(der - subeW - bajaW, b.yTop, bajaW, alto)
       }
     })
@@ -53,21 +75,32 @@ class RendererBarras implements ISeriesPrimitivePaneRenderer {
 
 class RendererPoc implements ISeriesPrimitivePaneRenderer {
   private _y: number | null = null
+  private _color = colorCon(REC_VPVR_POC, REC_VPVR_POC)
+  private _ancho = REC_VPVR_POC.ancho ?? 2
+  private _dash: number[] = []
 
   setY(y: number | null) {
     this._y = y
+  }
+
+  setEstilo(color: string, ancho: number, dash: number[]) {
+    this._color = color
+    this._ancho = ancho
+    this._dash = dash
   }
 
   draw(target: CanvasRenderingTarget2D) {
     if (this._y == null) return
     const y = this._y
     target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
-      ctx.strokeStyle = COLOR_POC
-      ctx.lineWidth = 1.5
+      ctx.strokeStyle = this._color
+      ctx.lineWidth = this._ancho
+      ctx.setLineDash(this._dash)
       ctx.beginPath()
       ctx.moveTo(0, y)
       ctx.lineTo(mediaSize.width, y)
       ctx.stroke()
+      ctx.setLineDash([])
     })
   }
 }
@@ -76,6 +109,9 @@ class VistaBarras implements ISeriesPrimitivePaneView {
   private _r = new RendererBarras()
   setBarras(barras: BarraPixel[]) {
     this._r.setBarras(barras)
+  }
+  setColores(sube: string, baja: string) {
+    this._r.setColores(sube, baja)
   }
   renderer() {
     return this._r
@@ -89,6 +125,9 @@ class VistaPoc implements ISeriesPrimitivePaneView {
   private _r = new RendererPoc()
   setY(y: number | null) {
     this._r.setY(y)
+  }
+  setEstilo(color: string, ancho: number, dash: number[]) {
+    this._r.setEstilo(color, ancho, dash)
   }
   renderer() {
     return this._r
@@ -148,6 +187,20 @@ export class PrimitivaVPVR implements ISeriesPrimitive {
 
   setPerfil(perfil: PerfilVPVR | null) {
     this._perfil = perfil
+    this._requestUpdate?.()
+  }
+
+  // Aplica el estilo del usuario (colores/opacidad de los histogramas, línea del POC)
+  setEstilos(estilos: EstilosVPVR) {
+    this._barras.setColores(
+      colorCon(estilos.sube, REC_VPVR_SUBE),
+      colorCon(estilos.baja, REC_VPVR_BAJA),
+    )
+    this._poc.setEstilo(
+      colorCon(estilos.poc, REC_VPVR_POC),
+      estilos.poc.ancho ?? REC_VPVR_POC.ancho ?? 2,
+      dashDe(estilos.poc.tipoLinea),
+    )
     this._requestUpdate?.()
   }
 }

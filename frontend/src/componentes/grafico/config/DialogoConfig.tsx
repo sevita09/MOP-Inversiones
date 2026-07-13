@@ -57,6 +57,22 @@ function DialogoConfig({ apertura, temporalidad, alCerrar }: Props) {
             />
           </div>
         )}
+        {elem.campos.includes('opacidad') && (
+          <div className="campo-config">
+            <span className="etiqueta-config">Opacidad</span>
+            <div className="fila-opacidad">
+              <input
+                type="range"
+                min={10}
+                max={100}
+                step={5}
+                value={Math.round((ef.opacidad ?? 1) * 100)}
+                onChange={(e) => guardar(elem.id, { opacidad: Number(e.target.value) / 100 })}
+              />
+              <span className="valor-opacidad">{Math.round((ef.opacidad ?? 1) * 100)}%</span>
+            </div>
+          </div>
+        )}
         <div className="recomendado-config">
           Recomendado:{' '}
           <b style={{ color: elem.recomendado.color }}>{nombreColor(elem.recomendado.color ?? '')}</b>
