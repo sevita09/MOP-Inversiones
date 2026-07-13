@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react'
 import { createChart, PriceScaleMode } from 'lightweight-charts'
 import type {
   CandlestickData,
@@ -32,6 +32,8 @@ import {
 } from '../../contextos/EmasExtraContext'
 import { sincronizarEmasExtra, limpiarEmasExtra, type EmaCalculada } from './seriesEmasExtra'
 import { mediaMovil } from './mediaMovil'
+import { calcularVPVR } from './vpvr'
+import { PrimitivaVPVR } from './primitivaVPVR'
 import { REC_EMA, REC_BANDAS, REC_BOLLINGER } from './config/estilosIndicadores'
 import { crearSeriesBollinger, volcarBollinger, aplicarEstiloBollinger } from './seriesBollinger'
 import { dibujarNiveles, quitarNiveles } from './seriesNiveles'
@@ -113,6 +115,7 @@ interface Props {
   mostrarBandas: boolean
   mostrarBollinger: boolean
   mostrarNiveles: boolean
+  mostrarVpvr: boolean
   sincronizador?: SincronizadorTiempo
   // Crosshair compartido: el ts bajo el mouse en cualquier panel, y cómo reportarlo
   tsActivo?: number | null
@@ -141,6 +144,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     mostrarBandas,
     mostrarBollinger,
     mostrarNiveles,
+    mostrarVpvr,
     sincronizador,
     tsActivo = null,
     alMoverCrosshair,
@@ -155,6 +159,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const seriesBandas = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
   const seriesBollinger = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
   const seriesEmasExtra = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
+  const vpvrPrim = useRef<PrimitivaVPVR | null>(null)
   const lineasNiveles = useRef<IPriceLine[]>([])
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
   // La media y las bandas salen del mismo indicador: basta con que alguno esté activo
@@ -273,6 +278,59 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
       serie.current = null
     }
   }, [tipo])
+
+  // VPVR: perfil de volumen del rango visible, calculado en el frontend. Recalcula
+  // el binning con las velas visibles y lo vuelca al primitivo (que redibuja).
+  const recomputarVpvr = useCallback(() => {
+    const chart = grafico.current
+    const prim = vpvrPrim.current
+    if (!chart || !prim) return
+    const rango = chart.timeScale().getVisibleLogicalRange()
+    const todas = velasRef.current
+    if (!rango || todas.length === 0) {
+      prim.setPerfil(null)
+      return
+    }
+    const desde = Math.max(0, Math.floor(rango.from))
+    const hasta = Math.min(todas.length, Math.ceil(rango.to) + 1)
+    prim.setPerfil(calcularVPVR(todas.slice(desde, hasta)))
+  }, [])
+
+  // Crear/atachar el primitivo del VPVR con su toggle (y al recrearse la serie por
+  // cambio de tipo). Recalcula al hacer pan/zoom (rango visible), con debounce.
+  useEffect(() => {
+    const chart = grafico.current
+    const s = serie.current
+    if (!chart || !s || !mostrarVpvr) return
+    const prim = new PrimitivaVPVR(s)
+    vpvrPrim.current = prim
+    s.attachPrimitive(prim)
+    recomputarVpvr()
+    let temporizador: number | undefined
+    const alCambiarRango = () => {
+      if (temporizador) window.clearTimeout(temporizador)
+      temporizador = window.setTimeout(recomputarVpvr, 120)
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(alCambiarRango)
+    return () => {
+      if (temporizador) window.clearTimeout(temporizador)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(alCambiarRango)
+      try {
+        s.detachPrimitive(prim)
+        // detachPrimitive no repinta solo: un applyOptions vacío fuerza el redibujo
+        // para que el histograma desaparezca ya, sin esperar a un pan/click.
+        s.applyOptions({})
+      } catch {
+        /* serie disposed */
+      }
+      vpvrPrim.current = null
+    }
+  }, [mostrarVpvr, tipo, recomputarVpvr])
+
+  // Recalcular el VPVR cuando cambian las velas (nueva data o refresco por sync)
+  useEffect(() => {
+    if (vpvrPrim.current) recomputarVpvr()
+  }, [velas, recomputarVpvr])
 
   // Serie de volumen (histograma overlay anclado al fondo del panel)
   useEffect(() => {

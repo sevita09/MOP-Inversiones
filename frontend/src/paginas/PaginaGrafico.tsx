@@ -16,6 +16,7 @@ import SelectorEma from '../componentes/grafico/SelectorEma'
 import SelectorBandas from '../componentes/grafico/SelectorBandas'
 import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
 import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
+import SelectorVPVR from '../componentes/grafico/SelectorVPVR'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import BotonPantallaCompleta from '../componentes/grafico/BotonPantallaCompleta'
 import DialogoConfig from '../componentes/grafico/config/DialogoConfig'
@@ -53,6 +54,7 @@ function PaginaGrafico() {
   const [mostrarBandas, setMostrarBandas] = usarEstadoPersistente('mop.bandas', false)
   const [mostrarBollinger, setMostrarBollinger] = usarEstadoPersistente('mop.bollinger', false)
   const [mostrarNiveles, setMostrarNiveles] = usarEstadoPersistente('mop.niveles', false)
+  const [mostrarVpvr, setMostrarVpvr] = usarEstadoPersistente('mop.vpvr', false)
   const [oscActivos, setOscActivos] = usarEstadoPersistente<NombreOscilador[]>('mop.osciladores', [])
   const osciladores = new Set(oscActivos)
   const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
@@ -97,6 +99,7 @@ function PaginaGrafico() {
         <SelectorTipoGrafico tipo={tipo} alCambiar={setTipo} />
         <span className="separador-barra" />
         <SelectorVolumen mostrar={mostrarVolumen} alCambiar={setMostrarVolumen} />
+        <SelectorVPVR mostrar={mostrarVpvr} alCambiar={setMostrarVpvr} />
         <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />
         <SelectorEma mostrar={mostrarEma} temporalidad={temporalidad} alCambiar={setMostrarEma} />
         <SelectorBandas mostrar={mostrarBandas} alCambiar={setMostrarBandas} />
@@ -130,6 +133,7 @@ function PaginaGrafico() {
             mostrarBandas={mostrarBandas}
             mostrarBollinger={mostrarBollinger}
             mostrarNiveles={mostrarNiveles}
+            mostrarVpvr={mostrarVpvr}
             sincronizador={sincronizador}
             tsActivo={tsActivo}
             alMoverCrosshair={setTsActivo}
