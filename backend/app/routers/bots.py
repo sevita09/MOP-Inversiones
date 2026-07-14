@@ -6,8 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import TICKERS_DOLAR
 from app.db import conexion_api
-from app.esquemas.bots import BotEdicion, BotPeticion
+from app.esquemas.bots import BotEdicion, BotPeticion, PreviewPeticion
 from app.repositorios import bots as repo
+from app.servicios.bots.evaluador import evaluar_reglas
+from app.servicios.dolar import velas_para_vista
 from app.servicios.tickers_extra import universo_completo
 
 router = APIRouter(prefix="/api")
@@ -24,6 +26,17 @@ def _validar_ticker(conexion: sqlite3.Connection, ticker: str) -> str:
 @router.get("/bots")
 def listar_bots(conexion: sqlite3.Connection = Depends(conexion_api)):
     return repo.listar(conexion)
+
+
+@router.post("/bots/preview")
+def preview_de_reglas(
+    body: PreviewPeticion, conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    """Evalúa las reglas sobre la historia del ticker (las mismas velas e
+    indicadores que ve el chart) y devuelve los ts donde disparan."""
+    ticker = _validar_ticker(conexion, body.ticker)
+    velas = velas_para_vista(conexion, ticker, body.temporalidad, body.moneda)
+    return evaluar_reglas(velas, body.reglas, body.temporalidad)
 
 
 @router.get("/bots/{id_bot}")

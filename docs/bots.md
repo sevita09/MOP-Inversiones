@@ -34,6 +34,43 @@ en v4.6.
   mutación), `componentes/bots/FormularioBot.tsx` (alta/edición con buscador de
   ticker), confirmación al borrar como en las listas del sidebar.
 
+## Reglas (v4.2)
+
+`reglas_json` versionado (`"version": 1`) con tres bloques — `entrada`, `salida`,
+`filtros` — de condiciones que se combinan con **AND** (los filtros van AND con
+la entrada). Cada condición referencia una serie de un indicador del registry:
+
+```json
+{"indicador": "bandas", "serie": "z", "operador": "menor", "objetivo": -2}
+{"indicador": "estocastico", "serie": "k", "operador": "cruza_arriba", "objetivo": {"serie": "d"}}
+{"indicador": "bandas", "serie": "media", "operador": "cruza_abajo_precio"}
+```
+
+- **Operadores**: `mayor`, `menor`, `cruza_arriba`, `cruza_abajo` (objetivo:
+  constante u otra serie del mismo indicador) y `cruza_arriba_precio` /
+  `cruza_abajo_precio` (el cierre cruza la serie; sin objetivo).
+- **`params`** ajusta el indicador (`{"periodo": 20}`); en `objetivo.params`
+  permite cruzar dos variantes (EMA rápida × EMA lenta).
+- El esquema vive en `esquemas/reglas.py` (`SERIES_POR_INDICADOR` dice qué serie
+  tiene cada indicador; un test lo verifica contra el registry real).
+- `bandas` expone también la serie **`z`** con la misma σ de las bandas: z = −2
+  es exactamente la banda −2σ que muestra el chart.
+
+## Evaluador y vista previa
+
+`servicios/bots/evaluador.py` — **el bot ve lo mismo que el chart**: velas de
+`velas_para_vista` (moneda/ADR resueltos) + indicadores de `calcular()`, sin
+recalcular nada propio. El período de `bandas`/`percentil_distancia` es la EMA
+central de la temporalidad (D=200, S=50, M=12), como en `/api/indicadores`. El
+warmup (`None`) nunca cumple una condición, y los cruces piden la barra
+anterior completa. Hasta v4.4 todas las condiciones se evalúan en la
+temporalidad del bot.
+
+`POST /api/bots/preview` con `{ticker, temporalidad, moneda, reglas}` →
+`{ts_entrada: [...], ts_salida: [...]}`: los ts de las barras donde las reglas
+hubieran disparado sobre la historia. Es lo que el editor de reglas (v4.3)
+pinta como ▲/▼ sobre el gráfico.
+
 ## Duplicar es de primera clase
 
 La metodología pide variar la salida de un mismo bot y dejar que el backtest

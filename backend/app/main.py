@@ -65,6 +65,17 @@ def salud():
     return {"estado": "ok", "servicio": "mop-backend"}
 
 
+@app.middleware("http")
+async def html_sin_cache(request, call_next):
+    """El index.html va sin cache: el WKWebView de la app guardaba el HTML viejo
+    y tras cada actualización seguía mostrando el frontend anterior. Los assets
+    hasheados (index-XXXX.js) sí pueden cachearse: cambian de nombre al cambiar."""
+    respuesta = await call_next(request)
+    if respuesta.headers.get("content-type", "").startswith("text/html"):
+        respuesta.headers["Cache-Control"] = "no-cache"
+    return respuesta
+
+
 # Frontend compilado (modo app de escritorio): servir el build de Vite desde el
 # mismo puerto que la API, así todo corre en un solo origen sin CORS. Se monta al
 # final para que las rutas /api tengan prioridad, y solo si existe el build (en
