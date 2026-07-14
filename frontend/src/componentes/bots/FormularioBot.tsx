@@ -1,0 +1,210 @@
+import { useMemo, useState } from 'react'
+import type { Bot, BotNuevo, Moneda, TemporalidadBot } from '../../api/tipos'
+import LogoTicker from '../LogoTicker'
+import { usarTickers } from '../../hooks/usarTickers'
+import './FormularioBot.css'
+
+interface Props {
+  bot: Bot | null // null = alta
+  alGuardar: (datos: BotNuevo) => Promise<void>
+  alCerrar: () => void
+}
+
+const TEMPORALIDADES: { valor: TemporalidadBot; etiqueta: string }[] = [
+  { valor: 'D', etiqueta: 'Diario' },
+  { valor: 'S', etiqueta: 'Semanal' },
+  { valor: 'M', etiqueta: 'Mensual' },
+]
+
+const MONEDAS: Moneda[] = ['ARS', 'USD']
+
+/** Alta y edición de un bot: nombre, ticker, temporalidad, moneda y capital. */
+function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
+  const paneles = usarTickers()
+  const [nombre, setNombre] = useState(bot?.nombre ?? '')
+  const [ticker, setTicker] = useState(bot?.ticker ?? '')
+  const [busqueda, setBusqueda] = useState('')
+  const [temporalidad, setTemporalidad] = useState<TemporalidadBot>(bot?.temporalidad ?? 'D')
+  const [moneda, setMoneda] = useState<Moneda>(bot?.moneda ?? 'ARS')
+  const [inicial, setInicial] = useState(String(bot?.capital.inicial ?? 1000000))
+  const [porcentaje, setPorcentaje] = useState(
+    String(bot?.capital.porcentaje_por_posicion ?? 100),
+  )
+  const [mensaje, setMensaje] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  // Los bots operan cualquier ticker con datos, menos los de dólar
+  const candidatos = useMemo(() => {
+    if (!paneles) return []
+    const todos = [
+      ...paneles.panel_lider,
+      ...paneles.panel_general,
+      ...paneles.cedears,
+      ...paneles.indices,
+      ...paneles.cripto,
+    ]
+    const consulta = busqueda.trim().toUpperCase()
+    if (!consulta) return []
+    return todos.filter((simbolo) => simbolo.includes(consulta)).slice(0, 8)
+  }, [paneles, busqueda])
+
+  const guardar = async () => {
+    const limpio = nombre.trim()
+    if (!limpio) return setMensaje('Poné un nombre al bot')
+    if (!ticker) return setMensaje('Elegí un ticker')
+    const capitalInicial = Number(inicial)
+    const capitalPorcentaje = Number(porcentaje)
+    if (!(capitalInicial > 0)) return setMensaje('El capital inicial debe ser mayor a 0')
+    if (!(capitalPorcentaje > 0 && capitalPorcentaje <= 100))
+      return setMensaje('El % por posición va de 1 a 100')
+
+    setGuardando(true)
+    setMensaje('')
+    try {
+      await alGuardar({
+        nombre: limpio,
+        ticker,
+        temporalidad,
+        moneda,
+        capital: { inicial: capitalInicial, porcentaje_por_posicion: capitalPorcentaje },
+      })
+    } catch (error) {
+      const texto = error instanceof Error ? error.message : ''
+      setMensaje(
+        texto.includes('409')
+          ? `Ya existe un bot llamado ${limpio}`
+          : 'No se pudo guardar el bot',
+      )
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <div className="fondo-formulario-bot" onClick={alCerrar}>
+      <div className="formulario-bot" onClick={(evento) => evento.stopPropagation()}>
+        <div className="cabecera-formulario-bot">
+          <span>{bot ? `Editar ${bot.nombre}` : 'Nuevo bot'}</span>
+          <button type="button" className="cerrar-formulario" onClick={alCerrar}>
+            ×
+          </button>
+        </div>
+
+        <label className="campo-bot">
+          Nombre
+          <input
+            autoFocus
+            value={nombre}
+            placeholder="Ej: Reversión GGAL semanal"
+            onChange={(evento) => setNombre(evento.target.value)}
+          />
+        </label>
+
+        <label className="campo-bot">
+          Ticker
+          {ticker ? (
+            <span className="ticker-elegido">
+              <LogoTicker ticker={ticker} tamano={20} />
+              {ticker}
+              <button type="button" onClick={() => setTicker('')} title="Cambiar">
+                ×
+              </button>
+            </span>
+          ) : (
+            <span className="buscador-ticker-bot">
+              <input
+                value={busqueda}
+                placeholder="Buscar ticker…"
+                onChange={(evento) => setBusqueda(evento.target.value.toUpperCase())}
+              />
+              {candidatos.length > 0 && (
+                <ul className="sugerencias-ticker">
+                  {candidatos.map((simbolo) => (
+                    <li key={simbolo}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTicker(simbolo)
+                          setBusqueda('')
+                        }}
+                      >
+                        <LogoTicker ticker={simbolo} tamano={18} />
+                        {simbolo}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </span>
+          )}
+        </label>
+
+        <div className="campo-bot">
+          Temporalidad
+          <div className="chips-bot">
+            {TEMPORALIDADES.map(({ valor, etiqueta }) => (
+              <button
+                key={valor}
+                type="button"
+                className={valor === temporalidad ? 'chip-bot activo' : 'chip-bot'}
+                onClick={() => setTemporalidad(valor)}
+              >
+                {etiqueta}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="campo-bot">
+          Moneda
+          <div className="chips-bot">
+            {MONEDAS.map((valor) => (
+              <button
+                key={valor}
+                type="button"
+                className={valor === moneda ? 'chip-bot activo' : 'chip-bot'}
+                onClick={() => setMoneda(valor)}
+              >
+                {valor}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="fila-capital">
+          <label className="campo-bot">
+            Capital inicial
+            <input
+              type="number"
+              min={1}
+              value={inicial}
+              onChange={(evento) => setInicial(evento.target.value)}
+            />
+          </label>
+          <label className="campo-bot">
+            % de entrada por posición
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={porcentaje}
+              onChange={(evento) => setPorcentaje(evento.target.value)}
+            />
+          </label>
+        </div>
+
+        {mensaje && <div className="mensaje-formulario-bot">{mensaje}</div>}
+
+        <div className="acciones-formulario-bot">
+          <button type="button" className="boton-guardar-bot" disabled={guardando} onClick={() => void guardar()}>
+            {guardando ? 'Guardando…' : bot ? 'Guardar cambios' : 'Crear bot'}
+          </button>
+          <button type="button" className="boton-cancelar" onClick={alCerrar}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default FormularioBot
