@@ -12,7 +12,9 @@ interface Props {
 
 function MenuIndicadores({ activos, alAlternar, alConfigurar }: Props) {
   const [abierto, setAbierto] = useState(false)
+  const [posicion, setPosicion] = useState({ top: 0, left: 0 })
   const ref = useRef<HTMLDivElement>(null)
+  const botonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!abierto) return
@@ -23,17 +25,32 @@ function MenuIndicadores({ activos, alAlternar, alConfigurar }: Props) {
     return () => document.removeEventListener('mousedown', cerrar)
   }, [abierto])
 
+  // La lista va con position:fixed anclada al botón: el overflow:hidden de la
+  // barra (BarraOverflow) recorta cualquier desplegable absoluto común.
+  const alternar = () => {
+    const boton = botonRef.current
+    if (!abierto && boton) {
+      const rect = boton.getBoundingClientRect()
+      setPosicion({
+        top: rect.bottom + 4,
+        left: Math.min(rect.left, window.innerWidth - 180),
+      })
+    }
+    setAbierto(!abierto)
+  }
+
   return (
     <div className="menu-indicadores" ref={ref}>
       <button
+        ref={botonRef}
         type="button"
         className={`boton-indicadores${activos.size > 0 ? ' activo' : ''}`}
-        onClick={() => setAbierto(!abierto)}
+        onClick={alternar}
       >
         Indicadores{activos.size > 0 ? ` (${activos.size})` : ''}
       </button>
       {abierto && (
-        <div className="menu-indicadores-lista">
+        <div className="menu-indicadores-lista" style={posicion}>
           {ORDEN_OSCILADORES.map((nombre) => (
             <div key={nombre} className="menu-indicadores-item">
               <label className="menu-indicadores-check" title={OSCILADORES[nombre].descripcion}>
