@@ -1,4 +1,6 @@
 import type {
+  Bot,
+  BotNuevo,
   Categoria,
   EstadoActualizacion,
   InfoAdr,
@@ -173,6 +175,34 @@ export function marcarFavorito(ticker: string): Promise<{ tickers: string[] }> {
 
 export function desmarcarFavorito(ticker: string): Promise<{ tickers: string[] }> {
   return fetchJson<{ tickers: string[] }>('/api/favoritos/' + ticker, { method: 'DELETE' })
+}
+
+// --- Bots ---
+
+export function obtenerBots(): Promise<Bot[]> {
+  return obtenerJson<Bot[]>('/api/bots')
+}
+
+export function crearBot(datos: BotNuevo): Promise<Bot> {
+  return fetchJson<Bot>('/api/bots', { method: 'POST', body: JSON.stringify(datos) })
+}
+
+export function editarBot(
+  id: number,
+  cambios: Partial<BotNuevo> & { activo?: boolean },
+): Promise<Bot> {
+  return fetchJson<Bot>('/api/bots/' + id, {
+    method: 'PUT',
+    body: JSON.stringify(cambios),
+  })
+}
+
+export function eliminarBot(id: number): Promise<void> {
+  return fetchJson('/api/bots/' + id, { method: 'DELETE' })
+}
+
+export function duplicarBot(id: number): Promise<Bot> {
+  return fetchJson<Bot>('/api/bots/' + id + '/duplicar', { method: 'POST' })
 }
 
 // --- Niveles de swing (soporte/resistencia) ---

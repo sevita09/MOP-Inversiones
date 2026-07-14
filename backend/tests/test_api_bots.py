@@ -1,0 +1,112 @@
+import pytest
+
+BOT = {
+    "nombre": "Reversión GGAL",
+    "ticker": "GGAL",
+    "temporalidad": "D",
+    "moneda": "USD",
+}
+
+
+@pytest.fixture
+def bot(cliente):
+    return cliente.post("/api/bots", json=BOT).json()
+
+
+# --- alta ---
+
+
+def test_crear_bot_con_defaults(cliente):
+    respuesta = cliente.post("/api/bots", json=BOT)
+    assert respuesta.status_code == 201
+    creado = respuesta.json()
+    assert creado["nombre"] == "Reversión GGAL"
+    assert creado["capital"] == {"inicial": 1000000, "porcentaje_por_posicion": 100}
+    assert creado["reglas"] == {"version": 1, "entrada": [], "salida": [], "filtros": []}
+    assert creado["activo"] is True
+
+
+def test_ticker_se_normaliza_a_mayusculas(cliente):
+    creado = cliente.post("/api/bots", json={**BOT, "ticker": "ggal"}).json()
+    assert creado["ticker"] == "GGAL"
+
+
+def test_nombre_duplicado_da_409(cliente, bot):
+    assert cliente.post("/api/bots", json={**BOT, "ticker": "BMA"}).status_code == 409
+
+
+def test_nombre_vacio_es_invalido(cliente):
+    assert cliente.post("/api/bots", json={**BOT, "nombre": "  "}).status_code == 422
+
+
+def test_ticker_desconocido_es_invalido(cliente):
+    assert cliente.post("/api/bots", json={**BOT, "ticker": "NADA"}).status_code == 422
+
+
+def test_tickers_de_dolar_quedan_afuera(cliente):
+    assert cliente.post("/api/bots", json={**BOT, "ticker": "DOLARCCL"}).status_code == 422
+
+
+def test_temporalidad_horaria_es_invalida(cliente):
+    assert cliente.post("/api/bots", json={**BOT, "temporalidad": "H"}).status_code == 422
+
+
+def test_capital_invalido_es_422(cliente):
+    peticion = {**BOT, "capital": {"inicial": -5, "porcentaje_por_posicion": 100}}
+    assert cliente.post("/api/bots", json=peticion).status_code == 422
+
+
+# --- lectura ---
+
+
+def test_listar_y_obtener(cliente, bot):
+    assert cliente.get("/api/bots").json() == [bot]
+    assert cliente.get(f"/api/bots/{bot['id']}").json() == bot
+
+
+def test_obtener_inexistente_es_404(cliente):
+    assert cliente.get("/api/bots/99").status_code == 404
+
+
+# --- edición ---
+
+
+def test_editar_campos_sueltos(cliente, bot):
+    respuesta = cliente.put(
+        f"/api/bots/{bot['id']}", json={"nombre": "Otro", "activo": False}
+    )
+    assert respuesta.status_code == 200
+    editado = respuesta.json()
+    assert editado["nombre"] == "Otro"
+    assert editado["activo"] is False
+    assert editado["ticker"] == "GGAL"
+
+
+def test_editar_a_nombre_ocupado_da_409(cliente, bot):
+    cliente.post("/api/bots", json={**BOT, "nombre": "Otro"})
+    respuesta = cliente.put(f"/api/bots/{bot['id']}", json={"nombre": "Otro"})
+    assert respuesta.status_code == 409
+
+
+def test_editar_inexistente_es_404(cliente):
+    assert cliente.put("/api/bots/99", json={"nombre": "X"}).status_code == 404
+
+
+# --- borrado y duplicado ---
+
+
+def test_eliminar_bot(cliente, bot):
+    assert cliente.delete(f"/api/bots/{bot['id']}").status_code == 200
+    assert cliente.get("/api/bots").json() == []
+    assert cliente.delete(f"/api/bots/{bot['id']}").status_code == 404
+
+
+def test_duplicar_bot(cliente, bot):
+    respuesta = cliente.post(f"/api/bots/{bot['id']}/duplicar")
+    assert respuesta.status_code == 201
+    assert respuesta.json()["nombre"] == "Reversión GGAL (copia)"
+    assert len(cliente.get("/api/bots").json()) == 2
+
+
+def test_duplicar_inexistente_es_404(cliente):
+    assert cliente.post("/api/bots/99/duplicar").status_code == 404

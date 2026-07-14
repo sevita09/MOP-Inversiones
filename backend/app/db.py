@@ -59,6 +59,19 @@ CREATE TABLE IF NOT EXISTS tickers_extra (
     agregado   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS bots (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre       TEXT NOT NULL UNIQUE,
+    ticker       TEXT NOT NULL,
+    temporalidad TEXT NOT NULL,   -- D, S o M (la horaria queda fuera de los bots)
+    moneda       TEXT NOT NULL DEFAULT 'ARS',
+    capital_json TEXT NOT NULL,   -- {"inicial": ..., "porcentaje_por_posicion": ...}
+    reglas_json  TEXT NOT NULL,   -- {"version": 1, "entrada": [...], "salida": [...], "filtros": [...]}
+    activo       INTEGER NOT NULL DEFAULT 1,
+    creado       TEXT NOT NULL DEFAULT (datetime('now')),
+    actualizado  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS dibujos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker   TEXT NOT NULL,
