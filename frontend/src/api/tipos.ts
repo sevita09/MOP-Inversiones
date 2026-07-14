@@ -83,3 +83,41 @@ export interface Categoria {
   nombre: string
   tickers: string[]
 }
+
+// --- Bots ---
+
+export type TemporalidadBot = 'D' | 'S' | 'M'
+
+export interface CapitalBot {
+  inicial: number
+  porcentaje_por_posicion: number
+}
+
+// Las reglas se tipan fuerte en v4.2 (constructor de reglas); por ahora viajan crudas
+export interface ReglasBot {
+  version: number
+  entrada: unknown[]
+  salida: unknown[]
+  filtros: unknown[]
+}
+
+export interface Bot {
+  id: number
+  nombre: string
+  ticker: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  capital: CapitalBot
+  reglas: ReglasBot
+  activo: boolean
+  creado: string
+  actualizado: string
+}
+
+export interface BotNuevo {
+  nombre: string
+  ticker: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  capital: CapitalBot
+}

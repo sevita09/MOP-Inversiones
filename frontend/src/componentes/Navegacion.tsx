@@ -3,6 +3,7 @@ import './Navegacion.css'
 
 const SECCIONES = [
   { ruta: '/', etiqueta: 'Gráfico' },
+  { ruta: '/bots', etiqueta: 'Bots' },
   { ruta: '/cartera', etiqueta: 'Cartera' },
   { ruta: '/datos', etiqueta: 'Datos' },
 ]

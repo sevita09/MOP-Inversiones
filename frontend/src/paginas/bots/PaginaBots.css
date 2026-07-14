@@ -1,0 +1,119 @@
+.pagina-bots {
+  padding: 16px 24px;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.cabecera-bots {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cabecera-bots h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.boton-nuevo-bot {
+  background: #238636;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.boton-nuevo-bot:hover {
+  background: #2ea043;
+}
+
+.bots-vacio {
+  color: #8b949e;
+  text-align: center;
+  margin-top: 48px;
+}
+
+.nota-bots {
+  font-size: 13px;
+}
+
+.lista-bots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 720px;
+}
+
+.fila-bot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #161b22;
+}
+
+.fila-bot.pausado {
+  opacity: 0.55;
+}
+
+.datos-bot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nombre-bot {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.detalle-bot {
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.chip-pausado {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #30363d;
+  color: #c9d1d9;
+  font-size: 11px;
+}
+
+.acciones-bot {
+  display: flex;
+  gap: 4px;
+}
+
+.acciones-bot button {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #8b949e;
+  font-size: 15px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.acciones-bot button:hover {
+  border-color: #30363d;
+  color: #e6edf3;
+  background: #21262d;
+}
+
+.acciones-bot .accion-borrar:hover {
+  color: #f85149;
+}

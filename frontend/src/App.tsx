@@ -5,6 +5,7 @@ import EstadoBackend from './componentes/EstadoBackend'
 import Navegacion from './componentes/Navegacion'
 import Sidebar from './componentes/Sidebar'
 import PaginaGrafico from './paginas/PaginaGrafico'
+import PaginaBots from './paginas/bots/PaginaBots'
 import PaginaCartera from './paginas/PaginaCartera'
 import PaginaDatos from './paginas/PaginaDatos'
 import { usarVersion } from './hooks/usarVersion'
@@ -31,6 +32,7 @@ function App() {
         <div className="contenido">
           <Routes>
             <Route path="/" element={<PaginaGrafico />} />
+            <Route path="/bots" element={<PaginaBots />} />
             <Route path="/cartera" element={<PaginaCartera />} />
             <Route path="/datos" element={<PaginaDatos />} />
           </Routes>
