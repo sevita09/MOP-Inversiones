@@ -48,6 +48,9 @@ def bandas(
     for nivel, k in zip(DESVIOS_BANDA, (desvio1, desvio2, desvio3)):
         salida[f"sup{nivel}"] = media + k * sigma
         salida[f"inf{nivel}"] = media - k * sigma
+    # El z-score con la MISMA σ de las bandas: z = ±k coincide con la banda ±kσ.
+    # Las reglas de los bots lo referencian como bandas.z (ver esquemas/reglas.py).
+    salida["z"] = distancia / sigma
     return salida
 
 
