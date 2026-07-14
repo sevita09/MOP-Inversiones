@@ -1,12 +1,11 @@
-"""Modelos pydantic de entrada para el CRUD de bots.
-
-Las reglas viajan como dict libre hasta v4.2, que trae su esquema fuerte.
-"""
+"""Modelos pydantic de entrada para el CRUD y la vista previa de bots."""
 from __future__ import annotations
 
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
+
+from app.esquemas.reglas import Reglas
 
 Temporalidad = Literal["D", "S", "M"]
 Moneda = Literal["ARS", "USD"]
@@ -24,6 +23,15 @@ class BotPeticion(BaseModel):
     moneda: Moneda = "ARS"
     capital: Capital = Capital()
     activo: bool = True
+
+
+class PreviewPeticion(BaseModel):
+    """Vista previa de reglas: dónde disparan sobre la historia de un ticker."""
+
+    ticker: str
+    temporalidad: Temporalidad
+    moneda: Moneda = "ARS"
+    reglas: Reglas
 
 
 class BotEdicion(BaseModel):
