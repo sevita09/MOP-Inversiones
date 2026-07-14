@@ -13,7 +13,7 @@ function SelectorVPVR({ mostrar, alCambiar }: Props) {
       className={`boton-vpvr${mostrar ? ' activo' : ''}`}
       onClick={() => alCambiar(!mostrar)}
     >
-      Vol Lat
+      Vol L
     </button>
   )
 }
