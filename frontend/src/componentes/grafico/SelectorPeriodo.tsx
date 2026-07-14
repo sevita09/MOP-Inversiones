@@ -6,7 +6,7 @@ const PERIODOS: { etiqueta: string; meses: number | null }[] = [
   { etiqueta: '6M', meses: 6 },
   { etiqueta: '1A', meses: 12 },
   { etiqueta: '5A', meses: 60 },
-  { etiqueta: 'Todo', meses: null },
+  { etiqueta: 'Max', meses: null },
 ]
 
 interface Props {

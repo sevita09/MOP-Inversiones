@@ -21,7 +21,7 @@ interface Props {
   unidades: UnidadBarra[]
 }
 
-const GAP_MIN = 10 // distancia mínima entre elementos del medio antes de ocultar
+const GAP_MIN = 8 // distancia mínima entre elementos del medio antes de ocultar
 const FLECHA = 44 // ancho reservado para la flecha de overflow (botón + margen)
 
 /** Barra responsive. Bordes fijos y compactos (ticker | … | CCL | ARS/USD) y el
