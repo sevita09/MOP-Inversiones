@@ -71,6 +71,26 @@ temporalidad del bot.
 hubieran disparado sobre la historia. Es lo que el editor de reglas (v4.3)
 pinta como ▲/▼ sobre el gráfico.
 
+## Constructor visual y vista previa (v4.3)
+
+El formulario del bot es un modal de dos columnas: los datos a la izquierda y
+las reglas + vista previa a la derecha.
+
+- **`configReglas.ts`** — espejo en el frontend de `SERIES_POR_INDICADOR`, con
+  las etiquetas en castellano de indicadores, series y operadores.
+- **`FilaCondicion.tsx`** — una condición como fila de selects: indicador →
+  serie → operador → objetivo (un valor, otra serie, o nada si el operador es
+  "el precio la cruza").
+- **`ConstructorReglas.tsx`** — los bloques Entrada/Salida/Filtros con sus
+  filas; agregar/quitar condición. El bloque de filtros solo aparece si tiene
+  contenido.
+- **`GraficoPreviewBot.tsx`** — chart compacto (lightweight-charts) con las
+  velas del ticker del bot y las señales de la vista previa como marcadores:
+  ▲ verde bajo la barra de entrada, ▼ rojo sobre la barra de salida.
+- **`usarPreviewBot.ts`** — llama a `POST /api/bots/preview` con debounce de
+  500 ms: editar una condición re-dibuja las señales solo, medio segundo
+  después de la última tecla. Una regla inválida a medio editar ⇒ sin señales.
+
 ## Duplicar es de primera clase
 
 La metodología pide variar la salida de un mismo bot y dejar que el backtest

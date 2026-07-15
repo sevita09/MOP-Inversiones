@@ -2,6 +2,9 @@ import type {
   Bot,
   BotNuevo,
   Categoria,
+  ReglasBot,
+  RespuestaPreview,
+  TemporalidadBot,
   EstadoActualizacion,
   InfoAdr,
   Moneda,
@@ -203,6 +206,18 @@ export function eliminarBot(id: number): Promise<void> {
 
 export function duplicarBot(id: number): Promise<Bot> {
   return fetchJson<Bot>('/api/bots/' + id + '/duplicar', { method: 'POST' })
+}
+
+export function previewBot(
+  ticker: string,
+  temporalidad: TemporalidadBot,
+  moneda: Moneda,
+  reglas: ReglasBot,
+): Promise<RespuestaPreview> {
+  return fetchJson<RespuestaPreview>('/api/bots/preview', {
+    method: 'POST',
+    body: JSON.stringify({ ticker, temporalidad, moneda, reglas }),
+  })
 }
 
 // --- Niveles de swing (soporte/resistencia) ---

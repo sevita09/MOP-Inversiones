@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
-import type { Bot, BotNuevo, Moneda, TemporalidadBot } from '../../api/tipos'
+import type { Bot, BotNuevo, Moneda, ReglasBot, TemporalidadBot } from '../../api/tipos'
 import LogoTicker from '../LogoTicker'
+import ConstructorReglas from './ConstructorReglas'
+import GraficoPreviewBot from './GraficoPreviewBot'
+import { REGLAS_VACIAS } from './configReglas'
 import { usarTickers } from '../../hooks/usarTickers'
 import './FormularioBot.css'
 
@@ -30,6 +33,7 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
   const [porcentaje, setPorcentaje] = useState(
     String(bot?.capital.porcentaje_por_posicion ?? 100),
   )
+  const [reglas, setReglas] = useState<ReglasBot>(bot?.reglas ?? REGLAS_VACIAS)
   const [mensaje, setMensaje] = useState('')
   const [guardando, setGuardando] = useState(false)
 
@@ -67,6 +71,7 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
         temporalidad,
         moneda,
         capital: { inicial: capitalInicial, porcentaje_por_posicion: capitalPorcentaje },
+        reglas,
       })
     } catch (error) {
       const texto = error instanceof Error ? error.message : ''
@@ -89,6 +94,8 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
           </button>
         </div>
 
+        <div className="cuerpo-formulario-bot">
+        <div className="columna-datos-bot">
         <label className="campo-bot">
           Nombre
           <input
@@ -190,6 +197,22 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
               onChange={(evento) => setPorcentaje(evento.target.value)}
             />
           </label>
+        </div>
+        </div>
+
+        <div className="columna-reglas-bot">
+          <ConstructorReglas reglas={reglas} alCambiar={setReglas} />
+          {ticker ? (
+            <GraficoPreviewBot
+              ticker={ticker}
+              temporalidad={temporalidad}
+              moneda={moneda}
+              reglas={reglas}
+            />
+          ) : (
+            <p className="preview-sin-ticker">Elegí un ticker para ver la vista previa.</p>
+          )}
+        </div>
         </div>
 
         {mensaje && <div className="mensaje-formulario-bot">{mensaje}</div>}
