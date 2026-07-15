@@ -93,12 +93,39 @@ export interface CapitalBot {
   porcentaje_por_posicion: number
 }
 
-// Las reglas se tipan fuerte en v4.2 (constructor de reglas); por ahora viajan crudas
+export type OperadorRegla =
+  | 'mayor'
+  | 'menor'
+  | 'cruza_arriba'
+  | 'cruza_abajo'
+  | 'cruza_arriba_precio'
+  | 'cruza_abajo_precio'
+
+// Objetivo de una condición: constante, otra serie del mismo indicador, o nada
+// (en los operadores *_precio, donde el cierre es quien cruza la serie)
+export interface ObjetivoSerie {
+  serie: string
+  params?: Record<string, number>
+}
+
+export interface CondicionRegla {
+  indicador: string
+  serie: string
+  operador: OperadorRegla
+  objetivo?: number | ObjetivoSerie | null
+  params?: Record<string, number>
+}
+
 export interface ReglasBot {
   version: number
-  entrada: unknown[]
-  salida: unknown[]
-  filtros: unknown[]
+  entrada: CondicionRegla[]
+  salida: CondicionRegla[]
+  filtros: CondicionRegla[]
+}
+
+export interface RespuestaPreview {
+  ts_entrada: number[]
+  ts_salida: number[]
 }
 
 export interface Bot {
@@ -120,4 +147,5 @@ export interface BotNuevo {
   temporalidad: TemporalidadBot
   moneda: Moneda
   capital: CapitalBot
+  reglas?: ReglasBot
 }

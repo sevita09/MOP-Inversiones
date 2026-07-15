@@ -56,6 +56,28 @@ def test_capital_invalido_es_422(cliente):
     assert cliente.post("/api/bots", json=peticion).status_code == 422
 
 
+REGLA_Z = {"indicador": "bandas", "serie": "z", "operador": "menor", "objetivo": -2}
+
+
+def test_crear_bot_con_reglas(cliente):
+    peticion = {**BOT, "reglas": {"version": 1, "entrada": [REGLA_Z], "salida": [], "filtros": []}}
+    creado = cliente.post("/api/bots", json=peticion).json()
+    assert creado["reglas"]["entrada"] == [REGLA_Z]
+
+
+def test_crear_bot_con_reglas_invalidas_es_422(cliente):
+    regla_rota = {**REGLA_Z, "indicador": "magia"}
+    peticion = {**BOT, "reglas": {"version": 1, "entrada": [regla_rota], "salida": [], "filtros": []}}
+    assert cliente.post("/api/bots", json=peticion).status_code == 422
+
+
+def test_editar_las_reglas_de_un_bot(cliente, bot):
+    reglas = {"version": 1, "entrada": [REGLA_Z], "salida": [], "filtros": []}
+    editado = cliente.put(f"/api/bots/{bot['id']}", json={"reglas": reglas}).json()
+    assert editado["reglas"]["entrada"] == [REGLA_Z]
+    assert editado["nombre"] == bot["nombre"]
+
+
 # --- lectura ---
 
 

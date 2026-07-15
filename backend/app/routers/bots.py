@@ -60,6 +60,7 @@ def crear_bot(body: BotPeticion, conexion: sqlite3.Connection = Depends(conexion
         body.temporalidad,
         body.moneda,
         body.capital.model_dump(),
+        body.reglas.model_dump(exclude_none=True) if body.reglas else None,
         activo=body.activo,
     )
     if bot is None:

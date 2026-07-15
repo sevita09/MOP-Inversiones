@@ -22,6 +22,7 @@ class BotPeticion(BaseModel):
     temporalidad: Temporalidad
     moneda: Moneda = "ARS"
     capital: Capital = Capital()
+    reglas: Optional[Reglas] = None  # None ⇒ bloques vacíos (bot recién creado)
     activo: bool = True
 
 
@@ -42,4 +43,5 @@ class BotEdicion(BaseModel):
     temporalidad: Optional[Temporalidad] = None
     moneda: Optional[Moneda] = None
     capital: Optional[Capital] = None
+    reglas: Optional[Reglas] = None
     activo: Optional[bool] = None

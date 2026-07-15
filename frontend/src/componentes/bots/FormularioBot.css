@@ -8,9 +8,13 @@
   z-index: 60;
 }
 
+/* El modal nunca scrollea entero: si las reglas crecen, scrollean ellas.
+   Cabecera y botones de guardar quedan siempre a la vista. */
 .formulario-bot {
-  width: 420px;
-  max-width: 92vw;
+  width: 960px;
+  max-width: 94vw;
+  max-height: 92vh;
+  overflow: hidden;
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 10px;
@@ -18,6 +22,52 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Dos columnas: datos del bot a la izquierda, reglas + vista previa a la derecha */
+.cuerpo-formulario-bot {
+  display: flex;
+  gap: 16px;
+  min-height: 0;
+}
+
+.columna-datos-bot {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Los campos no se estiran a lo alto de la columna (el flex:1 de .campo-bot es
+   para repartir el ANCHO en .fila-capital): quedan juntitos arriba.
+   Doble clase para pisar a .campo-bot, que aparece después en este archivo. */
+.formulario-bot .columna-datos-bot > * {
+  flex: none;
+}
+
+.columna-reglas-bot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+/* Muchas condiciones: scrollean adentro de su columna, el gráfico no se mueve */
+.columna-reglas-bot .constructor-reglas {
+  overflow-y: auto;
+  min-height: 96px;
+  flex-shrink: 1;
+}
+
+.preview-sin-ticker {
+  margin: 0;
+  color: #6e7681;
+  font-size: 12px;
 }
 
 .cabecera-formulario-bot {

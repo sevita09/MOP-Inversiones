@@ -1,0 +1,46 @@
+/* Alto fijo: el gráfico no se estira con el resto del formulario */
+.preview-bot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cabecera-preview-bot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.conteo-senales {
+  font-size: 12px;
+}
+
+.senal-entrada {
+  color: #3fb950;
+}
+
+.senal-salida {
+  color: #f85149;
+}
+
+.area-preview-bot {
+  position: relative;
+  height: 230px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cargando-preview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b949e;
+  font-size: 13px;
+  z-index: 2;
+}
