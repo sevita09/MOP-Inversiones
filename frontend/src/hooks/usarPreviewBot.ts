@@ -4,8 +4,10 @@ import type { Moneda, ReglasBot, RespuestaPreview, TemporalidadBot } from '../ap
 import { reglasConContenido } from '../componentes/bots/configReglas'
 
 const SIN_SENALES: RespuestaPreview = { ts_entrada: [], ts_salida: [] }
+const DEBOUNCE_MS = 500
 
-/** Señales de la vista previa del bot sobre la historia del ticker. */
+/** Señales de la vista previa, recalculadas solas al editar (con debounce):
+ *  cada tecleo en el constructor reprograma la consulta 500 ms para adelante. */
 export function usarPreviewBot(
   ticker: string,
   temporalidad: TemporalidadBot,
@@ -20,16 +22,19 @@ export function usarPreviewBot(
       return
     }
     let activo = true
-    previewBot(ticker, temporalidad, moneda, reglas)
-      .then((respuesta) => {
-        if (activo) setSenales(respuesta)
-      })
-      .catch(() => {
-        // Una regla a medio editar puede ser inválida: no hay señales y ya
-        if (activo) setSenales(SIN_SENALES)
-      })
+    const timer = setTimeout(() => {
+      previewBot(ticker, temporalidad, moneda, reglas)
+        .then((respuesta) => {
+          if (activo) setSenales(respuesta)
+        })
+        .catch(() => {
+          // Una regla a medio editar puede ser inválida: no hay señales y ya
+          if (activo) setSenales(SIN_SENALES)
+        })
+    }, DEBOUNCE_MS)
     return () => {
       activo = false
+      clearTimeout(timer)
     }
   }, [ticker, temporalidad, moneda, reglas])
 
