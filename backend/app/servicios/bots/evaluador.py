@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from app.config import periodo_ema_central
 from app.esquemas.reglas import Condicion, ObjetivoSerie, Reglas
+from app.servicios.bots.alineacion import ORDEN_TEMPORALIDADES, alinear_sobre_base
 from app.servicios.indicadores import calcular, defaults_de
 
 # El período de estos indicadores es la EMA central de la metodología: depende
@@ -32,19 +33,39 @@ def _params_de(condicion_params: dict | None, indicador: str, temporalidad: str)
 
 
 class _CacheSeries:
-    """Una corrida de `calcular` por (indicador, params): las condiciones que
-    comparten indicador (k cruza d, media y z de las mismas bandas) no recalculan."""
+    """Una corrida de `calcular` por (indicador, temporalidad, params): las
+    condiciones que comparten indicador (k cruza d, media y z de las mismas
+    bandas) no recalculan.
 
-    def __init__(self, velas: list[dict], temporalidad: str):
-        self._velas = velas
-        self._temporalidad = temporalidad
+    Confluencia: cada condición se calcula sobre las velas de SU temporalidad,
+    con la EMA central de esa ventana (D=200, S=50, M=12), y si es superior a la
+    del bot se alinea sobre el índice base sin lookahead (ver alineacion.py).
+    """
+
+    def __init__(self, velas_por: dict[str, list[dict]], temporalidad_base: str):
+        self._velas_por = velas_por
+        self._base = temporalidad_base
+        self._ts_base = [v["ts"] for v in velas_por[temporalidad_base]]
         self._series: dict[tuple, dict[str, list]] = {}
 
-    def serie(self, indicador: str, nombre: str, params: dict | None) -> list:
-        efectivos = _params_de(params, indicador, self._temporalidad)
-        clave = (indicador, tuple(sorted(efectivos.items())))
+    def serie(self, indicador: str, nombre: str, params: dict | None, temporalidad: str) -> list:
+        if ORDEN_TEMPORALIDADES[temporalidad] < ORDEN_TEMPORALIDADES[self._base]:
+            raise ValueError(
+                f"Una condición {temporalidad} no puede evaluarse en un bot {self._base}: "
+                "la temporalidad de la condición debe ser igual o superior a la del bot"
+            )
+        efectivos = _params_de(params, indicador, temporalidad)
+        clave = (indicador, temporalidad, tuple(sorted(efectivos.items())))
         if clave not in self._series:
-            self._series[clave] = calcular(indicador, self._velas, **efectivos)
+            velas = self._velas_por[temporalidad]
+            series = calcular(indicador, velas, **efectivos)
+            if temporalidad != self._base:
+                ts_superior = [v["ts"] for v in velas]
+                series = {
+                    n: alinear_sobre_base(self._ts_base, ts_superior, s, temporalidad)
+                    for n, s in series.items()
+                }
+            self._series[clave] = series
         return self._series[clave][nombre]
 
 
@@ -71,12 +92,13 @@ def _comparar(operador: str, serie: list, objetivo: list) -> list[bool]:
 
 
 def _evaluar_condicion(
-    condicion: Condicion, cache: _CacheSeries, cierres: list[float]
+    condicion: Condicion, cache: _CacheSeries, cierres: list[float], temporalidad_bot: str
 ) -> list[bool]:
-    serie = cache.serie(condicion.indicador, condicion.serie, condicion.params)
+    temporalidad = condicion.temporalidad or temporalidad_bot
+    serie = cache.serie(condicion.indicador, condicion.serie, condicion.params, temporalidad)
 
     if condicion.operador in ("cruza_arriba_precio", "cruza_abajo_precio"):
-        # El precio es quien cruza la serie: precio cruza_arriba serie
+        # El precio (cierre de la temporalidad del BOT) es quien cruza la serie
         operador = condicion.operador.replace("_precio", "")
         return _comparar(operador, cierres, serie)
 
@@ -85,6 +107,7 @@ def _evaluar_condicion(
             condicion.indicador,
             condicion.objetivo.serie,
             condicion.objetivo.params or condicion.params,
+            temporalidad,
         )
     else:
         objetivo = [condicion.objetivo] * len(serie)
@@ -98,22 +121,35 @@ def _combinar_and(vectores: list[list[bool]], largo: int) -> list[bool]:
     return [all(v[i] for v in vectores) for i in range(largo)]
 
 
-def evaluar_reglas(velas: list[dict], reglas: Reglas, temporalidad: str) -> dict:
-    """Evalúa las reglas sobre las velas y devuelve los ts donde disparan.
+def temporalidades_de(reglas: Reglas, temporalidad_bot: str) -> set:
+    """Las temporalidades que las reglas necesitan (para buscar sus velas)."""
+    condiciones = [*reglas.entrada, *reglas.salida, *reglas.filtros]
+    return {temporalidad_bot} | {c.temporalidad for c in condiciones if c.temporalidad}
 
-    `{"ts_entrada": [...], "ts_salida": [...]}` — ts de las barras (las mismas
-    que dibuja el chart) donde TODAS las condiciones del bloque se cumplen.
+
+def evaluar_reglas(velas_por: dict[str, list[dict]], reglas: Reglas, temporalidad: str) -> dict:
+    """Evalúa las reglas sobre el índice de la temporalidad del bot.
+
+    `velas_por` trae las velas de cada temporalidad que usan las condiciones
+    (al menos la del bot). Devuelve `{"ts_entrada": [...], "ts_salida": [...]}`
+    — ts de las barras base (las mismas que dibuja el chart) donde TODAS las
+    condiciones del bloque se cumplen.
     """
-    cache = _CacheSeries(velas, temporalidad)
+    velas = velas_por[temporalidad]
+    cache = _CacheSeries(velas_por, temporalidad)
     cierres = [v["cierre"] for v in velas]
     ts = [v["ts"] for v in velas]
 
     entrada = _combinar_and(
-        [_evaluar_condicion(c, cache, cierres) for c in [*reglas.entrada, *reglas.filtros]],
+        [
+            _evaluar_condicion(c, cache, cierres, temporalidad)
+            for c in [*reglas.entrada, *reglas.filtros]
+        ],
         len(velas),
     ) if reglas.entrada else [False] * len(velas)
     salida = _combinar_and(
-        [_evaluar_condicion(c, cache, cierres) for c in reglas.salida], len(velas)
+        [_evaluar_condicion(c, cache, cierres, temporalidad) for c in reglas.salida],
+        len(velas),
     )
 
     return {
