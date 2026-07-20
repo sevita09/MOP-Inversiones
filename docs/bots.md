@@ -71,6 +71,29 @@ temporalidad del bot.
 hubieran disparado sobre la historia. Es lo que el editor de reglas (v4.3)
 pinta como ▲/▼ sobre el gráfico.
 
+## Confluencia multitemporal (v4.4)
+
+Cada condición puede llevar su propia `temporalidad` (igual o **superior** a la
+del bot): la Triple Confluencia ejecuta en D con condiciones que miran M y S.
+
+```json
+{"indicador": "bandas", "serie": "z", "temporalidad": "M", "operador": "menor", "objetivo": -2}
+```
+
+- **Cada temporalidad usa su EMA central** (D=200, S=50, M=12): el z mensual se
+  calcula sobre las velas mensuales con EMA 12, igual que el chart en M.
+- **La vela superior solo cuenta cerrada** (`servicios/bots/alineacion.py`): el
+  sync escribe la vela S/M *en curso* en la base, y usarla sería mirar el
+  futuro. Cada barra base ve la última barra superior cuyo período terminó
+  **antes** del período en que vive la barra base: el viernes de la semana N ve
+  la semana N−1; recién el lunes siguiente ve la semana N. Garantía testeada:
+  agregar una barra en curso no cambia ninguna señal pasada.
+- Los períodos se comparan por clave de calendario (semana ISO / año-mes), así
+  el cruce de año no rompe el orden.
+- Una condición de temporalidad **menor** a la del bot es inválida (422).
+- En los cruces contra el precio, el precio es el cierre de la temporalidad
+  del bot (el TF de ejecución).
+
 ## Constructor visual y vista previa (v4.3)
 
 El formulario del bot es un modal de dos columnas: los datos a la izquierda y
