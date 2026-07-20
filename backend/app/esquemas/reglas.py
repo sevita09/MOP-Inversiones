@@ -65,6 +65,9 @@ class Condicion(BaseModel):
     operador: Operador
     objetivo: Optional[Union[float, ObjetivoSerie]] = None
     params: Optional[dict[str, float]] = None
+    # Confluencia (v4.4): la condición puede mirar OTRA temporalidad (superior a
+    # la del bot). None ⇒ la del bot. La horaria queda fuera de los bots.
+    temporalidad: Optional[Literal["D", "S", "M"]] = None
 
     @field_validator("indicador")
     @classmethod

@@ -86,6 +86,23 @@ def test_objetivo_con_serie_de_otro_indicador_es_invalido():
         )
 
 
+def test_temporalidad_por_condicion():
+    reglas = _reglas(
+        entrada=[
+            {**CONDICION_OK, "temporalidad": "M"},
+            {**CONDICION_OK, "temporalidad": "S"},
+            CONDICION_OK,  # sin temporalidad: la del bot
+        ]
+    )
+    assert reglas.entrada[0].temporalidad == "M"
+    assert reglas.entrada[2].temporalidad is None
+
+
+def test_temporalidad_horaria_es_invalida_en_condiciones():
+    with pytest.raises(ValidationError):
+        _reglas(entrada=[{**CONDICION_OK, "temporalidad": "H"}])
+
+
 def test_el_mapa_de_series_coincide_con_el_registry():
     """SERIES_POR_INDICADOR es estático: si el registry cambia, esto avisa."""
     rng = np.random.default_rng(42)

@@ -1,12 +1,20 @@
-import type { CondicionRegla, ObjetivoSerie, OperadorRegla } from '../../api/tipos'
+import type {
+  CondicionRegla,
+  ObjetivoSerie,
+  OperadorRegla,
+  TemporalidadBot,
+} from '../../api/tipos'
 import {
   ES_OPERADOR_PRECIO,
+  ETIQUETA_TEMPORALIDAD,
   INDICADORES_REGLAS,
   OPERADORES_REGLAS,
+  TEMPORALIDADES_SUPERIORES,
 } from './configReglas'
 
 interface Props {
   condicion: CondicionRegla
+  temporalidadBot: TemporalidadBot
   alCambiar: (condicion: CondicionRegla) => void
   alQuitar: () => void
 }
@@ -15,9 +23,11 @@ function esObjetivoSerie(objetivo: CondicionRegla['objetivo']): objetivo is Obje
   return typeof objetivo === 'object' && objetivo !== null
 }
 
-/** Una condición editable: indicador · serie · operador · objetivo. */
-function FilaCondicion({ condicion, alCambiar, alQuitar }: Props) {
+/** Una condición editable: indicador · serie · temporalidad · operador · objetivo. */
+function FilaCondicion({ condicion, temporalidadBot, alCambiar, alQuitar }: Props) {
   const info = INDICADORES_REGLAS[condicion.indicador]
+  // Confluencia: solo temporalidades iguales o superiores a la del bot
+  const superiores = TEMPORALIDADES_SUPERIORES[temporalidadBot]
   const objetivoSerie = esObjetivoSerie(condicion.objetivo) ? condicion.objetivo : null
   const esPrecio = ES_OPERADOR_PRECIO(condicion.operador)
 
@@ -64,6 +74,26 @@ function FilaCondicion({ condicion, alCambiar, alQuitar }: Props) {
           onChange={(evento) => alCambiar({ ...condicion, serie: evento.target.value })}
         >
           {info.series.map(({ valor, etiqueta }) => (
+            <option key={valor} value={valor}>
+              {etiqueta}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {superiores.length > 0 && (
+        <select
+          className="temporalidad-condicion"
+          title="Temporalidad de esta condición (confluencia)"
+          value={condicion.temporalidad ?? ''}
+          onChange={(evento) => {
+            const { temporalidad: _, ...resto } = condicion
+            const valor = evento.target.value as TemporalidadBot | ''
+            alCambiar(valor ? { ...resto, temporalidad: valor } : resto)
+          }}
+        >
+          <option value="">del bot ({ETIQUETA_TEMPORALIDAD[temporalidadBot]})</option>
+          {superiores.map(({ valor, etiqueta }) => (
             <option key={valor} value={valor}>
               {etiqueta}
             </option>

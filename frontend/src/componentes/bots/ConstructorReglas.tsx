@@ -1,10 +1,11 @@
-import type { CondicionRegla, ReglasBot } from '../../api/tipos'
+import type { CondicionRegla, ReglasBot, TemporalidadBot } from '../../api/tipos'
 import FilaCondicion from './FilaCondicion'
 import { CONDICION_NUEVA } from './configReglas'
 import './ConstructorReglas.css'
 
 interface Props {
   reglas: ReglasBot
+  temporalidadBot: TemporalidadBot
   alCambiar: (reglas: ReglasBot) => void
 }
 
@@ -17,7 +18,7 @@ const BLOQUES: { clave: Bloque; titulo: string; descripcion: string }[] = [
 ]
 
 /** Editor visual de reglas: tres bloques de condiciones combinadas con AND. */
-function ConstructorReglas({ reglas, alCambiar }: Props) {
+function ConstructorReglas({ reglas, temporalidadBot, alCambiar }: Props) {
   const cambiarBloque = (bloque: Bloque, condiciones: CondicionRegla[]) => {
     alCambiar({ ...reglas, [bloque]: condiciones })
   }
@@ -41,6 +42,7 @@ function ConstructorReglas({ reglas, alCambiar }: Props) {
               <FilaCondicion
                 key={indice}
                 condicion={condicion}
+                temporalidadBot={temporalidadBot}
                 alCambiar={(nueva) =>
                   cambiarBloque(
                     clave,

@@ -34,6 +34,27 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
     String(bot?.capital.porcentaje_por_posicion ?? 100),
   )
   const [reglas, setReglas] = useState<ReglasBot>(bot?.reglas ?? REGLAS_VACIAS)
+
+  // Al subir la temporalidad del bot, las condiciones que quedaron por debajo
+  // (p.ej. una diaria en un bot ahora semanal) vuelven a "la del bot"
+  const ORDEN: Record<TemporalidadBot, number> = { D: 0, S: 1, M: 2 }
+  const cambiarTemporalidad = (nueva: TemporalidadBot) => {
+    setTemporalidad(nueva)
+    const sanear = (condiciones: typeof reglas.entrada) =>
+      condiciones.map((c) => {
+        if (c.temporalidad && ORDEN[c.temporalidad] < ORDEN[nueva]) {
+          const { temporalidad: _, ...resto } = c
+          return resto
+        }
+        return c
+      })
+    setReglas((previas) => ({
+      ...previas,
+      entrada: sanear(previas.entrada),
+      salida: sanear(previas.salida),
+      filtros: sanear(previas.filtros),
+    }))
+  }
   const [mensaje, setMensaje] = useState('')
   const [guardando, setGuardando] = useState(false)
 
@@ -153,7 +174,7 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
                 key={valor}
                 type="button"
                 className={valor === temporalidad ? 'chip-bot activo' : 'chip-bot'}
-                onClick={() => setTemporalidad(valor)}
+                onClick={() => cambiarTemporalidad(valor)}
               >
                 {etiqueta}
               </button>
@@ -201,7 +222,11 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
         </div>
 
         <div className="columna-reglas-bot">
-          <ConstructorReglas reglas={reglas} alCambiar={setReglas} />
+          <ConstructorReglas
+            reglas={reglas}
+            temporalidadBot={temporalidad}
+            alCambiar={setReglas}
+          />
           {ticker ? (
             <GraficoPreviewBot
               ticker={ticker}

@@ -8,7 +8,7 @@ from app.config import TICKERS_DOLAR
 from app.db import conexion_api
 from app.esquemas.bots import BotEdicion, BotPeticion, PreviewPeticion
 from app.repositorios import bots as repo
-from app.servicios.bots.evaluador import evaluar_reglas
+from app.servicios.bots.evaluador import evaluar_reglas, temporalidades_de
 from app.servicios.dolar import velas_para_vista
 from app.servicios.tickers_extra import universo_completo
 
@@ -35,8 +35,15 @@ def preview_de_reglas(
     """Evalúa las reglas sobre la historia del ticker (las mismas velas e
     indicadores que ve el chart) y devuelve los ts donde disparan."""
     ticker = _validar_ticker(conexion, body.ticker)
-    velas = velas_para_vista(conexion, ticker, body.temporalidad, body.moneda)
-    return evaluar_reglas(velas, body.reglas, body.temporalidad)
+    velas_por = {
+        tf: velas_para_vista(conexion, ticker, tf, body.moneda)
+        for tf in temporalidades_de(body.reglas, body.temporalidad)
+    }
+    try:
+        return evaluar_reglas(velas_por, body.reglas, body.temporalidad)
+    except ValueError as error:
+        # Condición de temporalidad menor a la del bot (p.ej. D en un bot S)
+        raise HTTPException(422, str(error))
 
 
 @router.get("/bots/{id_bot}")
