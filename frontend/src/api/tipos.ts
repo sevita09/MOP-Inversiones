@@ -114,6 +114,9 @@ export interface CondicionRegla {
   operador: OperadorRegla
   objetivo?: number | ObjetivoSerie | null
   params?: Record<string, number>
+  // Confluencia: la condición puede mirar una temporalidad superior a la del
+  // bot (z mensual en un bot diario). Ausente = la del bot.
+  temporalidad?: TemporalidadBot
 }
 
 export interface ReglasBot {

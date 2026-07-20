@@ -1,4 +1,9 @@
-import type { CondicionRegla, OperadorRegla, ReglasBot } from '../../api/tipos'
+import type {
+  CondicionRegla,
+  OperadorRegla,
+  ReglasBot,
+  TemporalidadBot,
+} from '../../api/tipos'
 
 // Espejo de SERIES_POR_INDICADOR del backend (esquemas/reglas.py), con las
 // etiquetas que ve el usuario. Si el registry suma un indicador, va acá también.
@@ -65,6 +70,30 @@ export const OPERADORES_REGLAS: { valor: OperadorRegla; etiqueta: string }[] = [
 ]
 
 export const ES_OPERADOR_PRECIO = (operador: OperadorRegla) => operador.endsWith('_precio')
+
+export const ETIQUETA_TEMPORALIDAD: Record<TemporalidadBot, string> = {
+  D: 'Diario',
+  S: 'Semanal',
+  M: 'Mensual',
+}
+
+// Temporalidades que puede mirar una condición según la del bot (confluencia):
+// solo iguales o superiores — una condición diaria en un bot semanal no existe
+export const TEMPORALIDADES_SUPERIORES: Record<
+  TemporalidadBot,
+  { valor: TemporalidadBot; etiqueta: string }[]
+> = {
+  D: [
+    { valor: 'D', etiqueta: 'diaria' },
+    { valor: 'S', etiqueta: 'semanal' },
+    { valor: 'M', etiqueta: 'mensual' },
+  ],
+  S: [
+    { valor: 'S', etiqueta: 'semanal' },
+    { valor: 'M', etiqueta: 'mensual' },
+  ],
+  M: [],
+}
 
 export const CONDICION_NUEVA: CondicionRegla = {
   indicador: 'bandas',
