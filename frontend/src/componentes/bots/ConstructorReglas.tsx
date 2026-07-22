@@ -11,10 +11,25 @@ interface Props {
 
 type Bloque = 'entrada' | 'salida' | 'filtros'
 
-const BLOQUES: { clave: Bloque; titulo: string; descripcion: string }[] = [
-  { clave: 'entrada', titulo: 'Entrada', descripcion: 'compra cuando se cumplen todas' },
-  { clave: 'salida', titulo: 'Salida', descripcion: 'vende cuando se cumplen todas' },
-  { clave: 'filtros', titulo: 'Filtros', descripcion: 'condiciones extra para la entrada' },
+const BLOQUES: { clave: Bloque; titulo: string; descripcion: string; vacio: string }[] = [
+  {
+    clave: 'entrada',
+    titulo: 'Entrada',
+    descripcion: 'compra cuando se cumplen todas',
+    vacio: 'Sin condiciones — el bot no compra.',
+  },
+  {
+    clave: 'salida',
+    titulo: 'Salida',
+    descripcion: 'vende cuando se cumplen todas',
+    vacio: 'Sin condiciones — el bot no vende por reglas.',
+  },
+  {
+    clave: 'filtros',
+    titulo: 'Filtros',
+    descripcion: 'condiciones de contexto que también deben cumplirse para comprar',
+    vacio: 'Sin filtros — la entrada no exige contexto extra.',
+  },
 ]
 
 /** Editor visual de reglas: tres bloques de condiciones combinadas con AND. */
@@ -25,19 +40,15 @@ function ConstructorReglas({ reglas, temporalidadBot, alCambiar }: Props) {
 
   return (
     <div className="constructor-reglas">
-      {BLOQUES.map(({ clave, titulo, descripcion }) => {
+      {BLOQUES.map(({ clave, titulo, descripcion, vacio }) => {
         const condiciones = reglas[clave]
-        // Los filtros solo se muestran si hay (los agrega la plantilla o el usuario avanzado)
-        if (clave === 'filtros' && condiciones.length === 0) return null
         return (
           <section key={clave} className="bloque-reglas">
             <header className="cabecera-bloque">
               <span className={`titulo-bloque ${clave}`}>{titulo}</span>
               <span className="descripcion-bloque">{descripcion}</span>
             </header>
-            {condiciones.length === 0 && (
-              <p className="bloque-vacio">Sin condiciones — este bloque no dispara.</p>
-            )}
+            {condiciones.length === 0 && <p className="bloque-vacio">{vacio}</p>}
             {condiciones.map((condicion, indice) => (
               <FilaCondicion
                 key={indice}
