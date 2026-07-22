@@ -51,7 +51,8 @@ def test_cruce_de_constante_dispara_solo_al_cruzar():
 
 def test_cruce_abajo_de_constante():
     reglas = _reglas(
-        salida=[{**EMA_ES_EL_CIERRE, "operador": "cruza_abajo", "objetivo": 20}]
+        entrada=[{**EMA_ES_EL_CIERRE, "operador": "mayor", "objetivo": 999}],
+        salida=[{**EMA_ES_EL_CIERRE, "operador": "cruza_abajo", "objetivo": 20}],
     )
     resultado = evaluar_reglas(_velas_d([30, 25, 15, 10]), reglas, "D")
     assert resultado["ts_salida"] == [300]
@@ -75,6 +76,7 @@ def test_cruce_entre_series_del_mismo_indicador():
 def test_precio_cruza_abajo_una_serie():
     # SMA(3) de bollinger: en la barra 4 el cierre (4) cae bajo la media (8)
     reglas = _reglas(
+        entrada=[{**EMA_ES_EL_CIERRE, "operador": "mayor", "objetivo": 999}],
         salida=[
             {
                 "indicador": "bollinger",
@@ -82,7 +84,7 @@ def test_precio_cruza_abajo_una_serie():
                 "operador": "cruza_abajo_precio",
                 "params": {"periodo": 3},
             }
-        ]
+        ],
     )
     resultado = evaluar_reglas(_velas_d([10, 10, 10, 4]), reglas, "D")
     assert resultado["ts_salida"] == [400]
@@ -90,7 +92,7 @@ def test_precio_cruza_abajo_una_serie():
 
 def test_warmup_no_dispara():
     # bandas con periodo 3: las dos primeras barras no tienen σ → z es None.
-    # La condición "z < 999" es siempre cierta una vez que el z existe: si alguna
+    # La condición "z < 9" es siempre cierta una vez que el z existe: si alguna
     # de las dos primeras disparara, el warmup estaría contando.
     reglas = _reglas(
         entrada=[
@@ -98,7 +100,7 @@ def test_warmup_no_dispara():
                 "indicador": "bandas",
                 "serie": "z",
                 "operador": "menor",
-                "objetivo": 999,
+                "objetivo": 9,
                 "params": {"periodo": 3},
             }
         ]
@@ -128,17 +130,15 @@ def test_filtros_van_and_con_la_entrada():
 
 
 def test_entrada_vacia_nunca_dispara():
-    # Un bot recién creado (sin reglas) no puede disparar por bloque vacío,
-    # ni siquiera con filtros que se cumplen
-    reglas = _reglas(filtros=[{**EMA_ES_EL_CIERRE, "operador": "mayor", "objetivo": 0}])
-    resultado = evaluar_reglas(_velas_d([10, 20]), reglas, "D")
+    # Un bot recién creado (todo vacío) no dispara nada
+    resultado = evaluar_reglas(_velas_d([10, 20]), _reglas(), "D")
     assert resultado["ts_entrada"] == []
     assert resultado["ts_salida"] == []
 
 
 def test_periodo_central_por_temporalidad():
     # En M la EMA central es 12: con 15 barras el z existe; en D (200) no llega
-    condicion = {"indicador": "bandas", "serie": "z", "operador": "menor", "objetivo": 999}
+    condicion = {"indicador": "bandas", "serie": "z", "operador": "menor", "objetivo": 9}
     cierres = [10 + (i % 3) for i in range(15)]
     en_mensual = evaluar_reglas({"M": _velas(cierres)}, _reglas(entrada=[condicion]), "M")
     en_diario = evaluar_reglas(_velas_d(cierres), _reglas(entrada=[condicion]), "D")

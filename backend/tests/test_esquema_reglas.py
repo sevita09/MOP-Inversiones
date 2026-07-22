@@ -103,6 +103,58 @@ def test_temporalidad_horaria_es_invalida_en_condiciones():
         _reglas(entrada=[{**CONDICION_OK, "temporalidad": "H"}])
 
 
+# --- validación de reglas incoherentes (v4.5) ---
+
+
+def test_salida_sin_entrada_es_invalida():
+    with pytest.raises(ValidationError, match="sin entrada no hay señal"):
+        _reglas(salida=[CONDICION_OK])
+
+
+def test_todo_vacio_es_valido():
+    assert _reglas().entrada == []
+
+
+def test_umbral_imposible_es_invalido():
+    with pytest.raises(ValidationError, match="Umbral imposible"):
+        _reglas(
+            entrada=[
+                {"indicador": "estocastico", "serie": "k", "operador": "menor", "objetivo": -5}
+            ]
+        )
+    with pytest.raises(ValidationError, match="Umbral imposible"):
+        _reglas(entrada=[{**CONDICION_OK, "objetivo": -25}])
+
+
+def test_cruce_de_una_serie_consigo_misma_es_invalido():
+    with pytest.raises(ValidationError, match="consigo misma"):
+        _reglas(
+            entrada=[
+                {
+                    "indicador": "ema",
+                    "serie": "ema",
+                    "operador": "cruza_arriba",
+                    "objetivo": {"serie": "ema"},
+                }
+            ]
+        )
+
+
+def test_cruce_de_la_misma_serie_con_otros_params_es_valido():
+    reglas = _reglas(
+        entrada=[
+            {
+                "indicador": "ema",
+                "serie": "ema",
+                "operador": "cruza_arriba",
+                "params": {"periodo": 10},
+                "objetivo": {"serie": "ema", "params": {"periodo": 30}},
+            }
+        ]
+    )
+    assert reglas.entrada[0].objetivo.params == {"periodo": 30}
+
+
 def test_el_mapa_de_series_coincide_con_el_registry():
     """SERIES_POR_INDICADOR es estático: si el registry cambia, esto avisa."""
     rng = np.random.default_rng(42)
