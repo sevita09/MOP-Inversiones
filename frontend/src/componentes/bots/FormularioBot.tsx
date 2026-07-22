@@ -1,9 +1,20 @@
 import { useMemo, useState } from 'react'
-import type { Bot, BotNuevo, Moneda, ReglasBot, TemporalidadBot } from '../../api/tipos'
+import type {
+  Bot,
+  BotNuevo,
+  Moneda,
+  Plantilla,
+  ReglasBot,
+  TemporalidadBot,
+} from '../../api/tipos'
 import LogoTicker from '../LogoTicker'
 import ConstructorReglas from './ConstructorReglas'
 import GraficoPreviewBot from './GraficoPreviewBot'
+import GuardarComoPlantilla from './GuardarComoPlantilla'
+import SelectorPlantilla from './SelectorPlantilla'
 import { REGLAS_VACIAS } from './configReglas'
+import { resumirReglas } from './resumenReglas'
+import { usarPlantillas } from '../../hooks/usarPlantillas'
 import { usarTickers } from '../../hooks/usarTickers'
 import './FormularioBot.css'
 
@@ -24,6 +35,7 @@ const MONEDAS: Moneda[] = ['ARS', 'USD']
 /** Alta y edición de un bot: nombre, ticker, temporalidad, moneda y capital. */
 function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
   const paneles = usarTickers()
+  const { plantillas, crear: crearPlantilla, eliminar: eliminarPlantilla } = usarPlantillas()
   const [nombre, setNombre] = useState(bot?.nombre ?? '')
   const [ticker, setTicker] = useState(bot?.ticker ?? '')
   const [busqueda, setBusqueda] = useState('')
@@ -117,6 +129,17 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
 
         <div className="cuerpo-formulario-bot">
         <div className="columna-datos-bot">
+        <SelectorPlantilla
+          plantillas={plantillas}
+          alEliminar={(id) => void eliminarPlantilla(id)}
+          alLimpiar={() => setReglas(REGLAS_VACIAS)}
+          alElegir={(plantilla: Plantilla) => {
+            setNombre(plantilla.nombre)
+            setTemporalidad(plantilla.temporalidad)
+            setMoneda(plantilla.moneda)
+            setReglas(plantilla.reglas)
+          }}
+        />
         <label className="campo-bot">
           Nombre
           <input
@@ -226,6 +249,16 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
             reglas={reglas}
             temporalidadBot={temporalidad}
             alCambiar={setReglas}
+          />
+          {resumirReglas(reglas, temporalidad) && (
+            <p className="resumen-reglas">{resumirReglas(reglas, temporalidad)}</p>
+          )}
+          <GuardarComoPlantilla
+            reglas={reglas}
+            temporalidad={temporalidad}
+            moneda={moneda}
+            nombreSugerido={nombre.trim()}
+            alCrear={crearPlantilla}
           />
           {ticker ? (
             <GraficoPreviewBot

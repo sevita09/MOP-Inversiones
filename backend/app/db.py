@@ -72,6 +72,18 @@ CREATE TABLE IF NOT EXISTS bots (
     actualizado  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Plantillas de estrategia propias del usuario (las 4 de la metodología viven
+-- fijas en servicios/bots/plantillas.py; estas son las que él guarda y persisten)
+CREATE TABLE IF NOT EXISTS plantillas (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre       TEXT NOT NULL UNIQUE,
+    descripcion  TEXT NOT NULL DEFAULT '',
+    temporalidad TEXT NOT NULL,
+    moneda       TEXT NOT NULL DEFAULT 'USD',
+    reglas_json  TEXT NOT NULL,
+    creado       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS dibujos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker   TEXT NOT NULL,

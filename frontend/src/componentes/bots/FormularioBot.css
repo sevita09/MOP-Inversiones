@@ -110,6 +110,104 @@
   border-color: #58a6ff;
 }
 
+.campo-bot select {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.descripcion-plantilla {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #8b949e;
+  line-height: 1.4;
+}
+
+.horizonte-plantilla {
+  color: #d29922;
+}
+
+.borrar-plantilla {
+  align-self: flex-start;
+  margin-top: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #f85149;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.borrar-plantilla:hover {
+  text-decoration: underline;
+}
+
+/* Guardar las reglas actuales como plantilla propia */
+.guardar-como-plantilla {
+  align-self: flex-start;
+  background: none;
+  border: 1px dashed #30363d;
+  border-radius: 6px;
+  color: #8b949e;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.guardar-como-plantilla:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.panel-guardar-plantilla {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.panel-guardar-plantilla input {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.acciones-guardar-plantilla {
+  display: flex;
+  gap: 8px;
+}
+
+.mensaje-plantilla {
+  color: #f85149;
+  font-size: 11px;
+}
+
+/* El resumen en lenguaje natural de las reglas, debajo del constructor */
+.resumen-reglas {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 3px solid #388bfd;
+  background: rgba(56, 139, 253, 0.08);
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: #c9d1d9;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
 .chips-bot {
   display: flex;
   gap: 6px;

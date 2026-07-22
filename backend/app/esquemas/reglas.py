@@ -51,6 +51,19 @@ Operador = Literal[
 
 OPERADORES_PRECIO = ("cruza_arriba_precio", "cruza_abajo_precio")
 
+# Rango posible de las series acotadas: un umbral fuera de acá es incoherente
+# (estocástico < −5 no dispara nunca; < 150 dispara siempre). El z-score no
+# está acotado, pero ±10σ ya es físicamente irreal.
+RANGO_SERIES = {
+    ("estocastico", "k"): (0, 100),
+    ("estocastico", "d"): (0, 100),
+    ("rsi", "rsi"): (0, 100),
+    ("adx", "adx"): (0, 100),
+    ("percentil_distancia", "percentil"): (0, 100),
+    ("bandas", "z"): (-10, 10),
+    ("z_score", "z"): (-10, 10),
+}
+
 
 class ObjetivoSerie(BaseModel):
     """Otra serie del mismo indicador; `params` permite otra variante (EMA lenta)."""
@@ -90,10 +103,26 @@ class Condicion(BaseModel):
         else:
             if self.objetivo is None:
                 raise ValueError(f"El operador {self.operador} necesita un objetivo")
-        if isinstance(self.objetivo, ObjetivoSerie) and self.objetivo.serie not in series:
-            raise ValueError(
-                f"El objetivo {self.objetivo.serie} no es una serie de {self.indicador}"
-            )
+        if isinstance(self.objetivo, ObjetivoSerie):
+            if self.objetivo.serie not in series:
+                raise ValueError(
+                    f"El objetivo {self.objetivo.serie} no es una serie de {self.indicador}"
+                )
+            # Cruzar una serie consigo misma (mismos parámetros) no dispara nunca;
+            # con parámetros distintos sí vale (EMA rápida × EMA lenta)
+            mismos_params = self.objetivo.params is None or self.objetivo.params == self.params
+            if self.objetivo.serie == self.serie and mismos_params:
+                raise ValueError(
+                    f"Cruzar {self.serie} consigo misma no dispara nunca "
+                    "(usá otra serie u otros parámetros)"
+                )
+        if isinstance(self.objetivo, (int, float)):
+            rango = RANGO_SERIES.get((self.indicador, self.serie))
+            if rango and not (rango[0] <= self.objetivo <= rango[1]):
+                raise ValueError(
+                    f"Umbral imposible: {self.indicador}.{self.serie} se mueve "
+                    f"entre {rango[0]} y {rango[1]} (recibí {self.objetivo})"
+                )
         return self
 
 
@@ -104,3 +133,11 @@ class Reglas(BaseModel):
     entrada: list[Condicion] = Field(default_factory=list)
     salida: list[Condicion] = Field(default_factory=list)
     filtros: list[Condicion] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _entrada_presente(self) -> "Reglas":
+        # Todo vacío vale (bot recién creado); salida o filtros sin entrada, no:
+        # un bot que solo sabe vender no puede disparar nunca
+        if not self.entrada and (self.salida or self.filtros):
+            raise ValueError("Faltan las condiciones de entrada: sin entrada no hay señal")
+        return self
