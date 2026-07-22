@@ -35,6 +35,16 @@ class PreviewPeticion(BaseModel):
     reglas: Reglas
 
 
+class PlantillaPeticion(BaseModel):
+    """Plantilla propia que el usuario guarda desde el editor."""
+
+    nombre: str = Field(min_length=1)
+    descripcion: str = ""
+    temporalidad: Temporalidad = "D"
+    moneda: Moneda = "USD"
+    reglas: Reglas
+
+
 class BotEdicion(BaseModel):
     """Edición parcial: solo se aplican los campos presentes."""
 
