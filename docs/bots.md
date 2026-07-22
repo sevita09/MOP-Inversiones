@@ -114,6 +114,48 @@ las reglas + vista previa a la derecha.
   500 ms: editar una condición re-dibuja las señales solo, medio segundo
   después de la última tecla. Una regla inválida a medio editar ⇒ sin señales.
 
+## Plantillas y validación (v4.5)
+
+`servicios/bots/plantillas.py` trae las 4 estrategias base de
+`Documentacion/ESTRATEGIAS_BOTS.md` (reglas fijas en el código), precargables
+desde el selector del formulario (nombre, moneda USD, ejecución D y reglas;
+todo editable después). El texto que ve el usuario es sobrio y descriptivo:
+
+1. **Triple confluencia mensual-semanal-diaria** — z M < −2 ∧ z S < −2 ∧ %K
+   cruza %D en D; sale en la media semanal. Máxima exigencia: 1-3 señales/año.
+2. **Reversión semanal con filtro de tendencia** — z S < −1.5 ∧ gatillo EMA 20
+   diaria, con filtro mensual z M > −3 (no agarrar caídas libres). 1-2/mes.
+3. **Sobre-extensión por percentil** — percentil S < 10 ∧ gatillo diario; sale
+   en percentil 50. Auto-calibrada por papel.
+4. **Cruce de medias móviles (referencia)** — EMA 10 × EMA 30 semanales.
+   Estrategia de control del backtest v5, no para operar.
+
+**Plantillas propias.** Además de las 4 base, el usuario guarda sus estrategias
+como plantillas reutilizables (tabla `plantillas`, `repositorios/plantillas.py`,
+`POST`/`DELETE /api/bots/plantillas`). `GET /api/bots/plantillas` devuelve las
+base (`predefinida: true`, `id: null`) seguidas de las propias
+(`clave: "custom:<id>"`); el selector las agrupa en "Plantillas base" y
+"Propias", y las propias se pueden borrar. En el editor, el botón "Guardar como
+plantilla" (`GuardarComoPlantilla.tsx`) persiste las reglas actuales; no se
+puede repetir nombre ni pisar una base (409).
+
+**Validación de reglas incoherentes** (en `esquemas/reglas.py`, aplica al
+guardar bot/plantilla y al preview):
+- salida o filtros sin entrada → 422 ("sin entrada no hay señal");
+- umbrales imposibles según el rango de la serie (`RANGO_SERIES`: estocástico/
+  RSI/ADX/percentil 0-100, z ±10);
+- cruzar una serie consigo misma con los mismos parámetros.
+
+El **resumen en lenguaje natural** (`resumenReglas.ts`) traduce las reglas —
+entrada, filtros y salida — debajo del constructor, rearmándose con cada
+selección: "Compra cuando el z-score (σ) mensual está bajo −2, siempre que …;
+vende cuando …".
+
+Los tres bloques (**entrada**, **salida**, **filtros**) están siempre visibles.
+Los filtros son condiciones de contexto que van en AND con la entrada (misma
+mecánica que una condición de entrada, separadas solo para leer mejor la
+estrategia); vacíos no bloquean nada.
+
 ## Duplicar es de primera clase
 
 La metodología pide variar la salida de un mismo bot y dejar que el backtest
