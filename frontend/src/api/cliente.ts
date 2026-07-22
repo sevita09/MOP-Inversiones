@@ -2,6 +2,8 @@ import type {
   Bot,
   BotNuevo,
   Categoria,
+  Plantilla,
+  PlantillaNueva,
   ReglasBot,
   RespuestaPreview,
   TemporalidadBot,
@@ -206,6 +208,21 @@ export function eliminarBot(id: number): Promise<void> {
 
 export function duplicarBot(id: number): Promise<Bot> {
   return fetchJson<Bot>('/api/bots/' + id + '/duplicar', { method: 'POST' })
+}
+
+export function obtenerPlantillas(): Promise<Plantilla[]> {
+  return obtenerJson<Plantilla[]>('/api/bots/plantillas')
+}
+
+export function crearPlantilla(datos: PlantillaNueva): Promise<Plantilla> {
+  return fetchJson<Plantilla>('/api/bots/plantillas', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  })
+}
+
+export function eliminarPlantilla(id: number): Promise<void> {
+  return fetchJson('/api/bots/plantillas/' + id, { method: 'DELETE' })
 }
 
 export function previewBot(

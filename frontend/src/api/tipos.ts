@@ -131,6 +131,28 @@ export interface RespuestaPreview {
   ts_salida: number[]
 }
 
+// Estrategias precargables: las 4 de la metodología (predefinidas) + las que
+// guarda el usuario (propias, con id para poder borrarlas)
+export interface Plantilla {
+  clave: string
+  id: number | null
+  nombre: string
+  descripcion: string
+  horizonte: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  reglas: ReglasBot
+  predefinida: boolean
+}
+
+export interface PlantillaNueva {
+  nombre: string
+  descripcion: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  reglas: ReglasBot
+}
+
 export interface Bot {
   id: number
   nombre: string
