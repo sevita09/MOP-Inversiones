@@ -160,10 +160,16 @@ estrategia); vacíos no bloquean nada.
 
 Al terminar cada sincronización (`_correr()` del sincronizador), los bots
 activos evalúan su **última barra**: si la entrada dispara ahí,
-`servicios/bots/senales.py` persiste una señal en la tabla `senales`, única por
-`(bot_id, ts_barra, lado)` — así el sync que corre cada 15 min no la duplica
-("dispara una vez"). Solo se evalúa la **entrada**; la salida llega con la
-cartera (v6), cuando haya una posición contra la cual tenga sentido.
+`servicios/bots/senales.py` registra una señal en la tabla `senales`. Solo se
+evalúa la **entrada**; la salida llega con la cartera (v6), cuando haya una
+posición contra la cual tenga sentido.
+
+**Una tarjeta por bot** (`repo.registrar`, v4.6.1): no se acumulan señales del
+mismo bot. Si el bot vuelve a disparar en una **barra nueva**, la señal existente
+se **refresca** con los datos de ahora (nueva barra + desglose) y vuelve a
+marcarse *sin ver* (avisa de nuevo, sin crear una segunda tarjeta). Si dispara en
+la **misma barra**, no se toca (no re-avisa cada 15 min ni pisa el estado
+'vista'): eso mantiene el "dispara una vez" dentro de una barra.
 
 Cada señal guarda en `detalle_json` **por qué disparó**: el nombre del bot y el
 desglose de cada condición con su valor en la barra del disparo
