@@ -156,3 +156,64 @@ def evaluar_reglas(velas_por: dict[str, list[dict]], reglas: Reglas, temporalida
         "ts_entrada": [t for t, ok in zip(ts, entrada) if ok],
         "ts_salida": [t for t, ok in zip(ts, salida) if ok],
     }
+
+
+def _valor_serie(serie: list, i: int):
+    valor = serie[i]
+    return None if valor is None else round(float(valor), 4)
+
+
+def detalle_entrada(
+    velas_por: dict[str, list[dict]], reglas: Reglas, temporalidad: str, indice: int = -1
+) -> list[dict]:
+    """Desglose de cada condición de entrada+filtros en una barra concreta.
+
+    Devuelve, por condición, su valor y su objetivo en esa barra y si se cumple:
+    lo que explica POR QUÉ (no) dispara la señal ('estaba en z=−2,3, por eso…').
+    """
+    velas = velas_por[temporalidad]
+    if not velas:
+        return []
+    i = indice if indice >= 0 else len(velas) + indice
+    cache = _CacheSeries(velas_por, temporalidad)
+    cierres = [v["cierre"] for v in velas]
+
+    detalles = []
+    for condicion in [*reglas.entrada, *reglas.filtros]:
+        tf = condicion.temporalidad or temporalidad
+        serie = cache.serie(condicion.indicador, condicion.serie, condicion.params, tf)
+        cumple = _evaluar_condicion(condicion, cache, cierres, temporalidad)[i]
+
+        objetivo_valor = None
+        objetivo_serie = None
+        if condicion.operador in ("cruza_arriba_precio", "cruza_abajo_precio"):
+            valor = _valor_serie(cierres, i)  # el precio es el sujeto que cruza
+            objetivo_valor = _valor_serie(serie, i)
+        else:
+            valor = _valor_serie(serie, i)
+            if isinstance(condicion.objetivo, ObjetivoSerie):
+                objetivo_serie = condicion.objetivo.serie
+                obj = cache.serie(
+                    condicion.indicador,
+                    condicion.objetivo.serie,
+                    condicion.objetivo.params or condicion.params,
+                    tf,
+                )
+                objetivo_valor = _valor_serie(obj, i)
+            else:
+                objetivo_valor = condicion.objetivo
+
+        detalles.append(
+            {
+                "indicador": condicion.indicador,
+                "serie": condicion.serie,
+                "temporalidad": tf,
+                "operador": condicion.operador,
+                "params": condicion.params,
+                "valor": valor,
+                "objetivo": objetivo_valor,
+                "objetivo_serie": objetivo_serie,
+                "cumple": bool(cumple),
+            }
+        )
+    return detalles
