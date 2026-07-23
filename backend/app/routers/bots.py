@@ -9,6 +9,7 @@ from app.db import conexion_api
 from app.esquemas.bots import BotEdicion, BotPeticion, PlantillaPeticion, PreviewPeticion
 from app.repositorios import bots as repo
 from app.repositorios import plantillas as repo_plantillas
+from app.repositorios import senales as repo_senales
 from app.servicios.bots.evaluador import evaluar_reglas, temporalidades_de
 from app.servicios.bots.plantillas import listar_plantillas
 from app.servicios.dolar import velas_para_vista
@@ -155,6 +156,7 @@ def editar_bot(
 def eliminar_bot(id_bot: int, conexion: sqlite3.Connection = Depends(conexion_api)):
     if not repo.eliminar(conexion, id_bot):
         raise HTTPException(404, "Bot no encontrado")
+    repo_senales.borrar_de_bot(conexion, id_bot)  # sus señales se van con él
     return {"ok": True}
 
 
