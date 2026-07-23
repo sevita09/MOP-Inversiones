@@ -34,6 +34,59 @@ def guardar(
     return cursor.rowcount > 0
 
 
+def registrar(
+    conexion: sqlite3.Connection,
+    bot_id: int,
+    ticker: str,
+    ts_barra: int,
+    lado: str,
+    detalle: dict,
+) -> str:
+    """Una sola tarjeta por (bot, lado): no acumula señales del mismo bot.
+
+    - 'nueva': no existía → se inserta.
+    - 'actualizada': existía en OTRA barra → se refresca con los datos de ahora
+      (nueva barra + desglose) y vuelve a marcarse sin ver (avisa de nuevo).
+    - 'sin_cambios': existía en la MISMA barra → no se toca (no re-avisa cada
+      15 min ni pisa el estado 'vista').
+
+    Si por señales viejas hubiera más de una fila del mismo bot+lado, colapsa a
+    una (se queda con la de la barra más nueva y borra el resto).
+    """
+    filas = conexion.execute(
+        "SELECT id, ts_barra FROM senales WHERE bot_id = ? AND lado = ? ORDER BY ts_barra DESC",
+        (bot_id, lado),
+    ).fetchall()
+
+    if not filas:
+        conexion.execute(
+            """INSERT INTO senales (bot_id, ticker, ts_barra, lado, detalle_json)
+               VALUES (?, ?, ?, ?, ?)""",
+            (bot_id, ticker, ts_barra, lado, json.dumps(detalle)),
+        )
+        conexion.commit()
+        return "nueva"
+
+    principal = filas[0]
+    sobrantes = [f["id"] for f in filas[1:]]
+    if sobrantes:
+        eliminar_varias(conexion, sobrantes)
+
+    if principal["ts_barra"] == ts_barra:
+        conexion.commit()
+        return "sin_cambios"
+
+    conexion.execute(
+        """UPDATE senales
+           SET ticker = ?, ts_barra = ?, detalle_json = ?, vista = 0,
+               creado = datetime('now')
+           WHERE id = ?""",
+        (ticker, ts_barra, json.dumps(detalle), principal["id"]),
+    )
+    conexion.commit()
+    return "actualizada"
+
+
 def listar(conexion: sqlite3.Connection, limite: int = 200) -> list[dict]:
     filas = conexion.execute(
         "SELECT * FROM senales ORDER BY ts_barra DESC, id DESC LIMIT ?", (limite,)

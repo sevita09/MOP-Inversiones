@@ -20,6 +20,35 @@ def test_guardar_es_idempotente_por_barra(conexion):
     assert len(repo.listar(conexion)) == 1
 
 
+def test_registrar_estados_nueva_actualizada_sin_cambios(conexion):
+    # Nueva
+    assert repo.registrar(conexion, 1, "GGAL", 100, "entrada", {"v": 1}) == "nueva"
+    # Misma barra: no toca (no re-avisa)
+    repo.marcar_todas_vistas(conexion)
+    assert repo.registrar(conexion, 1, "GGAL", 100, "entrada", {"v": 2}) == "sin_cambios"
+    assert repo.contar_sin_ver(conexion) == 0  # no reseteó 'vista'
+    assert repo.listar(conexion)[0]["detalle"] == {"v": 1}  # no pisó el detalle
+    # Barra nueva: actualiza y vuelve a avisar
+    assert repo.registrar(conexion, 1, "GGAL", 200, "entrada", {"v": 3}) == "actualizada"
+    senales = repo.listar(conexion)
+    assert len(senales) == 1
+    assert senales[0]["ts_barra"] == 200
+    assert senales[0]["detalle"] == {"v": 3}
+    assert repo.contar_sin_ver(conexion) == 1
+
+
+def test_registrar_colapsa_duplicados_viejos(conexion):
+    # Simula señales viejas (esquema anterior): dos filas del mismo bot+lado
+    repo.guardar(conexion, 1, "GGAL", 100, "entrada", {})
+    repo.guardar(conexion, 1, "GGAL", 200, "entrada", {})
+    assert len(repo.listar(conexion)) == 2
+    # Al registrar, quedan colapsadas en una sola tarjeta
+    repo.registrar(conexion, 1, "GGAL", 300, "entrada", {"v": 1})
+    senales = repo.listar(conexion)
+    assert len(senales) == 1
+    assert senales[0]["ts_barra"] == 300
+
+
 def test_contar_y_marcar_sin_ver(conexion):
     repo.guardar(conexion, 1, "GGAL", 100, "entrada", {})
     repo.guardar(conexion, 1, "GGAL", 200, "entrada", {})
@@ -129,18 +158,26 @@ def test_los_bots_pausados_no_generan_senales(conexion):
     assert evaluar_senales(conexion) == 0
 
 
-def test_una_barra_nueva_que_cumple_dispara_de_nuevo(conexion):
+def test_una_barra_nueva_actualiza_la_misma_tarjeta(conexion):
     _sembrar_velas(conexion, [10, 15, 30])
     repo_bots.crear(conexion, "Bot GGAL", "GGAL", "D", "ARS", reglas=REGLAS_MAYOR_20)
     assert evaluar_senales(conexion) == 1
-    # Llega otra barra que también cumple: es otra ts_barra → nueva señal
+    repo.marcar_todas_vistas(conexion)  # la vi
+
+    # Llega otra barra que también cumple: NO crea una segunda tarjeta,
+    # actualiza la existente con la barra nueva y la vuelve a marcar sin ver
     guardar_velas(
         conexion,
         [{"ticker": "GGAL", "temporalidad": "D", "ts": 4 * 86400, "apertura": 31,
           "maximo": 32, "minimo": 30, "cierre": 31, "volumen": 1, "es_faltante": 0}],
     )
-    assert evaluar_senales(conexion) == 1
-    assert len(repo.listar(conexion)) == 2
+    assert evaluar_senales(conexion) == 1  # cuenta como aviso (actualizada)
+    senales = repo.listar(conexion)
+    assert len(senales) == 1  # una sola tarjeta
+    assert senales[0]["ts_barra"] == 4 * 86400  # con la barra nueva
+    assert senales[0]["detalle"]["condiciones"][0]["valor"] == 31  # datos de ahora
+    assert senales[0]["vista"] is False  # vuelve a avisar
+    assert repo.contar_sin_ver(conexion) == 1
 
 
 # --- endpoints ---

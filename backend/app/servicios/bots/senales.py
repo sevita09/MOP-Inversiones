@@ -53,7 +53,11 @@ def evaluar_senales(conexion: sqlite3.Connection) -> int:
             # Por qué disparó: cada condición con su valor en la barra del disparo
             "condiciones": detalle_entrada(velas_por, reglas, bot["temporalidad"]),
         }
-        if repo_senales.guardar(conexion, bot["id"], bot["ticker"], ultimo_ts, "entrada", detalle):
+        # Una tarjeta por bot: nueva o refrescada cuentan como aviso; misma barra no
+        estado = repo_senales.registrar(
+            conexion, bot["id"], bot["ticker"], ultimo_ts, "entrada", detalle
+        )
+        if estado in ("nueva", "actualizada"):
             nuevas += 1
     return nuevas
 
