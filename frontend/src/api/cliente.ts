@@ -5,6 +5,7 @@ import type {
   Plantilla,
   PlantillaNueva,
   ReglasBot,
+  RespuestaSenales,
   RespuestaPreview,
   TemporalidadBot,
   EstadoActualizacion,
@@ -223,6 +224,24 @@ export function crearPlantilla(datos: PlantillaNueva): Promise<Plantilla> {
 
 export function eliminarPlantilla(id: number): Promise<void> {
   return fetchJson('/api/bots/plantillas/' + id, { method: 'DELETE' })
+}
+
+// --- Señales del día ---
+
+export function obtenerSenales(): Promise<RespuestaSenales> {
+  return obtenerJson<RespuestaSenales>('/api/senales')
+}
+
+export function marcarSenalesVistas(): Promise<{ marcadas: number }> {
+  return fetchJson<{ marcadas: number }>('/api/senales/vistas', { method: 'POST' })
+}
+
+export function eliminarSenal(id: number): Promise<void> {
+  return fetchJson('/api/senales/' + id, { method: 'DELETE' })
+}
+
+export function eliminarSenalesVencidas(): Promise<{ eliminadas: number }> {
+  return fetchJson<{ eliminadas: number }>('/api/senales/eliminar_vencidas', { method: 'POST' })
 }
 
 export function previewBot(

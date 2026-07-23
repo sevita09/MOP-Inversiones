@@ -156,6 +156,34 @@ Los filtros son condiciones de contexto que van en AND con la entrada (misma
 mecánica que una condición de entrada, separadas solo para leer mejor la
 estrategia); vacíos no bloquean nada.
 
+## Señales del día (v4.6)
+
+Al terminar cada sincronización (`_correr()` del sincronizador), los bots
+activos evalúan su **última barra**: si la entrada dispara ahí,
+`servicios/bots/senales.py` persiste una señal en la tabla `senales`, única por
+`(bot_id, ts_barra, lado)` — así el sync que corre cada 15 min no la duplica
+("dispara una vez"). Solo se evalúa la **entrada**; la salida llega con la
+cartera (v6), cuando haya una posición contra la cual tenga sentido.
+
+Cada señal guarda en `detalle_json` **por qué disparó**: el nombre del bot y el
+desglose de cada condición con su valor en la barra del disparo
+(`detalle_entrada()` del evaluador → `{indicador, serie, temporalidad, operador,
+valor, objetivo, cumple}`). El endpoint `GET /api/senales` las anota además con
+**`vigente`**: re-evalúa la entrada del bot en su última barra actual (cacheado
+por bot), así se distingue una señal que sigue en pie de una que **ya no se
+cumple**.
+
+Endpoints (`routers/senales.py`): `GET /api/senales` (lista + `sin_ver`),
+`POST /api/senales/vistas` (apaga el badge), `DELETE /api/senales/{id}` (borra
+una) y `POST /api/senales/eliminar_vencidas` (borra las que ya no se cumplen).
+Al borrar un bot, sus señales se van con él.
+
+Frontend: página `paginas/senales/` (`FilaSenal` muestra el bot, el desglose y
+el aviso de vencida; estado vacío con el logo de fondo), hook `usarSenales`
+(lista + `usarSenalesSinVer` para el badge, refrescados con cada sync) y el
+**badge** rojo junto a "Señales" en la navegación con las señales sin ver, que
+se apaga al abrir la página.
+
 ## Duplicar es de primera clase
 
 La metodología pide variar la salida de un mismo bot y dejar que el backtest

@@ -185,6 +185,7 @@ def sincronizar_en_background() -> bool:
             sincronizar_ccl,
             sincronizar_dolar_oficial,
         )
+        from app.servicios.bots.senales import evaluar_senales
         from app.servicios.reparador import reparar_todo
 
         try:
@@ -196,6 +197,8 @@ def sincronizar_en_background() -> bool:
                 resumen["ccl"] = sincronizar_ccl(conexion)
                 generar_velas_ccl(conexion)
                 resumen["dolar_oficial"] = sincronizar_dolar_oficial(conexion)
+                # Con los datos al día, los bots activos miran su última barra
+                resumen["senales"] = evaluar_senales(conexion)
                 _ultimo_resumen = resumen
             finally:
                 conexion.close()
