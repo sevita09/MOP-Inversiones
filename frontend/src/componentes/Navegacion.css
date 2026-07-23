@@ -21,3 +21,20 @@
   color: #e6edf3;
   background: #1c2128;
 }
+
+/* Cantidad de señales de hoy sin ver, junto a "Señales" */
+.badge-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #f85149;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}

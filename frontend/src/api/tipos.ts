@@ -174,3 +174,43 @@ export interface BotNuevo {
   capital: CapitalBot
   reglas?: ReglasBot
 }
+
+// --- Señales del día ---
+
+// Cada condición de entrada con su valor en la barra del disparo (el "porqué")
+export interface CondicionDetalle {
+  indicador: string
+  serie: string
+  temporalidad: TemporalidadBot
+  operador: OperadorRegla
+  params?: Record<string, number> | null
+  valor: number | null
+  objetivo: number | null
+  objetivo_serie: string | null
+  cumple: boolean
+}
+
+export interface DetalleSenal {
+  bot?: string
+  temporalidad?: TemporalidadBot
+  moneda?: Moneda
+  cierre?: number
+  condiciones?: CondicionDetalle[]
+}
+
+export interface Senal {
+  id: number
+  bot_id: number
+  ticker: string
+  ts_barra: number
+  lado: string
+  detalle: DetalleSenal
+  vista: boolean
+  creado: string
+  vigente: boolean | null // true sigue cumpliéndose, false ya no, null no evaluable
+}
+
+export interface RespuestaSenales {
+  senales: Senal[]
+  sin_ver: number
+}
