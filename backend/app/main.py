@@ -17,6 +17,7 @@ from app.routers import (
     mercado,
     niveles,
     reparacion,
+    senales,
     sincronizacion,
     tickers_extra,
 )
@@ -48,6 +49,7 @@ app.include_router(logos.router)
 app.include_router(mercado.router)
 app.include_router(niveles.router)
 app.include_router(reparacion.router)
+app.include_router(senales.router)
 app.include_router(sincronizacion.router)
 app.include_router(tickers_extra.router)
 

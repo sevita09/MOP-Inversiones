@@ -84,6 +84,20 @@ CREATE TABLE IF NOT EXISTS plantillas (
     creado       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Señales que dispara un bot activo sobre su última barra tras cada sync.
+-- Única por (bot_id, ts_barra, lado): el sync corre seguido y no debe duplicar.
+CREATE TABLE IF NOT EXISTS senales (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    bot_id       INTEGER NOT NULL,
+    ticker       TEXT NOT NULL,
+    ts_barra     INTEGER NOT NULL,
+    lado         TEXT NOT NULL,     -- 'entrada' (la salida llega con la cartera)
+    detalle_json TEXT NOT NULL DEFAULT '{}',
+    vista        INTEGER NOT NULL DEFAULT 0,
+    creado       TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (bot_id, ts_barra, lado)
+);
+
 CREATE TABLE IF NOT EXISTS dibujos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker   TEXT NOT NULL,
