@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS bots (
     capital_json TEXT NOT NULL,   -- {"inicial": ..., "porcentaje_por_posicion": ...}
     reglas_json  TEXT NOT NULL,   -- {"version": 1, "entrada": [...], "salida": [...], "filtros": [...]}
     activo       INTEGER NOT NULL DEFAULT 1,
+    metricas_json TEXT,           -- resumen del último backtest (caché); NULL si nunca corrió
     creado       TEXT NOT NULL DEFAULT (datetime('now')),
     actualizado  TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -130,6 +131,11 @@ def inicializar_base(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> None:
             conexion.execute(
                 "ALTER TABLE tickers_extra ADD COLUMN grupo TEXT NOT NULL DEFAULT 'cedears'"
             )
+        except sqlite3.OperationalError:
+            pass  # la columna ya existe
+        # Migración suave: bases creadas antes del caché de métricas del backtest
+        try:
+            conexion.execute("ALTER TABLE bots ADD COLUMN metricas_json TEXT")
         except sqlite3.OperationalError:
             pass  # la columna ya existe
 

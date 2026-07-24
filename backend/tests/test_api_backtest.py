@@ -39,6 +39,34 @@ def test_backtest_por_bot(cliente, conexion):
     assert isinstance(datos["estrategia"]["curva"], list)
 
 
+def test_backtest_incluye_metricas(cliente, conexion):
+    _sembrar(conexion, [10, 12, 20, 25, 18, 12, 30])
+    bot = cliente.post(
+        "/api/bots",
+        json={"nombre": "Bt", "ticker": "GGAL", "temporalidad": "D", "reglas": REGLAS},
+    ).json()
+    datos = cliente.get(f"/api/bots/{bot['id']}/backtest").json()
+    metricas = datos["estrategia"]["metricas"]
+    for clave in ("win_rate_pct", "drawdown_maximo_pct", "sharpe", "profit_factor",
+                  "expectancy_pct", "exposicion_pct", "racha_maxima_perdidas"):
+        assert clave in metricas
+
+
+def test_backtest_cachea_el_resumen_en_el_bot(cliente, conexion):
+    _sembrar(conexion, [10, 12, 20, 25, 18, 12, 30])
+    bot = cliente.post(
+        "/api/bots",
+        json={"nombre": "Bt", "ticker": "GGAL", "temporalidad": "D", "reglas": REGLAS},
+    ).json()
+    assert bot["metricas"] is None  # todavía no se backtesteó
+
+    cliente.get(f"/api/bots/{bot['id']}/backtest")
+    guardado = cliente.get(f"/api/bots/{bot['id']}").json()
+    assert guardado["metricas"] is not None
+    assert "estrategia" in guardado["metricas"]
+    assert "buy_and_hold_retorno_pct" in guardado["metricas"]
+
+
 def test_backtest_de_bot_inexistente_es_404(cliente):
     assert cliente.get("/api/bots/999/backtest").status_code == 404
 

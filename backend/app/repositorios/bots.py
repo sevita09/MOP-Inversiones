@@ -17,8 +17,19 @@ def _a_dict(fila: sqlite3.Row) -> dict:
     bot = dict(fila)
     bot["capital"] = json.loads(bot.pop("capital_json"))
     bot["reglas"] = json.loads(bot.pop("reglas_json"))
+    # Resumen del último backtest (caché); None si nunca se backtesteó
+    crudo = bot.pop("metricas_json", None)
+    bot["metricas"] = json.loads(crudo) if crudo else None
     bot["activo"] = bool(bot["activo"])
     return bot
+
+
+def guardar_metricas(conexion: sqlite3.Connection, id_bot: int, resumen: dict) -> None:
+    """Cachea el resumen del último backtest en el bot (para la lista de bots)."""
+    conexion.execute(
+        "UPDATE bots SET metricas_json = ? WHERE id = ?", (json.dumps(resumen), id_bot)
+    )
+    conexion.commit()
 
 
 def crear(
