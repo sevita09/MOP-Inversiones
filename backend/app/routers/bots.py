@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -10,6 +11,7 @@ from app.esquemas.bots import BotEdicion, BotPeticion, PlantillaPeticion, Previe
 from app.repositorios import bots as repo
 from app.repositorios import plantillas as repo_plantillas
 from app.repositorios import senales as repo_senales
+from app.servicios.backtest.simulador import correr_backtest
 from app.servicios.bots.evaluador import evaluar_reglas, temporalidades_de
 from app.servicios.bots.plantillas import listar_plantillas
 from app.servicios.dolar import velas_para_vista
@@ -166,3 +168,19 @@ def duplicar_bot(id_bot: int, conexion: sqlite3.Connection = Depends(conexion_ap
     if copia is None:
         raise HTTPException(404, "Bot no encontrado")
     return copia
+
+
+@router.get("/bots/{id_bot}/backtest")
+def backtest_de_bot(
+    id_bot: int,
+    desde: Optional[int] = None,
+    hasta: Optional[int] = None,
+    conexion: sqlite3.Connection = Depends(conexion_api),
+):
+    """Backtest del bot en un rango (ts unix): estrategia vs Buy & Hold."""
+    bot = repo.obtener(conexion, id_bot)
+    if bot is None:
+        raise HTTPException(404, "Bot no encontrado")
+    if not bot["reglas"].get("entrada"):
+        raise HTTPException(422, "El bot no tiene reglas de entrada para backtestear")
+    return correr_backtest(conexion, bot, desde, hasta)
