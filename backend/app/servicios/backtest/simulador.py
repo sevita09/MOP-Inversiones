@@ -14,6 +14,7 @@ import sqlite3
 from typing import Optional
 
 from app.servicios.backtest.cargador import cargar_historia, recortar
+from app.servicios.backtest.metricas import calcular_metricas
 from app.servicios.bots.evaluador import evaluar_reglas
 
 
@@ -48,6 +49,7 @@ def simular(
     pendiente: Optional[str] = None  # 'entrar' | 'salir': señal de la barra previa
     trades: list[dict] = []
     curva: list[dict] = []
+    barras_en_posicion = 0
 
     for barra in barras:
         # 1) Ejecutar en ESTA apertura lo que señaló la barra anterior
@@ -69,6 +71,8 @@ def simular(
             pendiente = "salir"
 
         # 3) Capital a valor de mercado (al cierre de la barra)
+        if unidades > 0:
+            barras_en_posicion += 1
         curva.append({"ts": barra["ts"], "capital": round(efectivo + unidades * barra["cierre"], 2)})
 
     # Posición abierta al final: se cierra al cierre de la última barra
@@ -81,6 +85,8 @@ def simular(
         "capital_inicial": round(capital_inicial, 2),
         "capital_final": round(efectivo, 2),
         "retorno_pct": round((efectivo / capital_inicial - 1) * 100, 4) if capital_inicial else 0.0,
+        "barras": len(barras),
+        "barras_en_posicion": barras_en_posicion,
         "trades": trades,
         "curva": curva,
     }
@@ -106,6 +112,9 @@ def correr_backtest(
     estrategia = simular(barras, ts_entrada, ts_salida, capital, fraccion)
     # Buy & Hold: mismas entradas, sin salidas, 100% del capital
     buy_and_hold = simular(barras, ts_entrada, set(), capital, 1.0)
+
+    estrategia["metricas"] = calcular_metricas(estrategia, bot["temporalidad"])
+    buy_and_hold["metricas"] = calcular_metricas(buy_and_hold, bot["temporalidad"])
 
     return {
         "ticker": bot["ticker"],

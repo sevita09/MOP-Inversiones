@@ -39,9 +39,34 @@ del capital). Así el B&H entra cuando la estrategia entra pero nunca vende, y l
 comparación aísla **cuánto aporta la salida**: "la entrada define si ganás; la
 salida, cuánto" (`Documentacion/ESTRATEGIAS_BOTS.md`).
 
+## Métricas (v5.2)
+
+`servicios/backtest/metricas.py` calcula sobre el resultado de la simulación (no
+recalcula nada). Cada lado (estrategia y B&H) trae un dict `metricas`:
+
+- **retorno_pct**, **trades_total**, **trades_ganados**, **win_rate_pct**
+- **drawdown_maximo_pct** — peor caída pico-a-valle de la curva de capital
+- **sharpe** / **sortino** — sobre los retornos periódicos de la curva,
+  anualizados por temporalidad (`BARRAS_POR_ANIO`: D=252, S=52, M=12); el
+  Sortino castiga solo la volatilidad a la baja
+- **profit_factor** — ganancia bruta / pérdida bruta (en % por trade)
+- **expectancy_pct** — resultado promedio por trade
+- **exposicion_pct** — % de barras con posición abierta (el simulador cuenta
+  `barras_en_posicion`)
+- **racha_maxima_perdidas** — máximo de trades perdedores seguidos
+
+Con pocos datos, lo que no tiene sentido devuelve `None` (p.ej. Sharpe de una
+curva plana, profit factor sin pérdidas) en vez de un número engañoso.
+
+**Caché en el bot**: tras cada backtest, el endpoint guarda en el bot
+(`bots.metricas_json`, vía `repo.guardar_metricas`) un resumen liviano —
+`{desde, hasta, estrategia (métricas), buy_and_hold_retorno_pct}`, sin curva ni
+trades— para mostrarlo en la lista de bots sin recorrer la historia de nuevo.
+
 ## Endpoint
 
 `GET /api/bots/{id}/backtest?desde=&hasta=` (ts unix, opcionales) →
 `{ticker, temporalidad, moneda, desde, hasta, estrategia, buy_and_hold}`, donde
-cada lado trae `capital_inicial`, `capital_final`, `retorno_pct`, `trades` y
-`curva`. 422 si el bot no tiene reglas de entrada.
+cada lado trae `capital_inicial`, `capital_final`, `retorno_pct`, `barras`,
+`barras_en_posicion`, `metricas`, `trades` y `curva`. 422 si el bot no tiene
+reglas de entrada.

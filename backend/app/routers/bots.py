@@ -183,4 +183,16 @@ def backtest_de_bot(
         raise HTTPException(404, "Bot no encontrado")
     if not bot["reglas"].get("entrada"):
         raise HTTPException(422, "El bot no tiene reglas de entrada para backtestear")
-    return correr_backtest(conexion, bot, desde, hasta)
+    resultado = correr_backtest(conexion, bot, desde, hasta)
+    # Cachear en el bot un resumen liviano (sin curva ni trades) para la lista
+    repo.guardar_metricas(
+        conexion,
+        id_bot,
+        {
+            "desde": resultado["desde"],
+            "hasta": resultado["hasta"],
+            "estrategia": resultado["estrategia"]["metricas"],
+            "buy_and_hold_retorno_pct": resultado["buy_and_hold"]["metricas"]["retorno_pct"],
+        },
+    )
+    return resultado
