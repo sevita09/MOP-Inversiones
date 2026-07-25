@@ -63,6 +63,36 @@ curva plana, profit factor sin pérdidas) en vez de un número engañoso.
 `{desde, hasta, estrategia (métricas), buy_and_hold_retorno_pct}`, sin curva ni
 trades— para mostrarlo en la lista de bots sin recorrer la historia de nuevo.
 
+## Gestión de riesgo (v5.3)
+
+Cada bot tiene una config de riesgo (`bots.riesgo_json`, esquema `Riesgo`; todo
+opcional, sin nada opera como v5.2). El simulador la aplica **intra-barra**
+(`servicios/backtest/riesgo.py`):
+
+- **Stop loss** `stop_loss_pct` (% bajo la entrada) y/o **por ATR**
+  `stop_atr_mult` (a N ATR bajo la entrada). Con ambos, gana el más protector.
+- **Take profit** `take_profit_pct` (% sobre la entrada).
+- **Trailing stop** `trailing_pct`: un stop que sube con el máximo y nunca baja.
+- **Salida en la EMA central** `salida_ema_central`: vende cuando el cierre
+  cruza hacia abajo la EMA central (se suma a las señales de salida, ejecuta en
+  la apertura siguiente).
+- **Sizing por riesgo** `sizing_riesgo_pct`: dimensiona la posición para perder
+  ese % del capital si el precio llega al stop; nunca apalanca. Sin stop, cae a
+  la fracción fija del capital.
+
+**Reglas honestas**:
+- Stop y take profit se chequean contra el `low`/`high` de la barra. Si ambos
+  pudieron tocar en la misma barra, **se asume el stop primero** (peor caso, no
+  hay dato del orden intra-barra real).
+- Los **gaps** se llenan en la apertura: si la barra abrió más allá del nivel,
+  ese es el precio de salida.
+- El **ATR** que usan stops y sizing es el de la **barra anterior** (ya cerrada),
+  no el de la barra en curso: sin lookahead. El trailing usa el máximo hasta la
+  barra previa, así el propio máximo de una barra no sube un stop que su mínimo
+  gatilla en la misma barra.
+
+Cada trade guarda su `motivo`: `senal` · `stop` · `take_profit` · `fin`.
+
 ## Endpoint
 
 `GET /api/bots/{id}/backtest?desde=&hasta=` (ts unix, opcionales) →
