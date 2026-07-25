@@ -1,0 +1,84 @@
+.panel-metricas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.retornos-backtest {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.retorno-principal,
+.retorno-comparado {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.etiqueta-retorno {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6e7681;
+}
+
+.retorno-principal strong {
+  font-size: 28px;
+  color: #3fb950;
+}
+
+.retorno-principal.negativo strong {
+  color: #f85149;
+}
+
+.retorno-comparado strong {
+  font-size: 20px;
+  color: #8b949e;
+}
+
+.veredicto {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.veredicto.gana {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.12);
+}
+
+.veredicto.pierde {
+  color: #d29922;
+  background: rgba(210, 153, 34, 0.12);
+}
+
+.grilla-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.metrica {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #161b22;
+  cursor: help;
+}
+
+.etiqueta-metrica {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.valor-metrica {
+  font-size: 15px;
+  color: #e6edf3;
+  font-weight: 600;
+}

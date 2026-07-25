@@ -1,0 +1,101 @@
+.pagina-backtest {
+  padding: 16px 24px;
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cabecera-backtest {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.volver-bots {
+  color: #8b949e;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 5px 10px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+}
+
+.volver-bots:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.identidad-backtest {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.identidad-backtest h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.detalle-backtest {
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.ventanas-backtest {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.chip-ventana {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 14px;
+  color: #c9d1d9;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip-ventana.activo {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  background: rgba(56, 139, 253, 0.12);
+}
+
+.estado-backtest {
+  color: #8b949e;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.estado-backtest.error {
+  color: #f85149;
+}
+
+/* Ocupa todo el ancho disponible: los gráficos aprovechan la pantalla */
+.cuerpo-backtest {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  padding-bottom: 24px;
+}
+
+.seccion-backtest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seccion-backtest h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}

@@ -6,6 +6,7 @@ import Navegacion from './componentes/Navegacion'
 import Sidebar from './componentes/Sidebar'
 import PaginaGrafico from './paginas/PaginaGrafico'
 import PaginaBots from './paginas/bots/PaginaBots'
+import PaginaBacktest from './paginas/backtest/PaginaBacktest'
 import PaginaSenales from './paginas/senales/PaginaSenales'
 import PaginaCartera from './paginas/PaginaCartera'
 import PaginaDatos from './paginas/PaginaDatos'
@@ -34,6 +35,7 @@ function App() {
           <Routes>
             <Route path="/" element={<PaginaGrafico />} />
             <Route path="/bots" element={<PaginaBots />} />
+            <Route path="/bots/:id/backtest" element={<PaginaBacktest />} />
             <Route path="/senales" element={<PaginaSenales />} />
             <Route path="/cartera" element={<PaginaCartera />} />
             <Route path="/datos" element={<PaginaDatos />} />
