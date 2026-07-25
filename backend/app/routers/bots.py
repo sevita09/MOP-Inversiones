@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import TICKERS_DOLAR
 from app.db import conexion_api
-from app.esquemas.bots import BotEdicion, BotPeticion, PlantillaPeticion, PreviewPeticion
+from app.esquemas.bots import (
+    BacktestRapidoPeticion,
+    BotEdicion,
+    BotPeticion,
+    PlantillaPeticion,
+    PreviewPeticion,
+)
 from app.repositorios import bots as repo
 from app.repositorios import plantillas as repo_plantillas
 from app.repositorios import senales as repo_senales
@@ -103,6 +110,29 @@ def preview_de_reglas(
         return evaluar_reglas(velas_por, body.reglas, body.temporalidad)
     except ValueError as error:
         # Condición de temporalidad menor a la del bot (p.ej. D en un bot S)
+        raise HTTPException(422, str(error))
+
+
+@router.post("/bots/backtest_rapido")
+def backtest_rapido(
+    body: BacktestRapidoPeticion, conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    """Backtest de los últimos `meses` sobre una config sin guardar (el editor)."""
+    ticker = _validar_ticker(conexion, body.ticker)
+    if not body.reglas.entrada:
+        raise HTTPException(422, "Sin reglas de entrada no hay nada que backtestear")
+    desde = int((datetime.now(timezone.utc) - timedelta(days=body.meses * 30.44)).timestamp())
+    bot = {
+        "ticker": ticker,
+        "temporalidad": body.temporalidad,
+        "moneda": body.moneda,
+        "capital": body.capital.model_dump(),
+        "riesgo": body.riesgo.model_dump(),
+        "reglas": body.reglas.model_dump(exclude_none=True),
+    }
+    try:
+        return correr_backtest(conexion, bot, desde, None)
+    except ValueError as error:
         raise HTTPException(422, str(error))
 
 

@@ -1,0 +1,33 @@
+.curva-capital {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leyenda-curva {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+}
+
+.serie-leyenda.estrategia {
+  color: #3fb950;
+}
+
+.serie-leyenda.bh {
+  color: #8b949e;
+}
+
+.nota-curva {
+  color: #6e7681;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.area-curva {
+  height: 260px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+}

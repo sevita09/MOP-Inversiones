@@ -49,6 +49,18 @@ class PreviewPeticion(BaseModel):
     reglas: Reglas
 
 
+class BacktestRapidoPeticion(BaseModel):
+    """Backtest de una config sin guardar (el editor de bots)."""
+
+    ticker: str
+    temporalidad: Temporalidad
+    moneda: Moneda = "ARS"
+    capital: Capital = Capital()
+    riesgo: Riesgo = Riesgo()
+    reglas: Reglas
+    meses: int = Field(default=12, ge=1, le=240)
+
+
 class PresetRiesgoPeticion(BaseModel):
     """Guardar una config de riesgo como preset reutilizable."""
 

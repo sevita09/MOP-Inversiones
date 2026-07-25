@@ -41,14 +41,16 @@
   font-size: 13px;
 }
 
+/* Grilla que llena el ancho disponible: 2+ columnas en pantallas anchas,
+   1 sola cuando no entran (así no queda el hueco de la fila estirada) */
 .lista-bots {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 720px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 8px;
+  max-width: 1400px;
 }
 
 .fila-bot {
@@ -97,7 +99,12 @@
   gap: 4px;
 }
 
-.acciones-bot button {
+.acciones-bot button,
+.acciones-bot .accion-backtest {
+  position: relative; /* ancla del tooltip */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -106,12 +113,76 @@
   width: 30px;
   height: 30px;
   cursor: pointer;
+  text-decoration: none;
 }
 
-.acciones-bot button:hover {
+.acciones-bot button:hover,
+.acciones-bot .accion-backtest:hover {
   border-color: #30363d;
   color: #e6edf3;
   background: #21262d;
+}
+
+/* Cartel explicativo arriba del botón, al pasar el mouse */
+.acciones-bot [data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 9px;
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: #e6edf3;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Resultado del último backtest, cacheado en el bot */
+.metricas-bot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.metricas-bot .retorno-bot {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.metricas-bot .retorno-bot.positivo {
+  color: #3fb950;
+}
+
+.metricas-bot .retorno-bot.negativo {
+  color: #f85149;
+}
+
+.veredicto-bot {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.veredicto-bot.gana {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.12);
+}
+
+.veredicto-bot.pierde {
+  color: #d29922;
+  background: rgba(210, 153, 34, 0.12);
 }
 
 .acciones-bot .accion-borrar:hover {

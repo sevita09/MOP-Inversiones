@@ -91,7 +91,49 @@ opcional, sin nada opera como v5.2). El simulador la aplica **intra-barra**
   barra previa, así el propio máximo de una barra no sube un stop que su mínimo
   gatilla en la misma barra.
 
-Cada trade guarda su `motivo`: `senal` · `stop` · `take_profit` · `fin`.
+Cada trade guarda su **`motivo`**: `senal` · `stop` · `trailing` · `take_profit`
+· `fin`. El trailing se distingue del stop inicial (`stop_es_trailing()`
+compara el stop vigente contra el nivel del trailing), así en los resultados se
+ve qué parte de la gestión de riesgo actuó en cada cierre.
+
+## Página de resultados (v5.4)
+
+`paginas/backtest/PaginaBacktest.tsx` en la ruta **`/bots/:id/backtest`**, a la
+que se llega con el botón 📊 de cada fila en la lista de bots. Corre el backtest
+al abrir y lo re-corre al cambiar la ventana (1A · 3A · 5A · Todo,
+`usarBacktest`). Muestra:
+
+- **`PanelMetricas`** — el retorno de la estrategia en grande contra el del
+  Buy & Hold, con un veredicto ("le gana" / "no le gana") y la grilla de las
+  demás métricas, cada una con su explicación al pasar el mouse.
+- **`CurvaCapital`** — la curva de capital de la estrategia (verde, sólida) y la
+  del Buy & Hold (gris, punteada) sobre el mismo eje: arrancan del mismo capital
+  inicial, así la comparación es directa.
+- **`GraficoTrades`** — las velas del ticker con cada operación marcada:
+  ▲ verde la compra, ▼ la venta coloreada **según el motivo** (rojo stop, verde
+  take profit, azul señal, ámbar posición abierta al final) y el resultado en %.
+- **`TablaTrades`** — una fila por operación: fechas, precios, duración, motivo
+  de salida (con la palabra completa y coloreado: *Stop loss*, *Trailing stop*,
+  *Take profit*, *Señal de salida*, *Abierta al final*), resultado y el
+  **acumulado compuesto** — cada operación reinvierte sobre lo anterior, así la
+  última fila coincide con el retorno de la estrategia (sumar los % daría un
+  número inflado que no cierra con la curva).
+
+Los dos gráficos comparten un `sincronizadorTiempo` (el mismo del chart
+principal): mover o hacer zoom en uno mueve el otro. Para que los índices
+coincidan, el gráfico de precios muestra solo las barras del rango del backtest.
+
+En la **lista de bots**, cada fila muestra el resultado del último backtest
+(el resumen cacheado de v5.2) contra el Buy & Hold, sin recalcular nada.
+
+## Backtest rápido desde el editor
+
+`componentes/bots/BacktestRapido.tsx` — botón "⏱ Probar sobre el último año" en
+el editor de bots: manda la config **sin guardar** a
+`POST /api/bots/backtest_rapido` (`{ticker, temporalidad, moneda, capital,
+riesgo, reglas, meses}`) y muestra un resumen en línea (retorno, B&H,
+operaciones, aciertos, drawdown). Sirve para iterar reglas sin salir del
+formulario ni crear un bot.
 
 ## Endpoint
 

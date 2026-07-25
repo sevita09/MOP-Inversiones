@@ -131,6 +131,56 @@ export interface ResumenMetricas {
   buy_and_hold_retorno_pct: number
 }
 
+export type MotivoSalida = 'senal' | 'stop' | 'trailing' | 'take_profit' | 'fin'
+
+export interface TradeBacktest {
+  entrada_ts: number
+  entrada_precio: number
+  salida_ts: number
+  salida_precio: number
+  pnl_pct: number
+  duracion_dias: number
+  gana: boolean
+  motivo: MotivoSalida
+  abierto_al_final: boolean
+}
+
+export interface PuntoCurva {
+  ts: number
+  capital: number
+}
+
+export interface SimulacionBacktest {
+  capital_inicial: number
+  capital_final: number
+  retorno_pct: number
+  barras: number
+  barras_en_posicion: number
+  metricas: MetricasBacktest
+  trades: TradeBacktest[]
+  curva: PuntoCurva[]
+}
+
+export interface ResultadoBacktest {
+  ticker: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  desde: number | null
+  hasta: number | null
+  estrategia: SimulacionBacktest
+  buy_and_hold: SimulacionBacktest
+}
+
+export interface BacktestRapidoPeticion {
+  ticker: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  capital?: CapitalBot
+  riesgo?: RiesgoBot
+  reglas: ReglasBot
+  meses?: number
+}
+
 export type OperadorRegla =
   | 'mayor'
   | 'menor'

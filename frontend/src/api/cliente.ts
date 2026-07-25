@@ -1,7 +1,9 @@
 import type {
+  BacktestRapidoPeticion,
   Bot,
   BotNuevo,
   Categoria,
+  ResultadoBacktest,
   Plantilla,
   PlantillaNueva,
   PresetRiesgo,
@@ -191,6 +193,10 @@ export function obtenerBots(): Promise<Bot[]> {
   return obtenerJson<Bot[]>('/api/bots')
 }
 
+export function obtenerBot(id: number): Promise<Bot> {
+  return obtenerJson<Bot>('/api/bots/' + id)
+}
+
 export function crearBot(datos: BotNuevo): Promise<Bot> {
   return fetchJson<Bot>('/api/bots', { method: 'POST', body: JSON.stringify(datos) })
 }
@@ -226,6 +232,27 @@ export function crearPlantilla(datos: PlantillaNueva): Promise<Plantilla> {
 
 export function eliminarPlantilla(id: number): Promise<void> {
   return fetchJson('/api/bots/plantillas/' + id, { method: 'DELETE' })
+}
+
+// --- Backtest ---
+
+export function obtenerBacktest(
+  id: number,
+  desde?: number,
+  hasta?: number,
+): Promise<ResultadoBacktest> {
+  const parametros = new URLSearchParams()
+  if (desde) parametros.set('desde', String(desde))
+  if (hasta) parametros.set('hasta', String(hasta))
+  const cola = parametros.toString() ? `?${parametros}` : ''
+  return obtenerJson<ResultadoBacktest>(`/api/bots/${id}/backtest${cola}`)
+}
+
+export function backtestRapido(datos: BacktestRapidoPeticion): Promise<ResultadoBacktest> {
+  return fetchJson<ResultadoBacktest>('/api/bots/backtest_rapido', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  })
 }
 
 // --- Presets de riesgo ---

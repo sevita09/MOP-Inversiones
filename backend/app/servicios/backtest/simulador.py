@@ -20,6 +20,7 @@ from app.servicios.backtest.riesgo import (
     actualizar_trailing,
     niveles_iniciales,
     salida_intrabarra,
+    stop_es_trailing,
     unidades_a_comprar,
 )
 from app.servicios.bots.evaluador import evaluar_reglas
@@ -87,6 +88,9 @@ def simular(
         if unidades > 0 and posicion:
             posicion["stop"] = actualizar_trailing(posicion["stop"], riesgo, posicion["max_precio"])
             precio_salida, motivo = salida_intrabarra(barra, posicion["stop"], posicion["tp"])
+            # Distinguir el trailing del stop inicial: son gestiones distintas
+            if motivo == "stop" and stop_es_trailing(posicion["stop"], riesgo, posicion["max_precio"]):
+                motivo = "trailing"
             if precio_salida is not None:
                 efectivo += unidades * precio_salida
                 trades.append(_cerrar_trade(posicion, barra["ts"], precio_salida, motivo))

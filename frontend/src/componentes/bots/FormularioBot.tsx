@@ -9,6 +9,7 @@ import type {
   TemporalidadBot,
 } from '../../api/tipos'
 import LogoTicker from '../LogoTicker'
+import BacktestRapido from './BacktestRapido'
 import ConstructorReglas from './ConstructorReglas'
 import ControlesRiesgo, { RIESGO_VACIO } from './ControlesRiesgo'
 import InputNumero from './InputNumero'
@@ -249,6 +250,17 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
           {resumirReglas(reglas, temporalidad) && (
             <p className="resumen-reglas">{resumirReglas(reglas, temporalidad)}</p>
           )}
+          <BacktestRapido
+            ticker={ticker}
+            temporalidad={temporalidad}
+            moneda={moneda}
+            capital={{
+              inicial: inicial ?? 1000000,
+              porcentaje_por_posicion: porcentaje ?? 100,
+            }}
+            riesgo={riesgo}
+            reglas={reglas}
+          />
           <GuardarComoPlantilla
             reglas={reglas}
             temporalidad={temporalidad}
