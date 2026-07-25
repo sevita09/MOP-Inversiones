@@ -37,6 +37,15 @@ def actualizar_trailing(stop: Optional[float], riesgo: dict, max_precio: float) 
     return trailing if stop is None else max(stop, trailing)
 
 
+def stop_es_trailing(stop: Optional[float], riesgo: dict, max_precio: float) -> bool:
+    """True si el stop vigente es el del trailing (y no el inicial): sirve para
+    contar en los resultados por qué motivo se cerró la posición."""
+    if not riesgo.get("trailing_pct") or stop is None:
+        return False
+    trailing = max_precio * (1 - riesgo["trailing_pct"] / 100)
+    return abs(stop - trailing) < 1e-9
+
+
 def salida_intrabarra(
     barra: dict, stop: Optional[float], tp: Optional[float]
 ) -> tuple[Optional[float], Optional[str]]:

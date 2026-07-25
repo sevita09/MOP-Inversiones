@@ -88,7 +88,7 @@ def test_trailing_stop_sube_con_el_maximo():
         barras, {ts[0]}, set(), 1000, 1.0, riesgo={"trailing_pct": 10}
     )
     trade = resultado["trades"][0]
-    assert trade["motivo"] == "stop"
+    assert trade["motivo"] == "trailing"
     assert trade["salida_precio"] == 135
 
 
@@ -144,3 +144,28 @@ def test_salida_por_ema_central_corta_al_cruzar(conexion):
     assert con_ema["estrategia"]["trades"][0]["abierto_al_final"] is False
     # Sin ella, la posición queda abierta hasta el final del rango
     assert sin_ema["estrategia"]["trades"][0]["abierto_al_final"] is True
+
+
+def test_el_trailing_se_distingue_del_stop_inicial():
+    """Si cierra el trailing, el motivo lo dice (no se confunde con el stop fijo)."""
+    barras = _serie([
+        (10, 11, 9, 10),
+        (100, 120, 99, 118),   # entra a 100 (stop inicial 90), máximo 120
+        (119, 150, 118, 148),  # máximo 150 → trailing 135
+        (140, 141, 130, 134),  # low 130 toca 135 → salida por trailing
+    ])
+    ts = [b["ts"] for b in barras]
+    resultado = simular(
+        barras, {ts[0]}, set(), 1000, 1.0, riesgo={"stop_loss_pct": 10, "trailing_pct": 10}
+    )
+    assert resultado["trades"][0]["motivo"] == "trailing"
+
+
+def test_el_stop_inicial_sigue_marcandose_como_stop():
+    # Cae antes de que el trailing supere al stop inicial
+    barras = _serie([(10, 11, 9, 10), (100, 101, 99, 100), (95, 96, 88, 90)])
+    ts = [b["ts"] for b in barras]
+    resultado = simular(
+        barras, {ts[0]}, set(), 1000, 1.0, riesgo={"stop_loss_pct": 10, "trailing_pct": 50}
+    )
+    assert resultado["trades"][0]["motivo"] == "stop"

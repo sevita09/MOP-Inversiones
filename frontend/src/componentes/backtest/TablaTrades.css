@@ -1,0 +1,115 @@
+.tabla-trades-contenedor {
+  overflow-x: auto;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.tabla-trades {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tabla-trades th {
+  text-align: center;
+  padding: 8px 12px;
+  color: #8b949e;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  white-space: nowrap;
+}
+
+.tabla-trades td {
+  padding: 7px 12px;
+  text-align: center;
+  color: #c9d1d9;
+  border-bottom: 1px solid #21262d;
+  white-space: nowrap;
+}
+
+.tabla-trades tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-trades tbody tr:hover td {
+  background: #161b22;
+}
+
+.tabla-trades .numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-trades .resultado {
+  font-weight: 600;
+}
+
+.tabla-trades tr.gana .resultado {
+  color: #3fb950;
+}
+
+.tabla-trades tr.pierde .resultado {
+  color: #f85149;
+}
+
+/* Acumulado: la evolución del capital operación a operación */
+.tabla-trades .acumulado {
+  font-weight: 600;
+}
+
+.tabla-trades .acumulado.positivo {
+  color: #3fb950;
+}
+
+.tabla-trades .acumulado.negativo {
+  color: #f85149;
+}
+
+.chip-motivo {
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  background: #21262d;
+  color: #8b949e;
+  cursor: help;
+  white-space: nowrap;
+}
+
+/* Los motivos de gestión de riesgo van coloreados: se ven de un vistazo */
+.chip-motivo.stop {
+  background: rgba(248, 81, 73, 0.16);
+  color: #f85149;
+}
+
+.chip-motivo.trailing {
+  background: rgba(210, 153, 34, 0.16);
+  color: #d29922;
+}
+
+.chip-motivo.take_profit {
+  background: rgba(63, 185, 80, 0.16);
+  color: #3fb950;
+}
+
+.chip-motivo.senal {
+  background: rgba(56, 139, 253, 0.14);
+  color: #58a6ff;
+}
+
+.chip-motivo.fin {
+  background: #21262d;
+  color: #8b949e;
+}
+
+.trades-vacio {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  color: #8b949e;
+  font-size: 13px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
