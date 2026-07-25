@@ -1,0 +1,60 @@
+.backtest-rapido {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.boton-probar {
+  background: none;
+  border: 1px dashed #30363d;
+  border-radius: 6px;
+  color: #8b949e;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-probar:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.boton-probar:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.resumen-rapido {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.retorno-rapido {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.retorno-rapido.positivo {
+  color: #3fb950;
+}
+
+.retorno-rapido.negativo {
+  color: #f85149;
+}
+
+.dato-rapido {
+  color: #8b949e;
+  cursor: help;
+}
+
+.error-rapido {
+  color: #f85149;
+  font-size: 12px;
+}
