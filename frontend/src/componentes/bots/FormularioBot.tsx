@@ -5,10 +5,13 @@ import type {
   Moneda,
   Plantilla,
   ReglasBot,
+  RiesgoBot,
   TemporalidadBot,
 } from '../../api/tipos'
 import LogoTicker from '../LogoTicker'
 import ConstructorReglas from './ConstructorReglas'
+import ControlesRiesgo, { RIESGO_VACIO } from './ControlesRiesgo'
+import InputNumero from './InputNumero'
 import GraficoPreviewBot from './GraficoPreviewBot'
 import GuardarComoPlantilla from './GuardarComoPlantilla'
 import SelectorPlantilla from './SelectorPlantilla'
@@ -41,11 +44,12 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
   const [busqueda, setBusqueda] = useState('')
   const [temporalidad, setTemporalidad] = useState<TemporalidadBot>(bot?.temporalidad ?? 'D')
   const [moneda, setMoneda] = useState<Moneda>(bot?.moneda ?? 'ARS')
-  const [inicial, setInicial] = useState(String(bot?.capital.inicial ?? 1000000))
-  const [porcentaje, setPorcentaje] = useState(
-    String(bot?.capital.porcentaje_por_posicion ?? 100),
+  const [inicial, setInicial] = useState<number | null>(bot?.capital.inicial ?? 1000000)
+  const [porcentaje, setPorcentaje] = useState<number | null>(
+    bot?.capital.porcentaje_por_posicion ?? 100,
   )
   const [reglas, setReglas] = useState<ReglasBot>(bot?.reglas ?? REGLAS_VACIAS)
+  const [riesgo, setRiesgo] = useState<RiesgoBot>(bot?.riesgo ?? RIESGO_VACIO)
 
   // Al subir la temporalidad del bot, las condiciones que quedaron por debajo
   // (p.ej. una diaria en un bot ahora semanal) vuelven a "la del bot"
@@ -89,11 +93,11 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
     const limpio = nombre.trim()
     if (!limpio) return setMensaje('Poné un nombre al bot')
     if (!ticker) return setMensaje('Elegí un ticker')
-    const capitalInicial = Number(inicial)
-    const capitalPorcentaje = Number(porcentaje)
+    const capitalInicial = inicial ?? 0
+    const capitalPorcentaje = porcentaje ?? 0
     if (!(capitalInicial > 0)) return setMensaje('El capital inicial debe ser mayor a 0')
     if (!(capitalPorcentaje > 0 && capitalPorcentaje <= 100))
-      return setMensaje('El % por posición va de 1 a 100')
+      return setMensaje('La entrada por posición va de 1 a 100%')
 
     setGuardando(true)
     setMensaje('')
@@ -104,6 +108,7 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
         temporalidad,
         moneda,
         capital: { inicial: capitalInicial, porcentaje_por_posicion: capitalPorcentaje },
+        riesgo,
         reglas,
       })
     } catch (error) {
@@ -224,24 +229,15 @@ function FormularioBot({ bot, alGuardar, alCerrar }: Props) {
         <div className="fila-capital">
           <label className="campo-bot">
             Capital inicial
-            <input
-              type="number"
-              min={1}
-              value={inicial}
-              onChange={(evento) => setInicial(evento.target.value)}
-            />
+            <InputNumero valor={inicial} prefijo="$" miles placeholder="0" alCambiar={setInicial} />
           </label>
           <label className="campo-bot">
-            % de entrada por posición
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={porcentaje}
-              onChange={(evento) => setPorcentaje(evento.target.value)}
-            />
+            Entrada por posición
+            <InputNumero valor={porcentaje} sufijo="%" placeholder="100" alCambiar={setPorcentaje} />
           </label>
         </div>
+
+        <ControlesRiesgo riesgo={riesgo} alCambiar={setRiesgo} />
         </div>
 
         <div className="columna-reglas-bot">

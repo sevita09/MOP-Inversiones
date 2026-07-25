@@ -4,7 +4,9 @@ import type {
   Categoria,
   Plantilla,
   PlantillaNueva,
+  PresetRiesgo,
   ReglasBot,
+  RiesgoBot,
   RespuestaSenales,
   RespuestaPreview,
   TemporalidadBot,
@@ -224,6 +226,23 @@ export function crearPlantilla(datos: PlantillaNueva): Promise<Plantilla> {
 
 export function eliminarPlantilla(id: number): Promise<void> {
   return fetchJson('/api/bots/plantillas/' + id, { method: 'DELETE' })
+}
+
+// --- Presets de riesgo ---
+
+export function obtenerPresetsRiesgo(): Promise<PresetRiesgo[]> {
+  return obtenerJson<PresetRiesgo[]>('/api/riesgo/presets')
+}
+
+export function crearPresetRiesgo(nombre: string, riesgo: RiesgoBot): Promise<PresetRiesgo> {
+  return fetchJson<PresetRiesgo>('/api/riesgo/presets', {
+    method: 'POST',
+    body: JSON.stringify({ nombre, riesgo }),
+  })
+}
+
+export function eliminarPresetRiesgo(id: number): Promise<void> {
+  return fetchJson('/api/riesgo/presets/' + id, { method: 'DELETE' })
 }
 
 // --- Señales del día ---

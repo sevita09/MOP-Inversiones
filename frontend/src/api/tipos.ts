@@ -93,6 +93,44 @@ export interface CapitalBot {
   porcentaje_por_posicion: number
 }
 
+export interface RiesgoBot {
+  stop_loss_pct: number | null
+  stop_atr_mult: number | null
+  take_profit_pct: number | null
+  salida_ema_central: boolean
+  trailing_pct: number | null
+  atr_periodo: number
+  sizing_riesgo_pct: number | null
+}
+
+export interface PresetRiesgo {
+  id: number
+  nombre: string
+  riesgo: RiesgoBot
+}
+
+export interface MetricasBacktest {
+  retorno_pct: number
+  trades_total: number
+  trades_ganados: number
+  win_rate_pct: number | null
+  drawdown_maximo_pct: number
+  sharpe: number | null
+  sortino: number | null
+  profit_factor: number | null
+  expectancy_pct: number | null
+  exposicion_pct: number
+  racha_maxima_perdidas: number
+}
+
+// Resumen cacheado en el bot tras cada backtest
+export interface ResumenMetricas {
+  desde: number | null
+  hasta: number | null
+  estrategia: MetricasBacktest
+  buy_and_hold_retorno_pct: number
+}
+
 export type OperadorRegla =
   | 'mayor'
   | 'menor'
@@ -160,10 +198,12 @@ export interface Bot {
   temporalidad: TemporalidadBot
   moneda: Moneda
   capital: CapitalBot
+  riesgo: RiesgoBot
   reglas: ReglasBot
   activo: boolean
   creado: string
   actualizado: string
+  metricas: ResumenMetricas | null
 }
 
 export interface BotNuevo {
@@ -172,6 +212,7 @@ export interface BotNuevo {
   temporalidad: TemporalidadBot
   moneda: Moneda
   capital: CapitalBot
+  riesgo?: RiesgoBot
   reglas?: ReglasBot
 }
 
