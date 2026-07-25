@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Bot } from '../../api/tipos'
 import LogoTicker from '../../componentes/LogoTicker'
 import FormularioBot from '../../componentes/bots/FormularioBot'
@@ -6,6 +7,17 @@ import { usarBots } from '../../hooks/usarBots'
 import './PaginaBots.css'
 
 const NOMBRE_TEMPORALIDAD = { D: 'Diario', S: 'Semanal', M: 'Mensual' }
+
+/** Ícono de barras del backtest; hereda el color del botón (mismo gris que el resto). */
+function IconoBacktest() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <rect x="1.5" y="8" width="3" height="6" rx="0.5" />
+      <rect x="6.5" y="4.5" width="3" height="9.5" rx="0.5" />
+      <rect x="11.5" y="1.5" width="3" height="12.5" rx="0.5" />
+    </svg>
+  )
+}
 
 function PaginaBots() {
   const { bots, cargando, crear, editar, eliminar, duplicar, alternarActivo } = usarBots()
@@ -43,23 +55,64 @@ function PaginaBots() {
                   {!bot.activo && <span className="chip-pausado">pausado</span>}
                 </span>
               </div>
+              {bot.metricas && (
+                <span className="metricas-bot" title="Resultado del último backtest">
+                  <span
+                    className={`retorno-bot${
+                      bot.metricas.estrategia.retorno_pct >= 0 ? ' positivo' : ' negativo'
+                    }`}
+                  >
+                    {bot.metricas.estrategia.retorno_pct > 0 ? '+' : ''}
+                    {bot.metricas.estrategia.retorno_pct.toFixed(1)}%
+                  </span>
+                  <span
+                    className={`veredicto-bot${
+                      bot.metricas.estrategia.retorno_pct >= bot.metricas.buy_and_hold_retorno_pct
+                        ? ' gana'
+                        : ' pierde'
+                    }`}
+                    title={`Buy & Hold: ${
+                      bot.metricas.buy_and_hold_retorno_pct > 0 ? '+' : ''
+                    }${bot.metricas.buy_and_hold_retorno_pct.toFixed(1)}%`}
+                  >
+                    {bot.metricas.estrategia.retorno_pct >= bot.metricas.buy_and_hold_retorno_pct
+                      ? '↑ le gana al B&H'
+                      : '↓ no le gana al B&H'}
+                  </span>
+                </span>
+              )}
               <div className="acciones-bot">
+                <Link
+                  to={`/bots/${bot.id}/backtest`}
+                  className="accion-backtest"
+                  data-tooltip="Ver resultados del backtest"
+                >
+                  <IconoBacktest />
+                </Link>
                 <button
                   type="button"
-                  title={bot.activo ? 'Pausar' : 'Reanudar'}
+                  data-tooltip={bot.activo ? 'Pausar: deja de generar señales' : 'Reanudar: vuelve a generar señales'}
                   onClick={() => void alternarActivo(bot)}
                 >
                   {bot.activo ? '⏸' : '▶'}
                 </button>
-                <button type="button" title="Editar" onClick={() => setFormulario(bot)}>
+                <button
+                  type="button"
+                  data-tooltip="Editar reglas y configuración"
+                  onClick={() => setFormulario(bot)}
+                >
                   ✎
                 </button>
-                <button type="button" title="Duplicar" onClick={() => void duplicar(bot.id)}>
+                <button
+                  type="button"
+                  data-tooltip="Duplicar: copia el bot con sus reglas"
+                  onClick={() => void duplicar(bot.id)}
+                >
                   ⧉
                 </button>
                 <button
                   type="button"
-                  title="Borrar"
+                  data-tooltip="Borrar este bot"
                   className="accion-borrar"
                   onClick={() => setBorrando(bot)}
                 >
