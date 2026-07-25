@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS bots (
     moneda       TEXT NOT NULL DEFAULT 'ARS',
     capital_json TEXT NOT NULL,   -- {"inicial": ..., "porcentaje_por_posicion": ...}
     reglas_json  TEXT NOT NULL,   -- {"version": 1, "entrada": [...], "salida": [...], "filtros": [...]}
+    riesgo_json  TEXT,            -- gestión de riesgo (stop, take profit, trailing, sizing); NULL = sin riesgo
     activo       INTEGER NOT NULL DEFAULT 1,
     metricas_json TEXT,           -- resumen del último backtest (caché); NULL si nunca corrió
     creado       TEXT NOT NULL DEFAULT (datetime('now')),
@@ -97,6 +98,14 @@ CREATE TABLE IF NOT EXISTS senales (
     vista        INTEGER NOT NULL DEFAULT 0,
     creado       TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (bot_id, ts_barra, lado)
+);
+
+-- Configuraciones de riesgo guardadas por el usuario, para reusar entre bots
+CREATE TABLE IF NOT EXISTS presets_riesgo (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre      TEXT NOT NULL UNIQUE,
+    riesgo_json TEXT NOT NULL,
+    creado      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS dibujos (
@@ -136,6 +145,11 @@ def inicializar_base(ruta: RutaBase = RUTA_BASE_DE_DATOS) -> None:
         # Migración suave: bases creadas antes del caché de métricas del backtest
         try:
             conexion.execute("ALTER TABLE bots ADD COLUMN metricas_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # la columna ya existe
+        # Migración suave: bases creadas antes de la gestión de riesgo
+        try:
+            conexion.execute("ALTER TABLE bots ADD COLUMN riesgo_json TEXT")
         except sqlite3.OperationalError:
             pass  # la columna ya existe
 
