@@ -78,6 +78,25 @@ def test_editar_las_reglas_de_un_bot(cliente, bot):
     assert editado["nombre"] == bot["nombre"]
 
 
+def test_riesgo_por_defecto_y_edicion(cliente, bot):
+    # Un bot nuevo trae la config de riesgo vacía (sin stops)
+    assert bot["riesgo"]["stop_loss_pct"] is None
+    assert bot["riesgo"]["salida_ema_central"] is False
+    # Se puede editar
+    editado = cliente.put(
+        f"/api/bots/{bot['id']}",
+        json={"riesgo": {"stop_loss_pct": 8, "take_profit_pct": 20, "salida_ema_central": True}},
+    ).json()
+    assert editado["riesgo"]["stop_loss_pct"] == 8
+    assert editado["riesgo"]["take_profit_pct"] == 20
+    assert editado["riesgo"]["salida_ema_central"] is True
+
+
+def test_riesgo_invalido_es_422(cliente):
+    peticion = {**BOT, "riesgo": {"stop_loss_pct": 150}}  # > 100
+    assert cliente.post("/api/bots", json=peticion).status_code == 422
+
+
 # --- lectura ---
 
 

@@ -1,0 +1,58 @@
+.input-numero {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-numero input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.input-numero input:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+/* Sin flechas/spinners nativos */
+.input-numero input::-webkit-outer-spin-button,
+.input-numero input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Afijos internos tenues */
+.afijo-numero {
+  position: absolute;
+  color: #6e7681;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.afijo-numero.prefijo {
+  left: 10px;
+}
+
+.afijo-numero.sufijo {
+  right: 10px;
+}
+
+/* Espacio para que el texto no pise el afijo */
+.input-numero.con-prefijo input {
+  padding-left: 22px;
+}
+
+.input-numero.con-sufijo input {
+  padding-right: 40px;
+}
+
+.input-numero.deshabilitado input {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
