@@ -61,6 +61,24 @@ class BacktestRapidoPeticion(BaseModel):
     meses: int = Field(default=12, ge=1, le=240)
 
 
+class ParametroOptimizacion(BaseModel):
+    """Qué parámetro del bot barrer y en qué rango."""
+
+    tipo: Literal["condicion", "riesgo"]
+    campo: str  # 'objetivo' | 'params.<clave>' | nombre del campo de riesgo
+    desde: float
+    hasta: float
+    paso: float = Field(gt=0)
+    # Solo para tipo 'condicion': dónde vive la condición
+    bloque: Optional[Literal["entrada", "salida", "filtros"]] = None
+    indice: Optional[int] = Field(default=None, ge=0)
+
+
+class OptimizacionPeticion(BaseModel):
+    parametros: list[ParametroOptimizacion] = Field(min_length=1, max_length=2)
+    metrica: Literal["retorno_pct", "sharpe", "profit_factor", "expectancy_pct"] = "retorno_pct"
+
+
 class PresetRiesgoPeticion(BaseModel):
     """Guardar una config de riesgo como preset reutilizable."""
 
