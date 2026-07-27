@@ -132,7 +132,7 @@ todo editable después). El texto que ve el usuario es sobrio y descriptivo:
 
 **Plantillas propias.** Además de las 4 base, el usuario guarda sus estrategias
 como plantillas reutilizables (tabla `plantillas`, `repositorios/plantillas.py`,
-`POST`/`DELETE /api/bots/plantillas`). `GET /api/bots/plantillas` devuelve las
+`POST`/`DELETE /api/plantillas`). `GET /api/plantillas` devuelve las
 base (`predefinida: true`, `id: null`) seguidas de las propias
 (`clave: "custom:<id>"`); el selector las agrupa en "Plantillas base" y
 "Propias", y las propias se pueden borrar. En el editor, el botón "Guardar como
