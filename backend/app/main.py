@@ -9,6 +9,7 @@ from app.rutas import dir_recursos
 from app.routers import (
     actualizacion,
     bots,
+    cartera,
     categorias,
     dibujos,
     dolar,
@@ -44,6 +45,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="MOP Inversiones", lifespan=lifespan)
 app.include_router(actualizacion.router)
 app.include_router(bots.router)
+app.include_router(cartera.router)
 app.include_router(categorias.router)
 app.include_router(dibujos.router)
 app.include_router(dolar.router)

@@ -8,7 +8,7 @@ import PaginaGrafico from './paginas/PaginaGrafico'
 import PaginaBots from './paginas/bots/PaginaBots'
 import PaginaBacktest from './paginas/backtest/PaginaBacktest'
 import PaginaSenales from './paginas/senales/PaginaSenales'
-import PaginaCartera from './paginas/PaginaCartera'
+import PaginaCartera from './paginas/cartera/PaginaCartera'
 import PaginaDatos from './paginas/PaginaDatos'
 import { usarVersion } from './hooks/usarVersion'
 

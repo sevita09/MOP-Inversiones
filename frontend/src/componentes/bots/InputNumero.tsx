@@ -13,18 +13,35 @@ interface Props {
 
 function formatear(valor: number | null, miles?: boolean): string {
   if (valor === null || valor === undefined || Number.isNaN(valor)) return ''
-  return miles ? valor.toLocaleString('es-AR') : String(valor)
+  if (!miles) return String(valor)
+  return valor.toLocaleString('es-AR', { maximumFractionDigits: 2 })
 }
 
+/** Interpreta el formato argentino: el punto separa miles y la coma decimales.
+ *  Así pegar "22.746.810,66" del resumen del broker da 22746810.66 y no
+ *  2274681066 (que es lo que pasaba tratando el punto como ruido). */
 function parsear(texto: string, miles?: boolean): number | null {
   if (miles) {
-    const digitos = texto.replace(/\D/g, '')
-    return digitos === '' ? null : parseInt(digitos, 10)
+    const [entero, decimal] = texto.split(',')
+    const digitos = (entero ?? '').replace(/\D/g, '')
+    const decimales = (decimal ?? '').replace(/\D/g, '').slice(0, 2)
+    if (digitos === '' && decimales === '') return null
+    return parseFloat(`${digitos || '0'}.${decimales || '0'}`)
   }
-  const limpio = texto.replace(/[^\d.]/g, '')
+  const limpio = texto.replace(',', '.').replace(/[^\d.]/g, '')
   if (limpio === '' || limpio === '.') return null
   const num = parseFloat(limpio)
   return Number.isNaN(num) ? null : num
+}
+
+/** Reformatea mientras se escribe sin romper los decimales a medio tipear:
+ *  agrupa la parte entera y deja la decimal tal cual la va poniendo el usuario. */
+function formatearMientrasEscribe(texto: string): string {
+  const [entero, decimal] = texto.split(',')
+  const digitos = (entero ?? '').replace(/\D/g, '')
+  const agrupado = digitos === '' ? '' : parseInt(digitos, 10).toLocaleString('es-AR')
+  if (decimal === undefined) return agrupado
+  return `${agrupado},${decimal.replace(/\D/g, '').slice(0, 2)}`
 }
 
 /** Input numérico sin spinners, con afijo interno (%, $, ×) y formateo de miles.
@@ -48,8 +65,7 @@ function InputNumero({
 
   const alEscribir = (bruto: string) => {
     const num = parsear(bruto, miles)
-    // Con miles se reformatea al vuelo (entero); en decimales se deja tal cual
-    setTexto(miles ? formatear(num, true) : bruto.replace(/[^\d.]/g, ''))
+    setTexto(miles ? formatearMientrasEscribe(bruto) : bruto.replace(/[^\d.,]/g, ''))
     alCambiar(num)
   }
 
