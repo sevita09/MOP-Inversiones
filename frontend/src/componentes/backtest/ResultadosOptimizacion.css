@@ -1,0 +1,146 @@
+.resultados-optimizacion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.mejor-combinacion {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #161b22;
+}
+
+.dato-mejor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.etiqueta-mejor {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6e7681;
+}
+
+.dato-mejor strong {
+  font-size: 16px;
+  color: #e6edf3;
+}
+
+.dato-mejor strong.positivo {
+  color: #3fb950;
+}
+
+.dato-mejor strong.negativo {
+  color: #f85149;
+}
+
+.nota-mejor {
+  font-size: 11px;
+  color: #6e7681;
+}
+
+/* Aviso de sobreajuste: el corazón honesto del optimizador */
+.aviso-sobreajuste {
+  padding: 10px 14px;
+  border: 1px solid #d29922;
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: rgba(210, 153, 34, 0.08);
+  color: #e6edf3;
+  font-size: 12px;
+}
+
+.aviso-sobreajuste strong {
+  color: #d29922;
+}
+
+.aviso-sobreajuste ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.6;
+  color: #c9d1d9;
+}
+
+.sin-sobreajuste {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(63, 185, 80, 0.1);
+  color: #3fb950;
+  font-size: 12px;
+}
+
+.heatmap-contenedor {
+  overflow-x: auto;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.heatmap-optimizacion {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: 100%;
+}
+
+.heatmap-optimizacion th {
+  padding: 7px 10px;
+  background: #161b22;
+  color: #8b949e;
+  font-weight: 500;
+  font-size: 11px;
+  border-bottom: 1px solid #30363d;
+  white-space: nowrap;
+}
+
+.heatmap-optimizacion th.esquina {
+  text-align: left;
+  color: #6e7681;
+}
+
+.heatmap-optimizacion th.fila-encabezado {
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  border-right: 1px solid #30363d;
+  font-variant-numeric: tabular-nums;
+}
+
+.celda-heatmap,
+.celda-vacia {
+  padding: 7px 12px;
+  text-align: center;
+  color: #e6edf3;
+  border-bottom: 1px solid #21262d;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+.celda-vacia {
+  color: #484f58;
+}
+
+/* La ganadora, marcada con un borde para ubicarla de un vistazo */
+.celda-heatmap.mejor {
+  outline: 2px solid #58a6ff;
+  outline-offset: -2px;
+  font-weight: 700;
+}
+
+.leyenda-heatmap {
+  margin: 0;
+  font-size: 11px;
+  color: #6e7681;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.sin-resultados {
+  color: #8b949e;
+  font-size: 13px;
+}

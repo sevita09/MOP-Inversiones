@@ -135,6 +135,39 @@ riesgo, reglas, meses}`) y muestra un resumen en línea (retorno, B&H,
 operaciones, aciertos, drawdown). Sirve para iterar reglas sin salir del
 formulario ni crear un bot.
 
+## Optimizador de parámetros (v5.5)
+
+`servicios/backtest/optimizador.py` barre **uno o dos** parámetros del bot y
+corre un backtest por combinación (techo de 400, para no colgar la app).
+
+**Qué se puede barrer**: el `objetivo` de cualquier condición (el umbral de "z <
+−2"), un `params.periodo` (la EMA del gatillo) o los campos numéricos del riesgo
+(stop, take profit, trailing, ATR, sizing). El frontend deriva la lista del bot
+(`opcionesOptimizables.ts`) y sugiere un rango de ±50% alrededor del valor actual.
+
+**Walk-forward (la parte honesta)**: la grilla corre sobre el **70% más viejo**
+de la historia; después, la mejor combinación se evalúa en el **30% final**, que
+la optimización nunca vio. Comparar ambos números es lo que distingue una
+ventaja real de un ajuste al pasado.
+
+**Avisos de sobreajuste** (`evaluar_sobreajuste`) — se dispara cuando:
+- la mejor combinación tiene **menos de 10 operaciones** (muestra chica);
+- es un **pico aislado**: el promedio de los tres siguientes mejores no llega a
+  la mitad del ganador (se optimizó una casualidad, no una zona robusta);
+- **no valida**: fuera de muestra pierde, o rinde menos del 30% de lo optimizado.
+
+**En background**: `trabajo_optimizacion.py` corre la grilla en un thread (una a
+la vez) y publica su avance. `POST /api/optimizacion/{id_bot}` la lanza (202; 409
+si ya hay una corriendo) y `GET /api/optimizacion` devuelve
+`{en_curso, hechos, total, resultado, error}`. El hook `usarOptimizacion`
+consulta cada 500 ms mientras dure.
+
+**UI**: `Optimizador.tsx` (selector de parámetros, rangos, métrica a optimizar y
+barra de progreso) y `ResultadosOptimizacion.tsx` (la mejor combinación con sus
+números dentro y fuera de muestra, los avisos, y un **heatmap** coloreado —
+verde lo mejor, rojo lo peor— con la ganadora recuadrada). La lectura correcta
+es buscar **zonas** buenas, no una celda que brille sola.
+
 ## Endpoint
 
 `GET /api/bots/{id}/backtest?desde=&hasta=` (ts unix, opcionales) →

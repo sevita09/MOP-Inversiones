@@ -6,6 +6,7 @@ import LogoTicker from '../../componentes/LogoTicker'
 import { crearSincronizadorTiempo } from '../../componentes/grafico/sincronizadorTiempo'
 import CurvaCapital from '../../componentes/backtest/CurvaCapital'
 import GraficoTrades from '../../componentes/backtest/GraficoTrades'
+import Optimizador from '../../componentes/backtest/Optimizador'
 import PanelMetricas from '../../componentes/backtest/PanelMetricas'
 import TablaTrades from '../../componentes/backtest/TablaTrades'
 import { VENTANAS, usarBacktest } from '../../hooks/usarBacktest'
@@ -107,6 +108,13 @@ function PaginaBacktest() {
             <h3>Operaciones ({resultado.estrategia.trades.length})</h3>
             <TablaTrades trades={resultado.estrategia.trades} moneda={resultado.moneda} />
           </section>
+
+          {bot && (
+            <section className="seccion-backtest">
+              <h3>Optimizador de parámetros</h3>
+              <Optimizador bot={bot} />
+            </section>
+          )}
         </div>
       )}
     </div>
