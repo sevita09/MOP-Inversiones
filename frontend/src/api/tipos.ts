@@ -171,6 +171,53 @@ export interface ResultadoBacktest {
   buy_and_hold: SimulacionBacktest
 }
 
+// --- Optimizador ---
+
+export type MetricaOptimizacion = 'retorno_pct' | 'sharpe' | 'profit_factor' | 'expectancy_pct'
+
+export interface ParametroOptimizacion {
+  tipo: 'condicion' | 'riesgo'
+  campo: string
+  desde: number
+  hasta: number
+  paso: number
+  bloque?: 'entrada' | 'salida' | 'filtros'
+  indice?: number
+}
+
+export interface ResultadoCombinacion {
+  valores: number[]
+  metrica: number | null
+  retorno_pct: number
+  trades: number
+  drawdown_pct: number
+  buy_and_hold_pct: number
+}
+
+export interface AvisoSobreajuste {
+  hay_sobreajuste: boolean
+  avisos: string[]
+}
+
+export interface ResultadoOptimizacion {
+  parametros: ParametroOptimizacion[]
+  metrica: MetricaOptimizacion
+  corte_walk_forward: number | null
+  resultados: ResultadoCombinacion[]
+  mejor: ResultadoCombinacion | null
+  validacion: ResultadoCombinacion | null
+  sobreajuste: AvisoSobreajuste
+}
+
+export interface EstadoOptimizacion {
+  en_curso: boolean
+  bot_id: number | null
+  hechos: number
+  total: number
+  resultado: ResultadoOptimizacion | null
+  error: string | null
+}
+
 export interface BacktestRapidoPeticion {
   ticker: string
   temporalidad: TemporalidadBot

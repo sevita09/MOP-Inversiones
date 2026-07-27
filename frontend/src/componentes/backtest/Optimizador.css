@@ -1,0 +1,115 @@
+.optimizador {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ayuda-optimizador,
+.optimizador-vacio {
+  margin: 0;
+  font-size: 12px;
+  color: #8b949e;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.controles-optimizador {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.parametro-optimizador {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo-optimizador {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.campo-optimizador select {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  min-width: 220px;
+}
+
+.rango-optimizador {
+  display: flex;
+  gap: 8px;
+}
+
+.rango-optimizador label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #6e7681;
+  width: 80px;
+}
+
+.metrica-optimizador select {
+  min-width: 150px;
+}
+
+.acciones-optimizador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.boton-optimizar {
+  background: #1f6feb;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-optimizar:hover:not(:disabled) {
+  background: #388bfd;
+}
+
+.boton-optimizar:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.conteo-combinaciones {
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.progreso-optimizador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #8b949e;
+  font-variant-numeric: tabular-nums;
+}
+
+.progreso-optimizador progress {
+  width: 160px;
+  height: 6px;
+}
+
+.error-optimizador {
+  color: #f85149;
+  font-size: 12px;
+}
