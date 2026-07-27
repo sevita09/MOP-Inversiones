@@ -16,6 +16,8 @@ from app.routers import (
     logos,
     mercado,
     niveles,
+    optimizacion,
+    plantillas,
     reparacion,
     riesgo,
     senales,
@@ -49,6 +51,8 @@ app.include_router(indicadores.router)
 app.include_router(logos.router)
 app.include_router(mercado.router)
 app.include_router(niveles.router)
+app.include_router(optimizacion.router)
+app.include_router(plantillas.router)
 app.include_router(reparacion.router)
 app.include_router(riesgo.router)
 app.include_router(senales.router)

@@ -1,3 +1,3 @@
 """Versión de la app. Se actualiza al cerrar cada versión, junto con el tag de git."""
 
-VERSION = "5.4.0"
+VERSION = "5.5.0"

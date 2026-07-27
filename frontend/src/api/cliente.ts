@@ -3,6 +3,9 @@ import type {
   Bot,
   BotNuevo,
   Categoria,
+  EstadoOptimizacion,
+  MetricaOptimizacion,
+  ParametroOptimizacion,
   ResultadoBacktest,
   Plantilla,
   PlantillaNueva,
@@ -220,18 +223,18 @@ export function duplicarBot(id: number): Promise<Bot> {
 }
 
 export function obtenerPlantillas(): Promise<Plantilla[]> {
-  return obtenerJson<Plantilla[]>('/api/bots/plantillas')
+  return obtenerJson<Plantilla[]>('/api/plantillas')
 }
 
 export function crearPlantilla(datos: PlantillaNueva): Promise<Plantilla> {
-  return fetchJson<Plantilla>('/api/bots/plantillas', {
+  return fetchJson<Plantilla>('/api/plantillas', {
     method: 'POST',
     body: JSON.stringify(datos),
   })
 }
 
 export function eliminarPlantilla(id: number): Promise<void> {
-  return fetchJson('/api/bots/plantillas/' + id, { method: 'DELETE' })
+  return fetchJson('/api/plantillas/' + id, { method: 'DELETE' })
 }
 
 // --- Backtest ---
@@ -253,6 +256,23 @@ export function backtestRapido(datos: BacktestRapidoPeticion): Promise<Resultado
     method: 'POST',
     body: JSON.stringify(datos),
   })
+}
+
+// --- Optimizador ---
+
+export function lanzarOptimizacion(
+  idBot: number,
+  parametros: ParametroOptimizacion[],
+  metrica: MetricaOptimizacion,
+): Promise<{ lanzada: boolean }> {
+  return fetchJson<{ lanzada: boolean }>(`/api/optimizacion/${idBot}`, {
+    method: 'POST',
+    body: JSON.stringify({ parametros, metrica }),
+  })
+}
+
+export function obtenerEstadoOptimizacion(): Promise<EstadoOptimizacion> {
+  return obtenerJson<EstadoOptimizacion>('/api/optimizacion')
 }
 
 // --- Presets de riesgo ---
