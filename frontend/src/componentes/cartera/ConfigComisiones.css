@@ -1,0 +1,81 @@
+.fondo-config-comisiones {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.config-comisiones {
+  width: 360px;
+  max-width: 92vw;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cabecera-config-comisiones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.ayuda-config {
+  margin: 0;
+  font-size: 12px;
+  color: #8b949e;
+  line-height: 1.5;
+}
+
+.campo-comision {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #c9d1d9;
+  cursor: help;
+}
+
+.campo-comision .input-numero {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.efectiva-config {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin-top: 4px;
+  border-radius: 6px;
+  background: #0d1117;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.efectiva-config strong {
+  font-size: 15px;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+}
+
+.mensaje-config {
+  color: #f85149;
+  font-size: 12px;
+}
+
+.acciones-config-comisiones {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}

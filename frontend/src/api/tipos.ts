@@ -171,6 +171,50 @@ export interface ResultadoBacktest {
   buy_and_hold: SimulacionBacktest
 }
 
+// --- Cartera ---
+
+export type TipoOperacion = 'compra' | 'venta'
+
+export interface Transaccion {
+  id: number
+  ticker: string
+  tipo: TipoOperacion
+  fecha: string // AAAA-MM-DD
+  cantidad: number
+  precio: number // ARS por unidad (de mercado, sin comisión)
+  comision: number
+  nota: string
+  creado: string
+  bruto: number // cantidad × precio
+  monto_final: number // lo que pagó o cobró, con la comisión aplicada
+  monto_final_usd: number | null
+}
+
+// Se carga con `precio` O con `monto_final`: el backend despeja el otro
+export interface TransaccionNueva {
+  ticker: string
+  tipo: TipoOperacion
+  fecha: string
+  cantidad: number
+  precio?: number
+  monto_final?: number
+  nota?: string
+}
+
+// Estructura del boleto: arancel + derechos de mercado, con IVA sobre ambos
+export interface Comisiones {
+  arancel_pct: number
+  arancel_intradia_pct: number
+  derechos_mercado_pct: number
+  iva_pct: number
+}
+
+export interface TasaVigente extends Comisiones {
+  es_intradia: boolean
+  arancel_aplicado_pct: number
+  tasa_efectiva_pct: number
+}
+
 // --- Optimizador ---
 
 export type MetricaOptimizacion = 'retorno_pct' | 'sharpe' | 'profit_factor' | 'expectancy_pct'

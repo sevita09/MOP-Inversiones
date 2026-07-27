@@ -13,6 +13,11 @@ import type {
   ReglasBot,
   RiesgoBot,
   RespuestaSenales,
+  Comisiones,
+  TasaVigente,
+  TipoOperacion,
+  Transaccion,
+  TransaccionNueva,
   RespuestaPreview,
   TemporalidadBot,
   EstadoActualizacion,
@@ -256,6 +261,68 @@ export function backtestRapido(datos: BacktestRapidoPeticion): Promise<Resultado
     method: 'POST',
     body: JSON.stringify(datos),
   })
+}
+
+// --- Cartera ---
+
+export function obtenerTransacciones(ticker?: string): Promise<Transaccion[]> {
+  const cola = ticker ? `?ticker=${ticker}` : ''
+  return obtenerJson<Transaccion[]>(`/api/cartera/transacciones${cola}`)
+}
+
+export function crearTransaccion(datos: TransaccionNueva): Promise<Transaccion> {
+  return fetchJson<Transaccion>('/api/cartera/transacciones', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  })
+}
+
+export function editarTransaccion(
+  id: number,
+  cambios: Partial<TransaccionNueva>,
+): Promise<Transaccion> {
+  return fetchJson<Transaccion>('/api/cartera/transacciones/' + id, {
+    method: 'PUT',
+    body: JSON.stringify(cambios),
+  })
+}
+
+export function eliminarTransaccion(id: number): Promise<void> {
+  return fetchJson('/api/cartera/transacciones/' + id, { method: 'DELETE' })
+}
+
+export function obtenerPrecioSugerido(
+  ticker: string,
+  fecha: string,
+): Promise<{ ticker: string; fecha: string; precio: number | null }> {
+  const parametros = new URLSearchParams({ ticker, fecha })
+  return obtenerJson<{ ticker: string; fecha: string; precio: number | null }>(
+    `/api/cartera/precio_sugerido?${parametros}`,
+  )
+}
+
+export function obtenerPapelesEnCartera(): Promise<Record<string, number>> {
+  return obtenerJson<Record<string, number>>('/api/cartera/en_cartera')
+}
+
+export function obtenerComisiones(): Promise<Comisiones> {
+  return obtenerJson<Comisiones>('/api/cartera/comisiones')
+}
+
+export function guardarComisiones(datos: Comisiones): Promise<Comisiones> {
+  return fetchJson<Comisiones>('/api/cartera/comisiones', {
+    method: 'PUT',
+    body: JSON.stringify(datos),
+  })
+}
+
+export function obtenerTasaVigente(
+  ticker: string,
+  fecha: string,
+  tipo: TipoOperacion,
+): Promise<TasaVigente> {
+  const parametros = new URLSearchParams({ ticker, fecha, tipo })
+  return obtenerJson<TasaVigente>(`/api/cartera/tasa_vigente?${parametros}`)
 }
 
 // --- Optimizador ---
