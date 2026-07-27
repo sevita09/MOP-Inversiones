@@ -100,6 +100,27 @@ CREATE TABLE IF NOT EXISTS senales (
     UNIQUE (bot_id, ts_barra, lado)
 );
 
+-- Preferencias del usuario (clave/valor). Hoy: tasas de comisión de la cartera.
+CREATE TABLE IF NOT EXISTS configuracion (
+    clave TEXT PRIMARY KEY,
+    valor TEXT NOT NULL
+);
+
+-- Operaciones reales del usuario. El precio va SIEMPRE en ARS (es como se opera
+-- en BYMA); la vista en USD se calcula con la tasa CCL de la fecha.
+CREATE TABLE IF NOT EXISTS transacciones (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker   TEXT NOT NULL,
+    tipo     TEXT NOT NULL,              -- 'compra' | 'venta'
+    fecha    TEXT NOT NULL,              -- AAAA-MM-DD
+    cantidad REAL NOT NULL,
+    precio   REAL NOT NULL,              -- ARS por unidad
+    comision REAL NOT NULL DEFAULT 0,    -- ARS totales de la operación
+    nota     TEXT NOT NULL DEFAULT '',
+    creado   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_transacciones_ticker ON transacciones(ticker, fecha);
+
 -- Configuraciones de riesgo guardadas por el usuario, para reusar entre bots
 CREATE TABLE IF NOT EXISTS presets_riesgo (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
