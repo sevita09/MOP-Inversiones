@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { Transaccion } from '../../api/tipos'
 import LogoTicker from '../../componentes/LogoTicker'
 import ConfigComisiones from '../../componentes/cartera/ConfigComisiones'
+import PanelSplits from '../../componentes/cartera/PanelSplits'
+import TablaTenencias from '../../componentes/cartera/TablaTenencias'
 import FormularioOperacion from '../../componentes/cartera/FormularioOperacion'
 import { usarTransacciones } from '../../hooks/usarTransacciones'
 import './PaginaCartera.css'
@@ -21,6 +23,10 @@ function PaginaCartera() {
   const [formulario, setFormulario] = useState<'nueva' | Transaccion | null>(null)
   const [borrando, setBorrando] = useState<Transaccion | null>(null)
   const [ajustes, setAjustes] = useState(false)
+  const [vista, setVista] = useState<'tenencias' | 'historial'>('tenencias')
+  const [splits, setSplits] = useState(false)
+  // Cambia al registrar o borrar un split: fuerza recalcular las tenencias
+  const [revisionSplits, setRevisionSplits] = useState(0)
 
   const vacio = !cargando && transacciones.length === 0
 
@@ -44,12 +50,33 @@ function PaginaCartera() {
         <>
           <div className="cabecera-cartera">
             <h2>Cartera</h2>
-            <span className="nota-cartera">
-              {transacciones.length} {transacciones.length === 1 ? 'operación' : 'operaciones'}
-            </span>
+            <div className="pestanas-cartera">
+              <button
+                type="button"
+                className={vista === 'tenencias' ? 'pestana-cartera activa' : 'pestana-cartera'}
+                onClick={() => setVista('tenencias')}
+              >
+                Tenencias
+              </button>
+              <button
+                type="button"
+                className={vista === 'historial' ? 'pestana-cartera activa' : 'pestana-cartera'}
+                onClick={() => setVista('historial')}
+              >
+                Historial ({transacciones.length})
+              </button>
+            </div>
             <button
               type="button"
               className="boton-ajustes-cartera"
+              data-tooltip="Splits de acciones"
+              onClick={() => setSplits(true)}
+            >
+              ⇅
+            </button>
+            <button
+              type="button"
+              className="boton-ajustes-cartera sin-margen"
               data-tooltip="Configurar los gastos del broker"
               onClick={() => setAjustes(true)}
             >
@@ -66,6 +93,11 @@ function PaginaCartera() {
 
           {cargando && <p className="cartera-cargando">Cargando…</p>}
 
+          {vista === 'tenencias' && (
+            <TablaTenencias key={`${transacciones.length}-${revisionSplits}`} />
+          )}
+
+          {vista === 'historial' && (
           <div className="tabla-operaciones-contenedor">
             <table className="tabla-operaciones">
               <thead>
@@ -127,10 +159,18 @@ function PaginaCartera() {
               </tbody>
             </table>
           </div>
+          )}
         </>
       )}
 
       {ajustes && <ConfigComisiones alCerrar={() => setAjustes(false)} />}
+
+      {splits && (
+        <PanelSplits
+          alCerrar={() => setSplits(false)}
+          alCambiar={() => setRevisionSplits((n) => n + 1)}
+        />
+      )}
 
       {formulario && (
         <FormularioOperacion

@@ -84,3 +84,52 @@ formulario muestra el desglose completo en vivo antes de guardar.
   `/precio_sugerido`, `/en_cartera`, `/comisiones`, `/tasa_vigente`.
 - **Frontend** — `hooks/usarTransacciones.ts`, `componentes/cartera/`
   (`FormularioOperacion`, `ConfigComisiones`).
+
+## Tenencias por FIFO (v6.2)
+
+`servicios/cartera/posiciones.py` reconstruye la posición recorriendo las
+operaciones en orden y consumiendo, en cada venta, **las compras más viejas**
+(FIFO — el criterio del fisco). Lo que queda sin consumir es la tenencia actual,
+y su costo es el de esos papeles concretos, no un promedio de toda la historia.
+
+- **Los gastos entran al costo**: 100 papeles a $1.000 con $500 de gastos cuestan
+  $1.005 cada uno. En una venta parcial se prorratean por unidad.
+- **P&L no realizado** contra el último cierre conocido, en ARS y en USD (CCL de
+  hoy), con el peso de cada papel en la cartera.
+- `GET /api/cartera/tenencias` → `{posiciones, totales}`.
+
+## Splits
+
+Un split no mueve plata: multiplica los papeles y divide su precio. Se registran
+en la tabla `splits` (`ratio` = papeles nuevos por papel viejo: 3 es un 3:1, 0.1
+un inverso 1:10) y entran al recorrido del FIFO como un evento más, en orden
+cronológico:
+
+- los lotes **anteriores** se ajustan (cantidad × ratio, precio ÷ ratio, gastos
+  ÷ ratio) y los **posteriores** quedan intactos;
+- el **costo total nunca cambia**, que es lo que define un split;
+- un split del mismo día que una compra se aplica **después** (esa compra se
+  hizo al precio viejo).
+
+Por eso `cantidades_en_cartera` vive en `posiciones.py` y no en el repositorio:
+una suma SQL de compras menos ventas ignoraría los splits.
+
+Endpoints: `GET`/`POST`/`DELETE /api/cartera/splits`. UI: botón ⇅ en Cartera,
+que traduce el ratio a palabras mientras se escribe para no equivocar el sentido.
+
+## Marcas de la cartera en el gráfico
+
+Botón **PPC** en la barra del gráfico (`SelectorTenencia`). Con
+`GET /api/cartera/lotes?ticker=&moneda=` trae las compras abiertas y dibuja
+(`primitivaTenencia.ts`):
+
+- una **vertical punteada** el día de cada compra, con los papeles que quedan de
+  ella tras el FIFO;
+- una **horizontal punteada** desde ese día hacia adelante, al precio pagado;
+- una **línea llena con el PPC** (promedio ponderado) a lo ancho del gráfico.
+
+**En USD cada compra se convierte con el CCL de su propia fecha**: son los
+dólares que se pusieron en ese momento, lo único comparable contra la serie de
+precios en dólares. Pasar el promedio en pesos por el CCL de hoy daría un número
+que nunca existió (hay un test que fija esa diferencia). Colores y tipo de línea
+se editan desde la pestaña **PPC** de la tuerca.

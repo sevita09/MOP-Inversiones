@@ -21,6 +21,7 @@ import type {
 import { usarVelas } from '../../hooks/usarVelas'
 import { usarBandas } from '../../hooks/usarBandas'
 import { usarBollinger } from '../../hooks/usarBollinger'
+import { usarLotesCartera } from '../../hooks/usarLotesCartera'
 import { usarNivelesSwing } from '../../hooks/usarNivelesSwing'
 import { usarEstilos } from '../../contextos/EstilosContext'
 import {
@@ -33,11 +34,14 @@ import {
 import { sincronizarEmasExtra, limpiarEmasExtra, type EmaCalculada } from './seriesEmasExtra'
 import { mediaMovil } from './mediaMovil'
 import { calcularVPVR } from './vpvr'
+import { PrimitivaTenencia } from './primitivaTenencia'
 import { PrimitivaVPVR } from './primitivaVPVR'
 import {
   REC_EMA,
   REC_BANDAS,
   REC_BOLLINGER,
+  REC_PPC_COMPRA,
+  REC_PPC_LINEA,
   REC_VPVR_SUBE,
   REC_VPVR_BAJA,
   REC_VPVR_POC,
@@ -123,6 +127,8 @@ interface Props {
   mostrarBollinger: boolean
   mostrarNiveles: boolean
   mostrarVpvr: boolean
+  mostrarTenencia: boolean
+  conAdr?: boolean
   sincronizador?: SincronizadorTiempo
   // Crosshair compartido: el ts bajo el mouse en cualquier panel, y cómo reportarlo
   tsActivo?: number | null
@@ -152,6 +158,8 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
     mostrarBollinger,
     mostrarNiveles,
     mostrarVpvr,
+    mostrarTenencia,
+    conAdr,
     sincronizador,
     tsActivo = null,
     alMoverCrosshair,
@@ -167,6 +175,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const seriesBollinger = useRef<Map<string, ISeriesApi<'Line'>> | null>(null)
   const seriesEmasExtra = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
   const vpvrPrim = useRef<PrimitivaVPVR | null>(null)
+  const tenenciaPrim = useRef<PrimitivaTenencia | null>(null)
   const lineasNiveles = useRef<IPriceLine[]>([])
   const { velas, cargando, error } = usarVelas(ticker, temporalidad, moneda)
   // La media y las bandas salen del mismo indicador: basta con que alguno esté activo
@@ -175,6 +184,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const bollingerRef = useRef(bollinger)
   bollingerRef.current = bollinger
   const niveles = usarNivelesSwing(ticker, temporalidad, moneda, mostrarNiveles)
+  const tenencia = usarLotesCartera(ticker, moneda, mostrarTenencia)
   const bandasRef = useRef(bandas)
   bandasRef.current = bandas
   // El crosshair vive arriba (PaginaGrafico): reportamos el ts al moverlo
@@ -206,6 +216,15 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
   const firmaVpvr = JSON.stringify(estVpvr)
   const estVpvrRef = useRef(estVpvr)
   estVpvrRef.current = estVpvr
+
+  // Estilos de las marcas de cartera (compras abiertas y PPC)
+  const estPpc = {
+    compra: estiloDe('ppc.compra', REC_PPC_COMPRA),
+    promedio: estiloDe('ppc.promedio', REC_PPC_LINEA),
+  }
+  const firmaPpc = JSON.stringify(estPpc)
+  const estPpcRef = useRef(estPpc)
+  estPpcRef.current = estPpc
 
   const indicePorTs = useMemo(() => {
     const mapa = new Map<number, number>()
@@ -343,6 +362,38 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
       vpvrPrim.current = null
     }
   }, [mostrarVpvr, tipo, recomputarVpvr])
+
+  // Marcas de la cartera: compras abiertas y PPC. Mismo ciclo que el VPVR
+  // (se recrea al cambiar el tipo de gráfico, que reconstruye la serie).
+  useEffect(() => {
+    const s = serie.current
+    if (!s || !mostrarTenencia) return
+    const prim = new PrimitivaTenencia(grafico.current!, s, tenencia.lotes, tenencia.ppc)
+    tenenciaPrim.current = prim
+    s.attachPrimitive(prim)
+    prim.setEstilos(estPpcRef.current)
+    return () => {
+      try {
+        s.detachPrimitive(prim)
+        s.applyOptions({}) // fuerza el repintado para que desaparezcan las marcas
+      } catch {
+        /* serie disposed */
+      }
+      tenenciaPrim.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mostrarTenencia, tipo])
+
+  // Datos nuevos (otro papel, otra moneda, o una operación cargada)
+  useEffect(() => {
+    tenenciaPrim.current?.actualizar(tenencia.lotes, tenencia.ppc)
+  }, [tenencia])
+
+  // Estilos editados desde la tuerca
+  useEffect(() => {
+    tenenciaPrim.current?.setEstilos(estPpcRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaPpc])
 
   // Recalcular el VPVR cuando cambian las velas (nueva data o refresco por sync)
   useEffect(() => {
@@ -560,6 +611,7 @@ const PanelPrecio = forwardRef<PanelPrecioHandle, Props>(function PanelPrecio(
           bandas={bandasValores}
           bollinger={bollingerValores}
           emasExtra={emasExtraValores}
+          conAdr={conAdr}
         />
       )}
       <div ref={contenedor} className="grafico" />

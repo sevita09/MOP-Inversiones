@@ -1,0 +1,149 @@
+.tenencias {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tenencias-cargando,
+.tenencias-vacio {
+  color: #8b949e;
+  font-size: 13px;
+  margin: 24px 0;
+}
+
+/* Resumen de arriba: invertido, valor hoy y resultado */
+.resumen-cartera {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #161b22;
+}
+
+.dato-cartera {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dato-cartera > span:first-child {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6e7681;
+}
+
+.dato-cartera strong {
+  font-size: 20px;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+}
+
+.dato-cartera.resultado.positivo strong {
+  color: #3fb950;
+}
+
+.dato-cartera.resultado.negativo strong {
+  color: #f85149;
+}
+
+.pct-cartera {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.usd-cartera {
+  font-size: 11px;
+  color: #6e7681;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-tenencias-contenedor {
+  overflow-x: auto;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.tabla-tenencias {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tabla-tenencias th {
+  text-align: center;
+  padding: 8px 12px;
+  background: #161b22;
+  color: #8b949e;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #30363d;
+  white-space: nowrap;
+}
+
+.tabla-tenencias td {
+  padding: 8px 12px;
+  text-align: center;
+  color: #c9d1d9;
+  border-bottom: 1px solid #21262d;
+  white-space: nowrap;
+}
+
+.tabla-tenencias tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-tenencias tbody tr:hover td {
+  background: #161b22;
+}
+
+.tabla-tenencias .numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-tenencias .valor {
+  color: #e6edf3;
+  font-weight: 600;
+}
+
+.tabla-tenencias .resultado {
+  font-weight: 600;
+}
+
+.tabla-tenencias .resultado.positivo {
+  color: #3fb950;
+}
+
+.tabla-tenencias .resultado.negativo {
+  color: #f85149;
+}
+
+.pct-fila {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.tabla-tenencias .peso {
+  color: #8b949e;
+}
+
+.papel-tenencia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.nota-tenencias {
+  margin: 0;
+  font-size: 11px;
+  color: #6e7681;
+  line-height: 1.5;
+  max-width: 720px;
+}

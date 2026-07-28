@@ -332,16 +332,21 @@ def test_endpoint_de_precio_sugerido(cliente, conexion):
 
 
 def test_cantidades_en_cartera_resta_las_ventas(conexion):
+    # Vive en servicios/cartera/posiciones: tiene que aplicar splits, no es una suma SQL
+    from app.servicios.cartera.posiciones import cantidades_en_cartera
+
     repo.crear(conexion, **{**OPERACION, "cantidad": 100})
     repo.crear(conexion, **{**OPERACION, "cantidad": 40, "tipo": "venta"})
     repo.crear(conexion, **{**OPERACION, "ticker": "YPFD", "cantidad": 50})
-    assert repo.cantidades_en_cartera(conexion) == {"GGAL": 60, "YPFD": 50}
+    assert cantidades_en_cartera(conexion) == {"GGAL": 60, "YPFD": 50}
 
 
 def test_los_papeles_vendidos_del_todo_no_figuran(conexion):
+    from app.servicios.cartera.posiciones import cantidades_en_cartera
+
     repo.crear(conexion, **{**OPERACION, "cantidad": 100})
     repo.crear(conexion, **{**OPERACION, "cantidad": 100, "tipo": "venta"})
-    assert repo.cantidades_en_cartera(conexion) == {}
+    assert cantidades_en_cartera(conexion) == {}
 
 
 def test_endpoint_de_papeles_en_cartera(cliente):

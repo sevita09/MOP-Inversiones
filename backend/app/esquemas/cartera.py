@@ -46,3 +46,16 @@ class ComisionesPeticion(BaseModel):
     arancel_intradia_pct: float = Field(ge=0, le=10)
     derechos_mercado_pct: float = Field(ge=0, le=10)
     iva_pct: float = Field(ge=0, le=100)
+
+
+class SplitPeticion(BaseModel):
+    """Split de acciones: `ratio` son los papeles nuevos por cada papel viejo.
+
+    Un split 3:1 es ratio 3 (tenías 100, pasás a tener 300).
+    Un split inverso 1:10 es ratio 0.1 (tenías 100, pasás a tener 10).
+    """
+
+    ticker: str
+    fecha: str  # AAAA-MM-DD, desde cuándo rige
+    ratio: float = Field(gt=0)
+    nota: str = ""

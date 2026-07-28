@@ -88,22 +88,3 @@ def tickers_operados(conexion: sqlite3.Connection) -> list[str]:
         "SELECT DISTINCT ticker FROM transacciones ORDER BY ticker"
     ).fetchall()
     return [fila["ticker"] for fila in filas]
-
-
-def cantidades_en_cartera(conexion: sqlite3.Connection) -> dict:
-    """Papeles que se tienen hoy por ticker: compras menos ventas.
-
-    Solo los que quedan en positivo — es lo que se puede vender. El detalle con
-    precio promedio y P&L llega en v6.2; acá alcanza con la cantidad.
-    """
-    # El HAVING repite la expresión a propósito: el alias `cantidad` chocaría con
-    # la columna del mismo nombre y SQLite filtraría por la columna, no por la suma
-    filas = conexion.execute(
-        """SELECT ticker,
-                  SUM(CASE WHEN tipo = 'compra' THEN cantidad ELSE -cantidad END) AS en_cartera
-           FROM transacciones
-           GROUP BY ticker
-           HAVING SUM(CASE WHEN tipo = 'compra' THEN cantidad ELSE -cantidad END) > 0
-           ORDER BY ticker"""
-    ).fetchall()
-    return {fila["ticker"]: round(fila["en_cartera"], 6) for fila in filas}

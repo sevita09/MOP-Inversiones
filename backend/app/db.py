@@ -100,6 +100,19 @@ CREATE TABLE IF NOT EXISTS senales (
     UNIQUE (bot_id, ts_barra, lado)
 );
 
+-- Splits (y splits inversos) de un papel. No mueven plata: multiplican la
+-- cantidad de papeles y dividen su precio, dejando el costo total igual.
+-- `ratio` = papeles nuevos por cada papel viejo (3 = split 3:1; 0.1 = inverso 1:10).
+CREATE TABLE IF NOT EXISTS splits (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT NOT NULL,
+    fecha  TEXT NOT NULL,   -- AAAA-MM-DD, desde cuándo rige
+    ratio  REAL NOT NULL,
+    nota   TEXT NOT NULL DEFAULT '',
+    creado TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (ticker, fecha)
+);
+
 -- Preferencias del usuario (clave/valor). Hoy: tasas de comisión de la cartera.
 CREATE TABLE IF NOT EXISTS configuracion (
     clave TEXT PRIMARY KEY,

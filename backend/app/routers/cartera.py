@@ -6,8 +6,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.db import conexion_api
-from app.esquemas.cartera import ComisionesPeticion, TransaccionEdicion, TransaccionPeticion
+from app.esquemas.cartera import (
+    ComisionesPeticion,
+    SplitPeticion,
+    TransaccionEdicion,
+    TransaccionPeticion,
+)
 from app.repositorios import configuracion as repo_config
+from app.repositorios import splits as repo_splits
 from app.repositorios import transacciones as repo
 from app.servicios.cartera.comisiones import (
     CLAVE_ARANCEL,
@@ -18,6 +24,11 @@ from app.servicios.cartera.comisiones import (
     desde_monto_final,
     desde_precio,
     tasas,
+)
+from app.servicios.cartera.posiciones import (
+    cantidades_en_cartera,
+    lotes_abiertos,
+    tenencias,
 )
 from app.servicios.cartera.transacciones import enriquecer, fecha_valida, precio_sugerido
 from app.servicios.tickers_extra import universo_completo
@@ -89,13 +100,59 @@ def consultar_tasa(
     return contexto(conexion, ticker, fecha, tipo)
 
 
+# --- splits ---
+
+
+@router.get("/splits")
+def listar_splits(
+    ticker: Optional[str] = None, conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    return repo_splits.listar(conexion, ticker.upper() if ticker else None)
+
+
+@router.post("/splits", status_code=201)
+def crear_split(body: SplitPeticion, conexion: sqlite3.Connection = Depends(conexion_api)):
+    """Registra un split; recalcula sola la posición (no mueve plata)."""
+    ticker = _validar(conexion, body.ticker, body.fecha)
+    creado = repo_splits.crear(conexion, ticker, body.fecha, body.ratio, body.nota.strip())
+    if creado is None:
+        raise HTTPException(409, f"Ya hay un split de {ticker} en esa fecha")
+    return creado
+
+
+@router.delete("/splits/{id_split}")
+def eliminar_split(id_split: int, conexion: sqlite3.Connection = Depends(conexion_api)):
+    if not repo_splits.eliminar(conexion, id_split):
+        raise HTTPException(404, "Split no encontrado")
+    return {"ok": True}
+
+
 # --- operaciones ---
+
+
+@router.get("/tenencias")
+def listar_tenencias(conexion: sqlite3.Connection = Depends(conexion_api)):
+    """Posiciones abiertas por FIFO, con su P&L no realizado y los totales."""
+    return tenencias(conexion)
+
+
+@router.get("/lotes")
+def lotes_de_un_papel(
+    ticker: str, moneda: str = "ARS", conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    """Compras abiertas de un papel con su PPC, para marcarlas en el gráfico.
+
+    En USD cada compra se convierte con el CCL de su fecha.
+    """
+    if moneda not in ("ARS", "USD"):
+        raise HTTPException(422, f"Moneda inválida: {moneda}")
+    return lotes_abiertos(conexion, ticker.upper(), moneda)
 
 
 @router.get("/en_cartera")
 def papeles_en_cartera(conexion: sqlite3.Connection = Depends(conexion_api)):
     """Cantidad disponible por ticker: lo que se puede vender hoy."""
-    return repo.cantidades_en_cartera(conexion)
+    return cantidades_en_cartera(conexion)
 
 
 @router.get("/precio_sugerido")

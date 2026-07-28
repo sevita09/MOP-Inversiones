@@ -27,3 +27,61 @@
   background: #1c2128;
   border-color: #30363d;
 }
+
+/* Desplegable: un botón con el tipo actual y el menú con las tres opciones */
+.selector-tipo {
+  position: relative;
+}
+
+.boton-tipo.desplegable {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: auto;
+  padding: 4px 6px;
+}
+
+.flecha-tipo {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* position:fixed con coordenadas en línea: dentro de .barra-medio
+   (overflow:hidden) un desplegable absoluto queda recortado e invisible */
+.menu-tipo {
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: max-content;  /* se ajusta a la opción más larga, sin aire de más */
+  padding: 4px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.opcion-tipo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #c9d1d9;
+  padding: 5px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.opcion-tipo:hover {
+  background: #1c2128;
+  color: #e6edf3;
+}
+
+.opcion-tipo.activa {
+  color: #58a6ff;
+}
