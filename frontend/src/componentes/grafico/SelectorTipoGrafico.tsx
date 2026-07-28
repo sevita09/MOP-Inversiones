@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { TipoGrafico } from '../../api/tipos'
 import './SelectorTipoGrafico.css'
 
@@ -45,20 +46,66 @@ interface Props {
   alCambiar: (tipo: TipoGrafico) => void
 }
 
+/** Desplegable con el tipo de gráfico: un solo botón en la barra en vez de tres. */
 function SelectorTipoGrafico({ tipo, alCambiar }: Props) {
+  const [abierto, setAbierto] = useState(false)
+  const [posicion, setPosicion] = useState({ top: 0, left: 0 })
+  const ref = useRef<HTMLDivElement>(null)
+  const botonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!abierto) return
+    const cerrar = (evento: MouseEvent) => {
+      if (ref.current && !ref.current.contains(evento.target as Node)) setAbierto(false)
+    }
+    document.addEventListener('mousedown', cerrar)
+    return () => document.removeEventListener('mousedown', cerrar)
+  }, [abierto])
+
+  const actual = TIPOS.find(({ valor }) => valor === tipo) ?? TIPOS[0]
+
+  // El menú va con position:fixed anclado al botón: el overflow:hidden de la
+  // barra (BarraOverflow) recorta cualquier desplegable absoluto
+  const alternar = () => {
+    const boton = botonRef.current
+    if (!abierto && boton) {
+      const rect = boton.getBoundingClientRect()
+      // Centrado respecto del botón (el translateX(-50%) lo termina de ubicar)
+      setPosicion({ top: rect.bottom + 4, left: rect.left + rect.width / 2 })
+    }
+    setAbierto(!abierto)
+  }
+
   return (
-    <div className="selector-tipo">
-      {TIPOS.map(({ valor, titulo }) => (
-        <button
-          key={valor}
-          type="button"
-          title={titulo}
-          className={`boton-tipo${valor === tipo ? ' activo' : ''}`}
-          onClick={() => alCambiar(valor)}
-        >
-          <Icono tipo={valor} />
-        </button>
-      ))}
+    <div className="selector-tipo" ref={ref}>
+      <button
+        ref={botonRef}
+        type="button"
+        title={`Tipo de gráfico: ${actual.titulo}`}
+        className={`boton-tipo desplegable${abierto ? ' activo' : ''}`}
+        onClick={alternar}
+      >
+        <Icono tipo={actual.valor} />
+        <span className="flecha-tipo">▾</span>
+      </button>
+      {abierto && (
+        <div className="menu-tipo" style={posicion}>
+          {TIPOS.map(({ valor, titulo }) => (
+            <button
+              key={valor}
+              type="button"
+              className={`opcion-tipo${valor === tipo ? ' activa' : ''}`}
+              onClick={() => {
+                alCambiar(valor)
+                setAbierto(false)
+              }}
+            >
+              <Icono tipo={valor} />
+              {titulo}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

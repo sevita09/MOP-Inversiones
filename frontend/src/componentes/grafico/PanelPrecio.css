@@ -119,3 +119,9 @@
     transform: rotate(360deg);
   }
 }
+
+/* Con el ADR visible arriba a la derecha, la leyenda corta antes para no
+   superponerse con él (el overlay arranca en right: 82px). */
+.leyenda-ohlc.con-adr {
+  right: 200px;
+}

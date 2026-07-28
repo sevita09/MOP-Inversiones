@@ -33,6 +33,8 @@ interface Props {
   bandas: ValoresBandas | null // las 6 bandas σ (null = σ apagadas)
   bollinger: ValoresBollinger | null // banda inferior/media/superior de Bollinger
   emasExtra: ValorEmaExtra[] // EMAs extra del usuario (vacío = ninguna o EMA apagada)
+  // Con ADR visible hay que dejarle su espacio arriba a la derecha
+  conAdr?: boolean
 }
 
 function formatearPrecio(valor: number | null): string {
@@ -55,7 +57,7 @@ function claseZ(z: number): string {
   return z >= 0 ? 'z-alto' : 'z-bajo'
 }
 
-function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger, emasExtra }: Props) {
+function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger, emasExtra , conAdr}: Props) {
   // Colores efectivos (para que la leyenda coincida con las líneas del gráfico)
   const { estiloDe } = usarEstilos()
   const colorEma = estiloDe('ema', REC_EMA).color
@@ -78,7 +80,7 @@ function LeyendaOHLC({ vela, velaPrevia, z, ema, bandas, bollinger, emasExtra }:
     : []
 
   return (
-    <div className="leyenda-ohlc">
+    <div className={`leyenda-ohlc${conAdr ? ' con-adr' : ''}`}>
       <span className="leyenda-campo">O <b>{formatearPrecio(vela.apertura)}</b></span>
       <span className="leyenda-campo">H <b>{formatearPrecio(vela.maximo)}</b></span>
       <span className="leyenda-campo">L <b>{formatearPrecio(vela.minimo)}</b></span>

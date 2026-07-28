@@ -17,6 +17,7 @@ import SelectorEma from '../componentes/grafico/SelectorEma'
 import SelectorBandas from '../componentes/grafico/SelectorBandas'
 import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
 import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
+import SelectorTenencia from '../componentes/grafico/SelectorTenencia'
 import SelectorVPVR from '../componentes/grafico/SelectorVPVR'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import DialogoConfig from '../componentes/grafico/config/DialogoConfig'
@@ -54,6 +55,7 @@ function PaginaGrafico() {
   const [mostrarBollinger, setMostrarBollinger] = usarEstadoPersistente('mop.bollinger', false)
   const [mostrarNiveles, setMostrarNiveles] = usarEstadoPersistente('mop.niveles', false)
   const [mostrarVpvr, setMostrarVpvr] = usarEstadoPersistente('mop.vpvr', false)
+  const [mostrarTenencia, setMostrarTenencia] = usarEstadoPersistente('mop.tenencia', false)
   const [oscActivos, setOscActivos] = usarEstadoPersistente<NombreOscilador[]>('mop.osciladores', [])
   const osciladores = new Set(oscActivos)
   const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
@@ -118,6 +120,10 @@ function PaginaGrafico() {
             nodo: <SelectorNiveles mostrar={mostrarNiveles} alCambiar={setMostrarNiveles} />,
           },
           {
+            clave: 'tenencia',
+            nodo: <SelectorTenencia mostrar={mostrarTenencia} alCambiar={setMostrarTenencia} />,
+          },
+          {
             clave: 'ema',
             nodo: (
               <SelectorEma mostrar={mostrarEma} temporalidad={temporalidad} alCambiar={setMostrarEma} />
@@ -173,6 +179,8 @@ function PaginaGrafico() {
             mostrarBollinger={mostrarBollinger}
             mostrarNiveles={mostrarNiveles}
             mostrarVpvr={mostrarVpvr}
+            mostrarTenencia={mostrarTenencia}
+            conAdr={moneda === 'USD' && !!adr}
             sincronizador={sincronizador}
             tsActivo={tsActivo}
             alMoverCrosshair={setTsActivo}
