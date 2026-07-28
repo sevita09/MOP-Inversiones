@@ -16,6 +16,10 @@ import type {
   Comisiones,
   TasaVigente,
   TipoOperacion,
+  LotesDeTicker,
+  Split,
+  SplitNuevo,
+  Tenencias,
   Transaccion,
   TransaccionNueva,
   RespuestaPreview,
@@ -299,6 +303,31 @@ export function obtenerPrecioSugerido(
   return obtenerJson<{ ticker: string; fecha: string; precio: number | null }>(
     `/api/cartera/precio_sugerido?${parametros}`,
   )
+}
+
+export function obtenerLotes(ticker: string, moneda: Moneda): Promise<LotesDeTicker> {
+  const parametros = new URLSearchParams({ ticker, moneda })
+  return obtenerJson<LotesDeTicker>(`/api/cartera/lotes?${parametros}`)
+}
+
+export function obtenerSplits(ticker?: string): Promise<Split[]> {
+  const cola = ticker ? `?ticker=${ticker}` : ''
+  return obtenerJson<Split[]>(`/api/cartera/splits${cola}`)
+}
+
+export function crearSplit(datos: SplitNuevo): Promise<Split> {
+  return fetchJson<Split>('/api/cartera/splits', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  })
+}
+
+export function eliminarSplit(id: number): Promise<void> {
+  return fetchJson('/api/cartera/splits/' + id, { method: 'DELETE' })
+}
+
+export function obtenerTenencias(): Promise<Tenencias> {
+  return obtenerJson<Tenencias>('/api/cartera/tenencias')
 }
 
 export function obtenerPapelesEnCartera(): Promise<Record<string, number>> {

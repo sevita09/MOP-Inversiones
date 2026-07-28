@@ -202,6 +202,69 @@ export interface TransaccionNueva {
 }
 
 // Estructura del boleto: arancel + derechos de mercado, con IVA sobre ambos
+export interface Split {
+  id: number
+  ticker: string
+  fecha: string
+  ratio: number
+  nota: string
+  creado: string
+}
+
+export interface SplitNuevo {
+  ticker: string
+  fecha: string
+  ratio: number
+  nota?: string
+}
+
+// Compra abierta de la cartera, para marcarla en el gráfico
+export interface LoteAbierto {
+  fecha: string
+  ts: number | null
+  cantidad: number
+  precio: number
+}
+
+export interface LotesDeTicker {
+  ticker: string
+  moneda: Moneda
+  lotes: LoteAbierto[]
+  ppc: number | null
+  cantidad: number
+}
+
+export interface Posicion {
+  ticker: string
+  cantidad: number
+  costo: number
+  precio_promedio: number
+  precio_actual: number | null
+  valor_actual: number | null
+  pnl: number | null
+  pnl_pct: number | null
+  desde: string
+  peso_pct: number | null
+  valor_usd: number | null
+  pnl_usd: number | null
+}
+
+export interface TotalesCartera {
+  costo: number
+  valor_actual: number
+  pnl: number
+  pnl_pct: number | null
+  valor_usd: number | null
+  pnl_usd: number | null
+  tasa_ccl: number | null
+}
+
+export interface Tenencias {
+  posiciones: Posicion[]
+  totales: TotalesCartera
+}
+
+// Estructura del boleto: arancel + derechos de mercado, con IVA sobre ambos
 export interface Comisiones {
   arancel_pct: number
   arancel_intradia_pct: number

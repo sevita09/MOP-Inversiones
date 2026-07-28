@@ -83,7 +83,7 @@ export function grupoOscilador(nombre: string): GrupoConfig {
 }
 
 export const GRUPO_VPVR: GrupoConfig = {
-  titulo: 'VPVR',
+  titulo: 'Vol L',
   elementos: [
     { id: 'vpvr.sube', etiqueta: 'Vol. alcista', campos: ['color', 'opacidad'], recomendado: REC_VPVR_SUBE },
     { id: 'vpvr.baja', etiqueta: 'Vol. bajista', campos: ['color', 'opacidad'], recomendado: REC_VPVR_BAJA },
@@ -91,10 +91,36 @@ export const GRUPO_VPVR: GrupoConfig = {
   ],
 }
 
-// La tuerca única de la barra abre EMA / σ / BB / VPVR en pestañas
+// Marcas de la cartera sobre el gráfico: compras abiertas y precio promedio
+export const REC_PPC_COMPRA: Estilo = {
+  color: '#a371f7', ancho: 1, tipoLinea: 'dashed', opacidad: 0.55,
+}
+export const REC_PPC_LINEA: Estilo = {
+  color: '#a371f7', ancho: 2, tipoLinea: 'solid', opacidad: 1,
+}
+
+export const GRUPO_PPC: GrupoConfig = {
+  titulo: 'PPC',
+  elementos: [
+    {
+      id: 'ppc.compra',
+      etiqueta: 'Compras abiertas',
+      campos: ['color', 'linea', 'opacidad'],
+      recomendado: REC_PPC_COMPRA,
+    },
+    {
+      id: 'ppc.promedio',
+      etiqueta: 'Precio promedio',
+      campos: ['color', 'linea', 'opacidad'],
+      recomendado: REC_PPC_LINEA,
+    },
+  ],
+}
+
+// La tuerca única de la barra abre EMA / σ / BB / Vol L / PPC en pestañas
 export const APERTURA_PRECIO: AperturaConfig = {
   titulo: 'Indicadores del precio',
-  grupos: [GRUPO_EMA, GRUPO_BANDAS, GRUPO_BOLLINGER, GRUPO_VPVR],
+  grupos: [GRUPO_EMA, GRUPO_BANDAS, GRUPO_BOLLINGER, GRUPO_VPVR, GRUPO_PPC],
 }
 
 // La tuerca de un oscilador abre solo ese indicador (una sola pestaña)
