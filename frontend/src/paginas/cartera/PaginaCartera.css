@@ -70,7 +70,6 @@
   overflow-x: auto;
   border: 1px solid #30363d;
   border-radius: 8px;
-  max-width: 1100px;
 }
 
 .tabla-operaciones {
@@ -178,7 +177,7 @@
 .acciones-operacion [data-tooltip]:hover::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 9px;
@@ -215,7 +214,7 @@
 .boton-ajustes-cartera[data-tooltip]:hover::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 9px;
@@ -231,5 +230,36 @@
 
 /* Con el botón de ajustes, el de nueva operación ya no necesita el margen */
 .cabecera-cartera .boton-nueva-operacion {
+  margin-left: 0;
+}
+
+/* Pestañas: tenencias (qué tengo) vs historial (qué operé) */
+.pestanas-cartera {
+  display: flex;
+  gap: 4px;
+}
+
+.pestana-cartera {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: #8b949e;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pestana-cartera:hover {
+  color: #e6edf3;
+}
+
+.pestana-cartera.activa {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  background: rgba(56, 139, 253, 0.12);
+}
+
+/* Los botones de acción de la cabecera van juntos: solo el primero empuja */
+.boton-ajustes-cartera.sin-margen {
   margin-left: 0;
 }
