@@ -108,7 +108,7 @@ def test_endpoint_crea_grupos_indices_y_cripto(cliente, yahoo_conoce, sin_sync_n
     cliente.post("/api/tickers_extra", json={"ticker": "MERV", "grupo": "indices"})
     cliente.post("/api/tickers_extra", json={"ticker": "BTC", "grupo": "cripto"})
     grupos = cliente.get("/api/tickers").json()
-    assert grupos["indices"] == ["MERV"]
+    assert grupos["indices"] == ["MERVAL", "MERV"]  # MERVAL es fijo de config
     assert grupos["cripto"] == ["BTC"]
 
 

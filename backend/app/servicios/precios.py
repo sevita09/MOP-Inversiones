@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Optional
 
-from app.config import ADR, SUFIJO_ADR, tickers_byma
+from app.config import ADR, SUFIJO_ADR, tickers_en_pesos
 from app.repositorios.tickers_extra import listar as listar_tickers_extra
 from app.repositorios.velas import obtener_ultimas_velas
 from app.servicios.dolar import serie_ccl, tasa_ccl_para_ts
@@ -17,13 +17,13 @@ def _variacion(cierre: float, previo: Optional[float]) -> Optional[float]:
 
 
 def _tickers_convertibles(conexion: sqlite3.Connection) -> set:
-    """Los que cotizan en ARS: BYMA de config + agregados con símbolo .BA."""
+    """Los que cotizan en ARS: BYMA e índices locales + agregados con .BA."""
     extras = {
         e["ticker"]
         for e in listar_tickers_extra(conexion)
         if e["simbolo_yf"].endswith(".BA")
     }
-    return set(tickers_byma()) | extras
+    return set(tickers_en_pesos()) | extras
 
 
 def _cierre_en_moneda(

@@ -36,6 +36,11 @@ CEDEARS = [
     "GT", "RTX", "ARM", "KMB", "DISN",
 ]
 
+# Índices de la rueda local: cotizan en ARS, igual que los papeles BYMA, y por
+# eso también se pueden ver en USD vía CCL (el "Merval en dólares").
+# ticker propio -> símbolo de Yahoo Finance.
+INDICES_LOCALES = {"MERVAL": "^MERV"}
+
 # ADR de GGAL en NYSE: solo se usa para calcular la tasa CCL, no se muestra en la UI
 TICKER_CCL_BASE = "GGALD"
 
@@ -103,5 +108,13 @@ def tickers_byma() -> list:
     return PANEL_LIDER + PANEL_GENERAL
 
 
+def tickers_en_pesos() -> list:
+    """Lo que cotiza en ARS en la rueda local: papeles BYMA e índices locales.
+
+    Comparten calendario de ruedas y son los que se convierten a USD con el CCL.
+    """
+    return tickers_byma() + list(INDICES_LOCALES)
+
+
 def todos_los_tickers() -> list:
-    return tickers_byma() + CEDEARS + [TICKER_CCL_BASE]
+    return tickers_byma() + list(INDICES_LOCALES) + CEDEARS + [TICKER_CCL_BASE]

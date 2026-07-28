@@ -11,7 +11,7 @@ import sqlite3
 from bisect import bisect_right
 from datetime import datetime, timedelta, timezone
 
-from app.config import TICKER_CCL_BASE, tickers_byma
+from app.config import TICKER_CCL_BASE, tickers_en_pesos
 from app.repositorios.tasas_dolar import CCL, OFICIAL, guardar_tasas, obtener_tasas
 from app.repositorios.velas import guardar_velas, obtener_velas
 from app.servicios.descarga import descargar_velas
@@ -162,10 +162,11 @@ def sincronizar_dolar_oficial(conexion: sqlite3.Connection) -> int:
 
 
 def se_convierte_a_usd(ticker: str, conexion: Optional[sqlite3.Connection] = None) -> bool:
-    """Solo lo que cotiza en ARS se convierte: papeles BYMA de config y tickers
-    agregados por el usuario con símbolo .BA. CEDEARs (subyacente USD), índices,
-    cripto y dólares ya están en su moneda."""
-    if ticker in tickers_byma():
+    """Solo lo que cotiza en ARS se convierte: papeles BYMA e índices locales de
+    config, y tickers agregados por el usuario con símbolo .BA. CEDEARs
+    (subyacente USD), índices del exterior, cripto y dólares ya están en su
+    moneda."""
+    if ticker in tickers_en_pesos():
         return True
     if conexion is not None:
         from app.repositorios.tickers_extra import simbolo_de
