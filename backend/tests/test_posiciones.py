@@ -148,10 +148,10 @@ def test_los_papeles_cerrados_no_figuran(conexion):
     assert [p["ticker"] for p in tenencias(conexion)["posiciones"]] == ["YPFD"]
 
 
-def test_valores_en_usd_con_el_ccl(conexion):
+def test_valores_en_usd_con_el_mep(conexion):
     _operacion(conexion, "compra", 100, 1000, "2026-01-10")
     _precio_de_mercado(conexion, "GGAL", 1500)
-    guardar_tasas(conexion, [{"fecha": "2026-06-01", "tipo": "CCL", "valor": 1000}])
+    guardar_tasas(conexion, [{"fecha": "2026-06-01", "tipo": "MEP", "valor": 1000}])
 
     resultado = tenencias(conexion)
     assert resultado["totales"]["tasa_ccl"] == 1000
@@ -339,7 +339,7 @@ def test_endpoint_de_lotes(cliente, conexion):
     assert datos["ppc"] == 1000
 
 
-def test_los_lotes_en_usd_usan_el_ccl_de_su_fecha(conexion):
+def test_los_lotes_en_usd_usan_el_mep_de_su_fecha(conexion):
     """Cada compra vale los dólares que costó ESE día, no los de hoy."""
     from app.servicios.cartera.posiciones import lotes_abiertos
 
@@ -348,8 +348,8 @@ def test_los_lotes_en_usd_usan_el_ccl_de_su_fecha(conexion):
     guardar_tasas(
         conexion,
         [
-            {"fecha": "2026-01-10", "tipo": "CCL", "valor": 1000},
-            {"fecha": "2026-06-10", "tipo": "CCL", "valor": 1500},
+            {"fecha": "2026-01-10", "tipo": "MEP", "valor": 1000},
+            {"fecha": "2026-06-10", "tipo": "MEP", "valor": 1500},
         ],
     )
 
@@ -369,7 +369,7 @@ def test_sin_ccl_de_esa_fecha_el_lote_no_se_ubica(conexion):
 
 def test_endpoint_de_lotes_en_usd(cliente, conexion):
     _operacion(conexion, "compra", 100, 1000, "2026-01-10")
-    guardar_tasas(conexion, [{"fecha": "2026-01-10", "tipo": "CCL", "valor": 1000}])
+    guardar_tasas(conexion, [{"fecha": "2026-01-10", "tipo": "MEP", "valor": 1000}])
     datos = cliente.get("/api/cartera/lotes?ticker=GGAL&moneda=USD").json()
     assert datos["moneda"] == "USD"
     assert datos["ppc"] == 1

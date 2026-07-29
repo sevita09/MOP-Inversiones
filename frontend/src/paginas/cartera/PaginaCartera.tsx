@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Transaccion } from '../../api/tipos'
 import LogoTicker from '../../componentes/LogoTicker'
 import ConfigComisiones from '../../componentes/cartera/ConfigComisiones'
+import PanelRendimiento from '../../componentes/cartera/PanelRendimiento'
 import PanelSplits from '../../componentes/cartera/PanelSplits'
 import TablaTenencias from '../../componentes/cartera/TablaTenencias'
 import FormularioOperacion from '../../componentes/cartera/FormularioOperacion'
@@ -23,7 +24,7 @@ function PaginaCartera() {
   const [formulario, setFormulario] = useState<'nueva' | Transaccion | null>(null)
   const [borrando, setBorrando] = useState<Transaccion | null>(null)
   const [ajustes, setAjustes] = useState(false)
-  const [vista, setVista] = useState<'tenencias' | 'historial'>('tenencias')
+  const [vista, setVista] = useState<'tenencias' | 'rendimiento' | 'historial'>('tenencias')
   const [splits, setSplits] = useState(false)
   // Cambia al registrar o borrar un split: fuerza recalcular las tenencias
   const [revisionSplits, setRevisionSplits] = useState(0)
@@ -57,6 +58,13 @@ function PaginaCartera() {
                 onClick={() => setVista('tenencias')}
               >
                 Tenencias
+              </button>
+              <button
+                type="button"
+                className={vista === 'rendimiento' ? 'pestana-cartera activa' : 'pestana-cartera'}
+                onClick={() => setVista('rendimiento')}
+              >
+                Rendimiento
               </button>
               <button
                 type="button"
@@ -95,6 +103,10 @@ function PaginaCartera() {
 
           {vista === 'tenencias' && (
             <TablaTenencias key={`${transacciones.length}-${revisionSplits}`} />
+          )}
+
+          {vista === 'rendimiento' && (
+            <PanelRendimiento key={`${transacciones.length}-${revisionSplits}`} />
           )}
 
           {vista === 'historial' && (

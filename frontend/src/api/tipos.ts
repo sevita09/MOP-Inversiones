@@ -264,6 +264,86 @@ export interface Tenencias {
   totales: TotalesCartera
 }
 
+// --- Rendimiento (v7.1) ---
+
+export interface VentaRealizada {
+  id: number
+  ticker: string
+  fecha: string
+  cantidad: number
+  precio: number
+  ingreso: number
+  costo: number
+  ingreso_usd: number | null
+  costo_usd: number | null
+  pnl: number
+  pnl_pct: number | null
+  pnl_usd: number | null
+  pnl_usd_pct: number | null
+  desde: string | null
+}
+
+export interface RealizadoDePapel {
+  ticker: string
+  operaciones: number
+  cantidad: number
+  costo: number
+  ingreso: number
+  costo_usd: number | null
+  ingreso_usd: number | null
+  pnl: number
+  pnl_pct: number | null
+  pnl_usd: number | null
+  pnl_usd_pct: number | null
+  ventas: VentaRealizada[]
+}
+
+export interface Realizado {
+  papeles: RealizadoDePapel[]
+  totales: {
+    operaciones: number
+    costo: number
+    ingreso: number
+    costo_usd: number | null
+    ingreso_usd: number | null
+    pnl: number
+    pnl_pct: number | null
+    pnl_usd: number | null
+    pnl_usd_pct: number | null
+  }
+}
+
+export interface Rendimiento {
+  moneda: Moneda
+  fechas: string[]
+  /** Cartera en base 100: solo rendimiento, sin el ruido de los aportes */
+  cartera: number[]
+  /** `inflacion` solo viene en la vista en pesos */
+  benchmarks: {
+    mep: (number | null)[]
+    dolar: (number | null)[]
+    mercado: (number | null)[]
+    inflacion?: (number | null)[]
+  }
+  valores: number[]
+  totales: {
+    desde: string
+    hasta: string
+    twr_pct: number | null
+    valor_actual: number
+    aportado_neto: number
+    ganancia: number
+    /** Cuánto hizo cada benchmark en el período, por clave */
+    variaciones: Record<string, number | null>
+    /** Puntos porcentuales que le sacó la cartera a cada uno */
+    contra: Record<string, number | null>
+    mercado_pct: number | null
+    inflacion_pct: number | null
+    contra_mercado: number | null
+    contra_inflacion: number | null
+  }
+}
+
 // Estructura del boleto: arancel + derechos de mercado, con IVA sobre ambos
 export interface Comisiones {
   arancel_pct: number

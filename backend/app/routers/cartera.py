@@ -25,11 +25,13 @@ from app.servicios.cartera.comisiones import (
     desde_precio,
     tasas,
 )
+from app.servicios.cartera.benchmarks import comparacion
 from app.servicios.cartera.posiciones import (
     cantidades_en_cartera,
     lotes_abiertos,
     tenencias,
 )
+from app.servicios.cartera.rendimiento import realizado
 from app.servicios.cartera.transacciones import enriquecer, fecha_valida, precio_sugerido
 from app.servicios.tickers_extra import universo_completo
 
@@ -134,6 +136,26 @@ def eliminar_split(id_split: int, conexion: sqlite3.Connection = Depends(conexio
 def listar_tenencias(conexion: sqlite3.Connection = Depends(conexion_api)):
     """Posiciones abiertas por FIFO, con su P&L no realizado y los totales."""
     return tenencias(conexion)
+
+
+@router.get("/realizado")
+def listar_realizado(conexion: sqlite3.Connection = Depends(conexion_api)):
+    """P&L ya realizado por papel: cada venta contra el costo de sus compras."""
+    return realizado(conexion)
+
+
+@router.get("/rendimiento")
+def rendimiento(
+    moneda: str = "ARS",
+    desde: Optional[str] = None,
+    conexion: sqlite3.Connection = Depends(conexion_api),
+):
+    """Curva de la cartera en base 100 contra el dólar y el MERVAL, más el TWR."""
+    if moneda not in ("ARS", "USD"):
+        raise HTTPException(422, f"Moneda inválida: {moneda}")
+    if desde is not None and not fecha_valida(desde):
+        raise HTTPException(422, f"Fecha inválida: {desde} (usar AAAA-MM-DD)")
+    return comparacion(conexion, moneda, desde)
 
 
 @router.get("/lotes")

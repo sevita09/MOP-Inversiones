@@ -271,8 +271,8 @@ def test_las_tasas_se_pueden_cambiar(cliente):
 # --- USD, validaciones y edición ---
 
 
-def test_monto_final_en_usd_con_el_ccl_de_la_fecha(cliente, conexion):
-    guardar_tasas(conexion, [{"fecha": "2026-03-10", "tipo": "CCL", "valor": 1000}])
+def test_monto_final_en_usd_con_el_mep_de_la_fecha(cliente, conexion):
+    guardar_tasas(conexion, [{"fecha": "2026-03-10", "tipo": "MEP", "valor": 1000}])
     creada = cliente.post("/api/cartera/transacciones", json=PETICION).json()
     assert creada["monto_final_usd"] == 501.089  # 501.089 / 1000
 

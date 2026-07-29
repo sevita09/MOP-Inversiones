@@ -1,0 +1,173 @@
+.curva-rendimiento {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0d1117;
+}
+
+/* Leyenda a la izquierda (una serie por renglón), controles a la derecha */
+.encabezado-curva {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Tres columnas: la cartera y sus pares locales, los papeles del exterior y
+   los tres dólares. Se lee fila por fila. */
+.leyenda-rendimiento {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  column-gap: 18px;
+  row-gap: 2px;
+  font-size: 11px;
+}
+
+.controles-curva {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.monedas-rendimiento {
+  display: flex;
+  gap: 4px;
+}
+
+.moneda-rendimiento {
+  background: none;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #8b949e;
+  font-size: 11px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.moneda-rendimiento:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.moneda-rendimiento.activa {
+  background: #238636;
+  border-color: #238636;
+  color: #fff;
+}
+
+/* Ventanas de tiempo dentro del gráfico, contra el borde derecho */
+.periodos-rendimiento {
+  display: flex;
+  gap: 4px;
+}
+
+.periodo-rendimiento {
+  background: none;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #8b949e;
+  font-size: 11px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.periodo-rendimiento:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.periodo-rendimiento.activo {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #fff;
+}
+
+/* Cada celda ocupa el ancho de su columna y empuja el valor contra el borde
+   derecho: así el % (y la coma, con cifras tabulares) queda alineado en columna */
+.serie-rendimiento {
+  display: flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Espacio fijo para el valor bajo el crosshair: entran 4 dígitos y el %, así la
+   leyenda no se mueve al pasar el mouse ni cuando no hay valor */
+.valor-serie {
+  min-width: 62px;
+  margin-left: auto;
+  padding-left: 10px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.serie-rendimiento.cartera {
+  color: #388bfd;
+  font-weight: 600;
+}
+
+.serie-rendimiento.oficial {
+  color: #bb8009;
+}
+
+.serie-rendimiento.mep {
+  color: #d29922;
+}
+
+.serie-rendimiento.dolar {
+  color: #e3b341;
+}
+
+.serie-rendimiento.inflacion {
+  color: #a371f7;
+}
+
+.serie-rendimiento.brkb {
+  color: #f778ba;
+}
+
+.serie-rendimiento.spy {
+  color: #3fb950;
+}
+
+.serie-rendimiento.qqq {
+  color: #39c5cf;
+}
+
+.serie-rendimiento.btc {
+  color: #f7931a;
+}
+
+.serie-rendimiento.mercado {
+  color: #8b949e;
+}
+
+/* El trazo con ancho fijo alinea los nombres en columna */
+.trazo-serie {
+  display: inline-block;
+  width: 12px;
+}
+
+/* A la altura de las fechas, sobre el rincón vacío que deja la regla de precios:
+   así no se lleva un renglón propio. El fondo es el mismo del gráfico. */
+.nota-rendimiento {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  padding-left: 8px;
+  background: #0d1117;
+  color: #6e7681;
+  font-size: 10px;
+}
+
+/* El chart necesita una altura definida (min-height no alcanza) */
+.area-rendimiento {
+  height: 300px;
+  width: 100%;
+}

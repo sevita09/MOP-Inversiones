@@ -1,0 +1,187 @@
+.rendimiento {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rendimiento-cargando,
+.rendimiento-vacio {
+  color: #8b949e;
+  font-size: 13px;
+  margin: 24px 0;
+}
+
+/* El rótulo del TWR con su "?" al lado */
+.rotulo-con-ayuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Tarjetas del resumen, repartidas parejo a lo ancho de la barra */
+.resumen-rendimiento {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #161b22;
+}
+
+/* Todos los datos ocupan lo mismo: la franja se lee como una sola fila pareja */
+.dato-rendimiento {
+  flex: 1 1 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.dato-rendimiento > span:first-child {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #6e7681;
+}
+
+.dato-rendimiento strong {
+  font-size: 20px;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Los importes son referencia, no resultado: van sin negrita */
+.dato-rendimiento.monto strong {
+  font-weight: 400;
+}
+
+.dato-rendimiento.positivo strong {
+  color: #3fb950;
+}
+
+.dato-rendimiento.negativo strong {
+  color: #f85149;
+}
+
+.detalle-rendimiento {
+  font-size: 11px;
+  color: #6e7681;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La ganancia del período va con el color de su signo, como los porcentajes */
+.detalle-rendimiento.positivo {
+  color: #3fb950;
+}
+
+.detalle-rendimiento.negativo {
+  color: #f85149;
+}
+
+/* Tabla de resultado realizado */
+.titulo-realizado {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.nota-titulo {
+  font-size: 11px;
+  font-weight: 400;
+  color: #6e7681;
+}
+
+.tabla-realizado-contenedor {
+  overflow-x: auto;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.tabla-realizado {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tabla-realizado th {
+  text-align: center;
+  padding: 8px 12px;
+  background: #161b22;
+  color: #8b949e;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #30363d;
+  white-space: nowrap;
+}
+
+.tabla-realizado td {
+  padding: 8px 12px;
+  text-align: center;
+  color: #c9d1d9;
+  border-bottom: 1px solid #21262d;
+  white-space: nowrap;
+}
+
+.tabla-realizado tbody tr:hover td {
+  background: #161b22;
+}
+
+.tabla-realizado tfoot td {
+  border-bottom: none;
+  border-top: 1px solid #30363d;
+  background: #161b22;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tabla-realizado .numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-realizado .resultado {
+  font-weight: 600;
+}
+
+.tabla-realizado .positivo {
+  color: #3fb950;
+}
+
+.tabla-realizado .negativo {
+  color: #f85149;
+}
+
+.tabla-realizado .usd {
+  font-size: 11px;
+}
+
+.pct-realizado {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.papel-realizado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.nota-rendimiento-pie {
+  margin: 0;
+  font-size: 11px;
+  color: #6e7681;
+  line-height: 1.5;
+  max-width: 720px;
+}

@@ -9,9 +9,12 @@ import yfinance as yf
 from app.config import (
     ADR,
     HISTORIA_POR_TEMPORALIDAD,
+    INDICES_LOCALES,
     INTERVALO_YFINANCE,
+    SIMBOLO_MEP_BASE,
     SUFIJO_ADR,
     TICKER_CCL_BASE,
+    TICKER_MEP_BASE,
     tickers_byma,
 )
 
@@ -29,12 +32,17 @@ def simbolo_yahoo(ticker: str) -> str:
     """Convierte el ticker propio al símbolo de Yahoo Finance.
 
     Los BYMA llevan sufijo .BA; GGALD es el ADR de GGAL en NYSE (sin sufijo);
+    los índices locales tienen su propio símbolo (MERVAL es ^MERV, no MERVAL.BA);
     algunos CEDEARs usan otro símbolo allá (ver YAHOO_OVERRIDE).
     """
     if ticker == TICKER_CCL_BASE:
         return "GGAL"
+    if ticker == TICKER_MEP_BASE:
+        return SIMBOLO_MEP_BASE
     if ticker == "DOLAROF":
         return SIMBOLO_DOLAR_OFICIAL
+    if ticker in INDICES_LOCALES:
+        return INDICES_LOCALES[ticker]
     if ticker.endswith(SUFIJO_ADR):
         return ADR[ticker[: -len(SUFIJO_ADR)]][0]  # serie del ADR
     if ticker in tickers_byma():

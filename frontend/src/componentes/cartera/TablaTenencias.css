@@ -11,10 +11,12 @@
   margin: 24px 0;
 }
 
-/* Resumen de arriba: invertido, valor hoy y resultado */
+/* Resumen de arriba: invertido, valor hoy y resultado.
+   Los datos se reparten parejo a lo ancho de la barra, no apilados a la izquierda */
 .resumen-cartera {
   display: flex;
-  gap: 32px;
+  justify-content: space-evenly;
+  gap: 16px;
   flex-wrap: wrap;
   padding: 14px 16px;
   border: 1px solid #30363d;
@@ -25,6 +27,8 @@
 .dato-cartera {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 2px;
 }
 

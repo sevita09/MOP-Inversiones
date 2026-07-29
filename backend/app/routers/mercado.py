@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import (
     CEDEARS,
+    INDICES_LOCALES,
     PANEL_GENERAL,
     PANEL_LIDER,
     TEMPORALIDADES,
@@ -39,7 +40,7 @@ def tickers(conexion: sqlite3.Connection = Depends(conexion_api)):
         "panel_lider": PANEL_LIDER + extras.get("panel_lider", []),
         "panel_general": PANEL_GENERAL + extras.get("panel_general", []),
         "cedears": CEDEARS + extras.get("cedears", []),
-        "indices": extras.get("indices", []),
+        "indices": list(INDICES_LOCALES) + extras.get("indices", []),
         "cripto": extras.get("cripto", []),
         "dolar": TICKERS_DOLAR + extras.get("dolar", []),
     }
