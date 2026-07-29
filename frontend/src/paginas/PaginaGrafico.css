@@ -11,6 +11,8 @@
    (37 − 24) / 2 ≈ 6. */
 .barra-grafico {
   --espacio-borde: 12px;
+  /* igual que `minimumWidth` de rightPriceScale en configGrafico.ts */
+  --ancho-regla: 70px;
   display: flex;
   align-items: center;
   padding: 6px 0;
@@ -30,8 +32,10 @@
   padding-left: 6px;
 }
 
+/* Sin padding: el último ítem (la moneda) tiene que terminar en el mismo borde
+   que la regla de precios del gráfico de abajo */
 .barra-der {
-  padding-right: var(--espacio-borde);
+  padding-right: 0;
 }
 
 /* El medio se reparte parejo en el ancho restante, con aire también contra los
