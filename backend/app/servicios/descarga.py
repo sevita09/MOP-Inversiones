@@ -11,8 +11,10 @@ from app.config import (
     HISTORIA_POR_TEMPORALIDAD,
     INDICES_LOCALES,
     INTERVALO_YFINANCE,
+    SIMBOLO_MEP_BASE,
     SUFIJO_ADR,
     TICKER_CCL_BASE,
+    TICKER_MEP_BASE,
     tickers_byma,
 )
 
@@ -35,6 +37,8 @@ def simbolo_yahoo(ticker: str) -> str:
     """
     if ticker == TICKER_CCL_BASE:
         return "GGAL"
+    if ticker == TICKER_MEP_BASE:
+        return SIMBOLO_MEP_BASE
     if ticker == "DOLAROF":
         return SIMBOLO_DOLAR_OFICIAL
     if ticker in INDICES_LOCALES:

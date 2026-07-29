@@ -19,9 +19,10 @@ from typing import Optional
 from app.repositorios import splits as repo_splits
 from app.repositorios import transacciones as repo
 from app.repositorios.tasas_dolar import obtener_tasa_en_fecha
+from app.servicios.cartera import TIPO_DOLAR
 
 
-def _eventos(operaciones: list[dict], splits: list[dict]) -> list[dict]:
+def eventos_ordenados(operaciones: list[dict], splits: list[dict]) -> list[dict]:
     """Operaciones y splits mezclados en orden cronológico.
 
     Un split del mismo día que una compra se aplica DESPUÉS (la compra se hizo
@@ -32,11 +33,19 @@ def _eventos(operaciones: list[dict], splits: list[dict]) -> list[dict]:
     return sorted(eventos, key=lambda e: e["_orden"])
 
 
-def _lotes_pendientes(operaciones: list[dict], splits: list[dict]) -> list[dict]:
-    """Recorre los eventos en orden y devuelve los lotes de compra que quedaron
-    sin vender. Cada lote lleva su costo unitario con gastos."""
+def recorrer_fifo(
+    operaciones: list[dict], splits: list[dict]
+) -> tuple[list[dict], list[dict]]:
+    """Recorre los eventos en orden y devuelve `(lotes abiertos, ventas cerradas)`.
+
+    Los lotes abiertos son las compras que quedaron sin vender, cada una con su
+    costo unitario con gastos: son la tenencia de hoy. Cada venta anota qué
+    lotes consumió y a qué costo — eso es lo que vuelve calculable el P&L
+    **realizado** (v7.1) sin volver a recorrer nada.
+    """
     lotes: list[dict] = []
-    for evento in _eventos(operaciones, splits):
+    ventas: list[dict] = []
+    for evento in eventos_ordenados(operaciones, splits):
         if evento["tipo"] == "split":
             # Multiplica los papeles y divide su precio: el costo total no cambia
             ratio = evento["ratio"]
@@ -63,14 +72,38 @@ def _lotes_pendientes(operaciones: list[dict], splits: list[dict]) -> list[dict]
 
         # Venta: consume los lotes más viejos primero
         por_vender = cantidad
+        consumos = []
         while por_vender > 1e-9 and lotes:
             lote = lotes[0]
             usado = min(lote["cantidad"], por_vender)
+            consumos.append(
+                {
+                    "fecha": lote["fecha"],
+                    "cantidad": usado,
+                    "costo_unitario": lote["precio"] + lote["gasto_unitario"],
+                }
+            )
             lote["cantidad"] -= usado
             por_vender -= usado
             if lote["cantidad"] <= 1e-9:
                 lotes.pop(0)
-    return lotes
+        ventas.append(
+            {
+                "id": evento["id"],
+                "ticker": evento["ticker"],
+                "fecha": evento["fecha"],
+                "cantidad": cantidad,
+                "precio": evento["precio"],
+                "comision": evento["comision"],
+                "consumos": consumos,
+            }
+        )
+    return lotes, ventas
+
+
+def _lotes_pendientes(operaciones: list[dict], splits: list[dict]) -> list[dict]:
+    """Solo los lotes abiertos (lo que se tiene hoy)."""
+    return recorrer_fifo(operaciones, splits)[0]
 
 
 def _fin_del_dia(fecha: str) -> int:
@@ -92,9 +125,10 @@ def _precio_actual(conexion: sqlite3.Connection, ticker: str) -> Optional[float]
 
 def _tasa_hoy(conexion: sqlite3.Connection) -> Optional[float]:
     fila = conexion.execute(
-        "SELECT fecha FROM tasas_dolar WHERE tipo = 'CCL' ORDER BY fecha DESC LIMIT 1"
+        "SELECT fecha FROM tasas_dolar WHERE tipo = ? ORDER BY fecha DESC LIMIT 1",
+        (TIPO_DOLAR,),
     ).fetchone()
-    return obtener_tasa_en_fecha(conexion, fila["fecha"]) if fila else None
+    return obtener_tasa_en_fecha(conexion, fila["fecha"], TIPO_DOLAR) if fila else None
 
 
 def posicion_de(conexion: sqlite3.Connection, ticker: str) -> Optional[dict]:
@@ -128,7 +162,7 @@ def posicion_de(conexion: sqlite3.Connection, ticker: str) -> Optional[dict]:
 def tenencias(conexion: sqlite3.Connection) -> dict:
     """Todas las posiciones abiertas, con los totales de la cartera.
 
-    El P&L en USD se calcula con el CCL de hoy sobre el resultado en ARS: es
+    El P&L en USD se calcula con el MEP de hoy sobre el resultado en ARS: es
     cuánto vale hoy en dólares la ganancia, no el resultado medido en dólares
     desde el inicio (eso llega en v7 con la curva de rendimiento).
     """
@@ -186,7 +220,7 @@ def lotes_abiertos(conexion: sqlite3.Connection, ticker: str, moneda: str = "ARS
     chart), cuántos papeles quedan de esa compra tras el FIFO, y a qué costo
     unitario. `ppc` es el precio promedio de compra ponderado de la posición.
 
-    En **USD** cada lote se convierte con el CCL **de su propia fecha**: es
+    En **USD** cada lote se convierte con el MEP **de su propia fecha**: es
     cuántos dólares se pusieron realmente por ese papel. Convertir el promedio
     en pesos con el dólar de hoy daría un número que nunca existió, y además no
     sería comparable contra la serie de precios en dólares del gráfico.
@@ -202,9 +236,9 @@ def lotes_abiertos(conexion: sqlite3.Connection, ticker: str, moneda: str = "ARS
     for lote in lotes:
         precio_ars = lote["precio"] + lote["gasto_unitario"]
         if moneda == "USD":
-            tasa = obtener_tasa_en_fecha(conexion, lote["fecha"])
+            tasa = obtener_tasa_en_fecha(conexion, lote["fecha"], TIPO_DOLAR)
             if not tasa:
-                continue  # sin CCL de esa fecha no se puede ubicar la compra
+                continue  # sin MEP de esa fecha no se puede ubicar la compra
             precio_ars = precio_ars / tasa
         # El ts de la vela de esa fecha: el chart ubica la línea por ahí
         fila = conexion.execute(
@@ -229,7 +263,7 @@ def lotes_abiertos(conexion: sqlite3.Connection, ticker: str, moneda: str = "ARS
         "moneda": moneda,
         "lotes": salida,
         # Promedio ponderado de los lotes ya convertidos: en USD son los dólares
-        # efectivamente puestos, no el promedio en pesos pasado por el CCL de hoy
+        # efectivamente puestos, no el promedio en pesos pasado por el MEP de hoy
         "ppc": round(costo / cantidad, 6) if cantidad else None,
         "cantidad": round(cantidad, 6),
     }

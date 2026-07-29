@@ -44,6 +44,11 @@ INDICES_LOCALES = {"MERVAL": "^MERV"}
 # ADR de GGAL en NYSE: solo se usa para calcular la tasa CCL, no se muestra en la UI
 TICKER_CCL_BASE = "GGALD"
 
+# GGAL con liquidación en dólares en BYMA (GGALD.BA): contra GGAL en pesos da el
+# MEP, el dólar que se consigue sin sacar la plata del país. Tampoco se muestra.
+TICKER_MEP_BASE = "GGALDBA"
+SIMBOLO_MEP_BASE = "GGALD.BA"
+
 # Tickers sintéticos de dólar (se generan en v0.5)
 TICKERS_DOLAR = ["DOLARCCL", "DOLAROF"]
 
@@ -116,5 +121,19 @@ def tickers_en_pesos() -> list:
     return tickers_byma() + list(INDICES_LOCALES)
 
 
+def tickers_de_la_rueda_local() -> list:
+    """Todo lo que opera en BYMA, sin importar en qué moneda cotiza.
+
+    Comparte calendario de ruedas: GGALD.BA liquida en dólares pero opera acá,
+    así que sus feriados son los locales y no los del exterior.
+    """
+    return tickers_en_pesos() + [TICKER_MEP_BASE]
+
+
 def todos_los_tickers() -> list:
-    return tickers_byma() + list(INDICES_LOCALES) + CEDEARS + [TICKER_CCL_BASE]
+    return (
+        tickers_byma()
+        + list(INDICES_LOCALES)
+        + CEDEARS
+        + [TICKER_CCL_BASE, TICKER_MEP_BASE]
+    )

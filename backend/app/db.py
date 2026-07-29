@@ -142,6 +142,13 @@ CREATE TABLE IF NOT EXISTS presets_riesgo (
     creado      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Inflación mensual (IPC nacional del INDEC, vía api.argentinadatos.com).
+-- `valor` es la variación porcentual de ese mes, no un índice.
+CREATE TABLE IF NOT EXISTS inflacion (
+    fecha  TEXT PRIMARY KEY,   -- AAAA-MM-DD, último día del mes medido
+    valor  REAL NOT NULL       -- variación % del mes
+);
+
 CREATE TABLE IF NOT EXISTS dibujos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     ticker   TEXT NOT NULL,

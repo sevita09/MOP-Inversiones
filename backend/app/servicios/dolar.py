@@ -4,6 +4,11 @@ CCL (Contado con Liquidación): se calcula a partir de GGAL en BYMA (ARS) y su
 ADR en NYSE (USD). Cada ADR equivale a 10 acciones locales.
 
     CCL = (GGAL_ars * 10) / GGAL_adr_usd
+
+MEP: la misma acción, las dos puntas en BYMA — GGAL en pesos contra GGALD.BA,
+que liquida en dólares acá. No hay ratio: es la misma acción.
+
+    MEP = GGAL_ars / GGALD_ba_usd
 """
 from __future__ import annotations
 
@@ -11,8 +16,8 @@ import sqlite3
 from bisect import bisect_right
 from datetime import datetime, timedelta, timezone
 
-from app.config import TICKER_CCL_BASE, tickers_en_pesos
-from app.repositorios.tasas_dolar import CCL, OFICIAL, guardar_tasas, obtener_tasas
+from app.config import TICKER_CCL_BASE, TICKER_MEP_BASE, tickers_en_pesos
+from app.repositorios.tasas_dolar import CCL, MEP, OFICIAL, guardar_tasas, obtener_tasas
 from app.repositorios.velas import guardar_velas, obtener_velas
 from app.servicios.descarga import descargar_velas
 
@@ -28,41 +33,52 @@ def _fecha_a_ts(fecha: str) -> int:
 
 
 def _por_fecha(velas: list[dict]) -> dict[str, dict]:
-    """Indexa velas diarias por fecha AAAA-MM-DD (UTC)."""
+    """Indexa velas diarias por fecha AAAA-MM-DD (UTC), descartando las faltantes.
+
+    Un mismo día puede tener la vela real y un placeholder del reparador con otra
+    hora: si el placeholder pisara a la real, esa rueda se perdería y con ella su
+    tasa (pasó con GGALD.BA, que quedó con 1.745 placeholders y solo 29 tasas).
+    """
     indexado = {}
     for vela in velas:
+        if vela.get("es_faltante"):
+            continue
         fecha = datetime.fromtimestamp(vela["ts"], tz=timezone.utc).strftime("%Y-%m-%d")
         indexado[fecha] = vela
     return indexado
 
 
-def calcular_ccl_diario(
-    velas_ars: list[dict], velas_adr: list[dict]
+def calcular_tasas_diarias(
+    velas_ars: list[dict], velas_usd: list[dict], tipo: str, acciones: int = 1
 ) -> list[dict]:
-    """Combina las series diarias de GGAL (ARS) y su ADR (USD) en tasas CCL.
+    """Divide la punta en pesos por la punta en dólares, rueda por rueda.
+
+    `acciones` es cuántas acciones locales representa un papel de la punta en
+    dólares: 10 para el ADR del CCL, 1 para GGALD.BA del MEP.
 
     Solo emite tasa en las fechas donde hay vela real (no faltante) de ambos
     lados, con cierres positivos.
     """
-    adr_por_fecha = _por_fecha(velas_adr)
+    usd_por_fecha = _por_fecha(velas_usd)
     tasas = []
     for fecha, vela_ars in _por_fecha(velas_ars).items():
-        vela_adr = adr_por_fecha.get(fecha)
-        if vela_adr is None:
+        vela_usd = usd_por_fecha.get(fecha)
+        if vela_usd is None:
             continue
-        if vela_ars.get("es_faltante") or vela_adr.get("es_faltante"):
+        if vela_ars.get("es_faltante") or vela_usd.get("es_faltante"):
             continue
-        cierre_ars, cierre_adr = vela_ars["cierre"], vela_adr["cierre"]
-        if cierre_ars <= 0 or cierre_adr <= 0:
+        cierre_ars, cierre_usd = vela_ars["cierre"], vela_usd["cierre"]
+        if cierre_ars <= 0 or cierre_usd <= 0:
             continue
         tasas.append(
-            {
-                "fecha": fecha,
-                "tipo": CCL,
-                "valor": round(cierre_ars * ACCIONES_POR_ADR / cierre_adr, 4),
-            }
+            {"fecha": fecha, "tipo": tipo, "valor": round(cierre_ars * acciones / cierre_usd, 4)}
         )
     return sorted(tasas, key=lambda t: t["fecha"])
+
+
+def calcular_ccl_diario(velas_ars: list[dict], velas_adr: list[dict]) -> list[dict]:
+    """Tasas CCL desde GGAL (ARS) y su ADR en NYSE (USD)."""
+    return calcular_tasas_diarias(velas_ars, velas_adr, CCL, ACCIONES_POR_ADR)
 
 
 def sincronizar_ccl(conexion: sqlite3.Connection) -> int:
@@ -70,6 +86,14 @@ def sincronizar_ccl(conexion: sqlite3.Connection) -> int:
     velas_ars = obtener_velas(conexion, "GGAL", "D")
     velas_adr = obtener_velas(conexion, TICKER_CCL_BASE, "D")
     tasas = calcular_ccl_diario(velas_ars, velas_adr)
+    return guardar_tasas(conexion, tasas) if tasas else 0
+
+
+def sincronizar_mep(conexion: sqlite3.Connection) -> int:
+    """Recalcula la serie MEP: GGAL en pesos contra GGALD.BA en dólares."""
+    velas_ars = obtener_velas(conexion, "GGAL", "D")
+    velas_usd = obtener_velas(conexion, TICKER_MEP_BASE, "D")
+    tasas = calcular_tasas_diarias(velas_ars, velas_usd, MEP)
     return guardar_tasas(conexion, tasas) if tasas else 0
 
 

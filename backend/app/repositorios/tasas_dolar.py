@@ -5,6 +5,7 @@ from bisect import bisect_right
 from typing import Iterable, Optional
 
 CCL = "CCL"
+MEP = "MEP"
 OFICIAL = "OFICIAL"
 
 

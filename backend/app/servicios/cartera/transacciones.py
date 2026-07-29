@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from app.repositorios.tasas_dolar import obtener_tasa_en_fecha
+from app.servicios.cartera import TIPO_DOLAR
 
 TIPOS = ("compra", "venta")
 
@@ -50,8 +51,8 @@ def precio_sugerido(
 
 
 def a_usd(conexion: sqlite3.Connection, monto_ars: float, fecha: str) -> Optional[float]:
-    """Convierte un monto en ARS a USD con el CCL vigente en esa fecha."""
-    tasa = obtener_tasa_en_fecha(conexion, fecha)
+    """Convierte un monto en ARS a USD con el MEP vigente en esa fecha."""
+    tasa = obtener_tasa_en_fecha(conexion, fecha, TIPO_DOLAR)
     return None if not tasa else round(monto_ars / tasa, 4)
 
 

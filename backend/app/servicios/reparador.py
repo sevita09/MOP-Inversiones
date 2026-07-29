@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from app.config import TEMPORALIDADES, tickers_en_pesos, todos_los_tickers
+from app.config import TEMPORALIDADES, tickers_de_la_rueda_local, todos_los_tickers
 from app.repositorios.velas import (
     guardar_velas,
     marcar_velas_en_cero,
@@ -34,7 +34,7 @@ def marcar_corruptas(conexion: sqlite3.Connection) -> int:
 
 def companeros_de_mercado(ticker: str) -> list:
     """Los demás tickers del mismo mercado, cuyo calendario de ruedas es compartido."""
-    locales = tickers_en_pesos()
+    locales = tickers_de_la_rueda_local()
     grupo = (
         locales
         if ticker in locales
