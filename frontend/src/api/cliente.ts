@@ -14,6 +14,8 @@ import type {
   RiesgoBot,
   RespuestaSenales,
   Comisiones,
+  Realizado,
+  Rendimiento,
   TasaVigente,
   TipoOperacion,
   LotesDeTicker,
@@ -328,6 +330,16 @@ export function eliminarSplit(id: number): Promise<void> {
 
 export function obtenerTenencias(): Promise<Tenencias> {
   return obtenerJson<Tenencias>('/api/cartera/tenencias')
+}
+
+export function obtenerRealizado(): Promise<Realizado> {
+  return obtenerJson<Realizado>('/api/cartera/realizado')
+}
+
+export function obtenerRendimiento(moneda: Moneda, desde?: string): Promise<Rendimiento> {
+  const parametros = new URLSearchParams({ moneda })
+  if (desde) parametros.set('desde', desde)
+  return obtenerJson<Rendimiento>(`/api/cartera/rendimiento?${parametros}`)
 }
 
 export function obtenerPapelesEnCartera(): Promise<Record<string, number>> {

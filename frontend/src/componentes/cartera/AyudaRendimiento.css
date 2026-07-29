@@ -1,0 +1,88 @@
+.ayuda-rendimiento {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Va con la especificidad del contenedor para ganarle al color del rótulo
+   (la tarjeta se pinta de verde o rojo según el resultado) */
+.ayuda-rendimiento .boton-ayuda {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid #388bfd;
+  background: none;
+  color: #388bfd;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+  cursor: help;
+  padding: 0;
+}
+
+.ayuda-rendimiento .boton-ayuda:hover,
+.ayuda-rendimiento .boton-ayuda:focus-visible {
+  background: #388bfd;
+  color: #0d1117;
+}
+
+/* El panel va debajo del botón: arriba lo cortaría la barra superior */
+.panel-ayuda {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 340px;
+  padding: 12px 14px;
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  color: #c9d1d9;
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  z-index: 30;
+}
+
+.ayuda-rendimiento:hover .panel-ayuda,
+.boton-ayuda:focus-visible + .panel-ayuda {
+  display: block;
+}
+
+/* Tres clases de especificidad: si no, gana el verde o el rojo con que se pinta
+   la tarjeta del resultado, que es la que contiene este panel */
+.ayuda-rendimiento .panel-ayuda .titulo-ayuda {
+  display: block;
+  color: #388bfd;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 10px;
+}
+
+.ayuda-rendimiento .panel-ayuda .titulo-ayuda:first-child {
+  margin-top: 0;
+}
+
+.panel-ayuda p {
+  margin: 4px 0 0;
+}
+
+.ayuda-rendimiento .panel-ayuda .clave-ayuda {
+  color: #e6edf3;
+  font-weight: 600;
+}
+
+/* El ejemplo concreto, apartado del texto */
+.ejemplo-ayuda {
+  border-left: 2px solid #388bfd;
+  padding-left: 9px;
+  color: #8b949e;
+}

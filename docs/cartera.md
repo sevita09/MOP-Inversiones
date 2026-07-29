@@ -17,7 +17,23 @@ las tenencias por FIFO y el P&L llegan en v6.2.
 | `nota` | libre |
 
 El precio va siempre en ARS porque así se opera en BYMA; la vista en USD se
-calcula con la tasa CCL de esa fecha (`obtener_tasa_en_fecha`).
+calcula con el **dólar MEP** de esa fecha (`obtener_tasa_en_fecha`).
+
+## Por qué MEP y no CCL
+
+La cartera se valúa con el MEP (`servicios/cartera/__init__.py`, `TIPO_DOLAR`):
+es el dólar que se consigue operando las dos puntas en BYMA, sin sacar la plata
+del país, y por eso es el que corresponde a una cartera local. El resto de la
+app —gráfico, indicadores, precios del sidebar— sigue con CCL.
+
+    MEP = GGAL.BA / GGALD.BA        (misma acción, sin ratio)
+    CCL = GGAL.BA × 10 / GGAL(NYSE) (el ADR equivale a 10 acciones)
+
+`GGALD.BA` entra como un ticker más (`config.TICKER_MEP_BASE`), no se muestra en
+la UI y **no se convierte a USD** (ya cotiza en dólares), pero **sí comparte el
+calendario de ruedas local** (`tickers_de_la_rueda_local`): si quedara en el
+grupo del exterior, el reparador le inventaría placeholders en días que acá no
+hubo rueda, y esos placeholders taparían las ruedas reales al calcular la tasa.
 
 ## Gastos: la estructura real del boleto
 
@@ -94,7 +110,7 @@ y su costo es el de esos papeles concretos, no un promedio de toda la historia.
 
 - **Los gastos entran al costo**: 100 papeles a $1.000 con $500 de gastos cuestan
   $1.005 cada uno. En una venta parcial se prorratean por unidad.
-- **P&L no realizado** contra el último cierre conocido, en ARS y en USD (CCL de
+- **P&L no realizado** contra el último cierre conocido, en ARS y en USD (MEP de
   hoy), con el peso de cada papel en la cartera.
 - `GET /api/cartera/tenencias` → `{posiciones, totales}`.
 
@@ -117,6 +133,70 @@ una suma SQL de compras menos ventas ignoraría los splits.
 Endpoints: `GET`/`POST`/`DELETE /api/cartera/splits`. UI: botón ⇅ en Cartera,
 que traduce el ratio a palabras mientras se escribe para no equivocar el sentido.
 
+## Rendimiento (v7.1)
+
+Pestaña **Rendimiento** de la página Cartera. Responde dos preguntas: cuánto
+rindió la cartera de verdad y si le ganó al dólar y al mercado.
+
+La vista tiene su propio selector **Pesos / Dólares**, independiente del toggle
+global del gráfico: mirar la cartera en pesos o en dólares son dos preguntas
+distintas. La tabla de resultado realizado va siempre en dólares.
+
+### P&L realizado — `servicios/cartera/rendimiento.py`
+
+Lo que ya está cobrado: cada venta contra el costo de las compras que consumió
+por FIFO. Es independiente del no realizado de `posiciones.py` — un papel puede
+tener las dos cosas si se vendió una parte. Los gastos pesan de las dos puntas
+(los de la compra están en el costo del lote, los de la venta bajan el ingreso).
+
+**En USD cada punta va con el MEP de su fecha**: los dólares que se pusieron
+contra los que se sacaron. Se puede ganar en pesos y perder en dólares, y la
+tabla lo muestra.
+
+### Curva de valor y flujos — `servicios/cartera/curva.py`
+
+Rueda por rueda: la tenencia de cada papel (reconstruida desde las operaciones
+y los splits) por el cierre de ese día. Aparte, el **flujo** del día: lo que
+entró al comprar (precio + gastos) y lo que salió al vender (precio − gastos).
+
+Separar valor de flujo es lo que hace calculable el TWR. En USD todo se
+convierte con el MEP de **esa** rueda.
+
+### TWR y benchmarks — `servicios/cartera/benchmarks.py`
+
+El retorno simple engaña apenas hay flujos: meter plata justo antes de una suba
+infla el porcentaje sin haber acertado nada. El **TWR** parte la historia en
+tramos entre flujo y flujo y los encadena:
+
+```
+r_t = (V_t − F_t) / V_(t−1) − 1        TWR = Π (1 + r_t) − 1
+```
+
+Los benchmarks van todos a base 100 desde la misma rueda que la cartera:
+
+| Serie | Qué responde |
+|---|---|
+| Dólar MEP | ¿le gané al dólar con el que me valúo? |
+| Dólar CCL | ¿se abrió o cerró la brecha entre los dos dólares? |
+| MERVAL | ¿le gané al mercado? |
+| Inflación | ¿le gané al costo de vida? (solo en pesos) |
+
+En la vista en dólares las tasas se miden contra el MEP: el MEP queda plano
+—quedarse en dólares no rinde en dólares— y el CCL muestra la brecha. La
+inflación no aparece en dólares: es un fenómeno en pesos.
+
+La **inflación** es el IPC nacional del INDEC vía `api.argentinadatos.com`
+(`servicios/inflacion.py`). La serie es mensual y se encadena en un índice
+(`índice *= 1 + variación/100`); dentro del mes no se mueve, porque el dato es
+mensual y fabricar un recorrido diario sería precisión inventada. Se consulta
+**entre el 11 y el 15 de cada mes, una vez por hora** (el INDEC publica cerca
+del 13), salvo la carga inicial. El MERVAL es el índice real de Yahoo (`^MERV`, `config.INDICES_LOCALES`), no un
+índice armado a mano: cotiza en pesos, entra al sync como cualquier papel y en
+la vista USD se divide por el MEP de cada rueda (el "Merval en dólares").
+
+Endpoints: `GET /api/cartera/realizado` y
+`GET /api/cartera/rendimiento?moneda=&desde=`.
+
 ## Marcas de la cartera en el gráfico
 
 Botón **PPC** en la barra del gráfico (`SelectorTenencia`). Con
@@ -128,7 +208,7 @@ Botón **PPC** en la barra del gráfico (`SelectorTenencia`). Con
 - una **horizontal punteada** desde ese día hacia adelante, al precio pagado;
 - una **línea llena con el PPC** (promedio ponderado) a lo ancho del gráfico.
 
-**En USD cada compra se convierte con el CCL de su propia fecha**: son los
+**En USD cada compra se convierte con el MEP de su propia fecha**: son los
 dólares que se pusieron en ese momento, lo único comparable contra la serie de
 precios en dólares. Pasar el promedio en pesos por el CCL de hoy daría un número
 que nunca existió (hay un test que fija esa diferencia). Colores y tipo de línea
