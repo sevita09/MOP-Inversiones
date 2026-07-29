@@ -199,6 +199,30 @@ Endpoints: `GET /api/cartera/realizado` y
 
 ## Marcas de la cartera en el gráfico
 
+Dos capas distintas, las dos en `servicios/cartera/marcas.py`:
+
+| | **PPC** (v6.2) | **Operaciones** (v7.2) |
+|---|---|---|
+| Botón | `PPC` | `Ops` |
+| Qué muestra | las compras que siguen abiertas tras el FIFO | todas las órdenes, compras y ventas |
+| Posición cerrada | no aparece | aparece completa |
+| Precio | con gastos (es el costo) | de mercado (es donde se ejecutó) |
+| Pregunta | ¿dónde está mi costo hoy? | ¿cómo operé? |
+
+**Las dos convierten con CCL, no con el MEP** que valúa la cartera: son objetos
+que se dibujan sobre la serie del gráfico, y esa serie se convierte con CCL
+(`precio_para_vista` en `servicios/dolar.py`). Con MEP quedarían corridas ~4%.
+
+Y en los papeles **con ADR** el gráfico en dólares muestra el certificado, que
+vale `ratio` acciones locales: la marca se multiplica por el ratio para caer
+sobre esa serie. Verificado: una compra de GGAL a $5.520 el 16/09/24 marca
+US$44,33, que es exactamente el cierre del ADR de esa rueda.
+
+Desde **Tenencias**, tocar el nombre del papel abre su gráfico con las
+operaciones ya marcadas.
+
+### PPC (v6.2)
+
 Botón **PPC** en la barra del gráfico (`SelectorTenencia`). Con
 `GET /api/cartera/lotes?ticker=&moneda=` trae las compras abiertas y dibuja
 (`primitivaTenencia.ts`):
