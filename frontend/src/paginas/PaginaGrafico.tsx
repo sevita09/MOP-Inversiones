@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import InterruptorMoneda, { CotizacionCCL } from '../componentes/InterruptorMoneda'
+import InterruptorMoneda, { CotizacionDolar } from '../componentes/InterruptorMoneda'
 import LogoTicker from '../componentes/LogoTicker'
 import PanelPrecio, { type PanelPrecioHandle } from '../componentes/grafico/PanelPrecio'
 import PanelOscilador from '../componentes/grafico/PanelOscilador'
@@ -18,6 +18,7 @@ import SelectorBandas from '../componentes/grafico/SelectorBandas'
 import SelectorBollinger from '../componentes/grafico/SelectorBollinger'
 import SelectorNiveles from '../componentes/grafico/SelectorNiveles'
 import SelectorTenencia from '../componentes/grafico/SelectorTenencia'
+import SelectorOperaciones from '../componentes/grafico/SelectorOperaciones'
 import SelectorVPVR from '../componentes/grafico/SelectorVPVR'
 import SelectorPeriodo from '../componentes/grafico/SelectorPeriodo'
 import DialogoConfig from '../componentes/grafico/config/DialogoConfig'
@@ -56,6 +57,7 @@ function PaginaGrafico() {
   const [mostrarNiveles, setMostrarNiveles] = usarEstadoPersistente('mop.niveles', false)
   const [mostrarVpvr, setMostrarVpvr] = usarEstadoPersistente('mop.vpvr', false)
   const [mostrarTenencia, setMostrarTenencia] = usarEstadoPersistente('mop.tenencia', false)
+  const [mostrarOperaciones, setMostrarOperaciones] = usarEstadoPersistente('mop.operaciones', false)
   const [oscActivos, setOscActivos] = usarEstadoPersistente<NombreOscilador[]>('mop.osciladores', [])
   const osciladores = new Set(oscActivos)
   const alternarOscilador = (nombre: NombreOscilador, activo: boolean) => {
@@ -91,7 +93,7 @@ function PaginaGrafico() {
             <span className="identidad-simbolo">{ticker}</span>
           </span>
         }
-        derecha={[<CotizacionCCL key="ccl" />, <InterruptorMoneda key="moneda" />]}
+        derecha={[<CotizacionDolar key="dolar" />, <InterruptorMoneda key="moneda" />]}
         unidades={[
           {
             clave: 'temporalidad',
@@ -122,6 +124,15 @@ function PaginaGrafico() {
           {
             clave: 'tenencia',
             nodo: <SelectorTenencia mostrar={mostrarTenencia} alCambiar={setMostrarTenencia} />,
+          },
+          {
+            clave: 'operaciones',
+            nodo: (
+              <SelectorOperaciones
+                mostrar={mostrarOperaciones}
+                alCambiar={setMostrarOperaciones}
+              />
+            ),
           },
           {
             clave: 'ema',
@@ -180,6 +191,7 @@ function PaginaGrafico() {
             mostrarNiveles={mostrarNiveles}
             mostrarVpvr={mostrarVpvr}
             mostrarTenencia={mostrarTenencia}
+            mostrarOperaciones={mostrarOperaciones}
             conAdr={moneda === 'USD' && !!adr}
             sincronizador={sincronizador}
             tsActivo={tsActivo}

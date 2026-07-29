@@ -162,7 +162,7 @@ def test_endpoint_dolar_devuelve_la_ultima_cotizacion(cliente, conexion):
 
 def test_endpoint_dolar_sin_datos_devuelve_nulos(cliente):
     datos = cliente.get("/api/dolar").json()
-    assert datos == {"ccl": None, "oficial": None}
+    assert datos == {"ccl": None, "mep": None, "oficial": None}
 
 
 # --- velas sintéticas DOLARCCL ---

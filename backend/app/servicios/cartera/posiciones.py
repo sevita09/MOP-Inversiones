@@ -13,7 +13,6 @@ Ignorarlos daría un P&L optimista que no existe.
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from app.repositorios import splits as repo_splits
@@ -101,15 +100,9 @@ def recorrer_fifo(
     return lotes, ventas
 
 
-def _lotes_pendientes(operaciones: list[dict], splits: list[dict]) -> list[dict]:
+def lotes_pendientes(operaciones: list[dict], splits: list[dict]) -> list[dict]:
     """Solo los lotes abiertos (lo que se tiene hoy)."""
     return recorrer_fifo(operaciones, splits)[0]
-
-
-def _fin_del_dia(fecha: str) -> int:
-    """ts del último instante del día, para encontrar la vela de esa rueda."""
-    dia = datetime.strptime(fecha, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return int((dia + timedelta(days=1)).timestamp()) - 1
 
 
 def _precio_actual(conexion: sqlite3.Connection, ticker: str) -> Optional[float]:
@@ -133,7 +126,7 @@ def _tasa_hoy(conexion: sqlite3.Connection) -> Optional[float]:
 
 def posicion_de(conexion: sqlite3.Connection, ticker: str) -> Optional[dict]:
     """Tenencia actual de un papel, o None si no queda nada."""
-    lotes = _lotes_pendientes(
+    lotes = lotes_pendientes(
         repo.listar_cronologicas(conexion, ticker),
         repo_splits.listar_cronologicos(conexion, ticker),
     )
@@ -211,59 +204,3 @@ def cantidades_en_cartera(conexion: sqlite3.Connection) -> dict:
     ignoraría los splits y daría la cantidad vieja.
     """
     return {p["ticker"]: p["cantidad"] for p in tenencias(conexion)["posiciones"]}
-
-
-def lotes_abiertos(conexion: sqlite3.Connection, ticker: str, moneda: str = "ARS") -> dict:
-    """Los lotes de compra que siguen abiertos, para marcarlos en el gráfico.
-
-    Cada lote trae su fecha (y el ts de esa rueda, que es lo que entiende el
-    chart), cuántos papeles quedan de esa compra tras el FIFO, y a qué costo
-    unitario. `ppc` es el precio promedio de compra ponderado de la posición.
-
-    En **USD** cada lote se convierte con el MEP **de su propia fecha**: es
-    cuántos dólares se pusieron realmente por ese papel. Convertir el promedio
-    en pesos con el dólar de hoy daría un número que nunca existió, y además no
-    sería comparable contra la serie de precios en dólares del gráfico.
-    """
-    lotes = _lotes_pendientes(
-        repo.listar_cronologicas(conexion, ticker),
-        repo_splits.listar_cronologicos(conexion, ticker),
-    )
-    if not lotes:
-        return {"ticker": ticker, "lotes": [], "ppc": None, "cantidad": 0}
-
-    salida = []
-    for lote in lotes:
-        precio_ars = lote["precio"] + lote["gasto_unitario"]
-        if moneda == "USD":
-            tasa = obtener_tasa_en_fecha(conexion, lote["fecha"], TIPO_DOLAR)
-            if not tasa:
-                continue  # sin MEP de esa fecha no se puede ubicar la compra
-            precio_ars = precio_ars / tasa
-        # El ts de la vela de esa fecha: el chart ubica la línea por ahí
-        fila = conexion.execute(
-            """SELECT ts FROM velas
-               WHERE ticker = ? AND temporalidad = 'D' AND ts <= ? AND es_faltante = 0
-               ORDER BY ts DESC LIMIT 1""",
-            (ticker, _fin_del_dia(lote["fecha"])),
-        ).fetchone()
-        salida.append(
-            {
-                "fecha": lote["fecha"],
-                "ts": fila["ts"] if fila else None,
-                "cantidad": round(lote["cantidad"], 6),
-                "precio": round(precio_ars, 6),
-            }
-        )
-
-    cantidad = sum(l["cantidad"] for l in salida)
-    costo = sum(l["cantidad"] * l["precio"] for l in salida)
-    return {
-        "ticker": ticker,
-        "moneda": moneda,
-        "lotes": salida,
-        # Promedio ponderado de los lotes ya convertidos: en USD son los dólares
-        # efectivamente puestos, no el promedio en pesos pasado por el MEP de hoy
-        "ppc": round(costo / cantidad, 6) if cantidad else None,
-        "cantidad": round(cantidad, 6),
-    }

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { obtenerTenencias } from '../../api/cliente'
 import type { Tenencias } from '../../api/tipos'
+import { usarTicker } from '../../contextos/TickerContext'
+import { usarEstadoPersistente } from '../../hooks/usarEstadoPersistente'
 import LogoTicker from '../LogoTicker'
 import './TablaTenencias.css'
 
@@ -16,6 +19,16 @@ function fecha(texto: string): string {
 function TablaTenencias() {
   const [datos, setDatos] = useState<Tenencias | null>(null)
   const [cargando, setCargando] = useState(true)
+  const { elegirTicker } = usarTicker()
+  const [, setMostrarOperaciones] = usarEstadoPersistente('mop.operaciones', false)
+  const navegar = useNavigate()
+
+  /** Abre el gráfico del papel con las operaciones propias ya marcadas. */
+  const verEnElGrafico = (ticker: string) => {
+    elegirTicker(ticker)
+    setMostrarOperaciones(true)
+    navegar('/')
+  }
 
   useEffect(() => {
     obtenerTenencias()
@@ -88,10 +101,15 @@ function TablaTenencias() {
             {posiciones.map((posicion) => (
               <tr key={posicion.ticker}>
                 <td>
-                  <span className="papel-tenencia">
+                  <button
+                    type="button"
+                    className="papel-tenencia"
+                    title={`Ver ${posicion.ticker} en el gráfico con mis operaciones`}
+                    onClick={() => verEnElGrafico(posicion.ticker)}
+                  >
                     <LogoTicker ticker={posicion.ticker} tamano={18} />
                     {posicion.ticker}
-                  </span>
+                  </button>
                 </td>
                 <td className="numero">{pesos(posicion.cantidad)}</td>
                 <td className="numero">${pesos(posicion.precio_promedio)}</td>
