@@ -3,38 +3,50 @@ import { usarMonedaEfectiva } from '../hooks/usarMonedaEfectiva'
 import { usarDolar } from '../hooks/usarDolar'
 import './InterruptorMoneda.css'
 
-function formatearCCL(valor: number): string {
+function formatearDolar(valor: number): string {
   return valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Cotización del CCL (ítem propio de la barra, para que respete la distribución)
-export function CotizacionCCL() {
+/** Cotización del MEP (ítem propio de la barra, para que respete la distribución).
+ *
+ *  Es informativa: el gráfico en dólares sigue convirtiendo con el CCL —el MEP
+ *  se usa para valuar la cartera—, y el tooltip lo aclara. */
+export function CotizacionDolar() {
   const dolar = usarDolar()
-  if (!dolar?.ccl) return null
+  if (!dolar?.mep) return null
   return (
-    <span className="cotizacion-ccl" title={`CCL al ${dolar.ccl.fecha}`}>
-      CCL ${formatearCCL(dolar.ccl.valor)}
+    <span
+      className="cotizacion-ccl"
+      title={`MEP al ${dolar.mep.fecha} · el gráfico en dólares convierte con el CCL`}
+    >
+      MEP ${formatearDolar(dolar.mep.valor)}
     </span>
   )
 }
 
-// Interruptor ARS/USD (ítem propio de la barra)
+/** Moneda de visualización: dice en cuál está y al tocarlo cambia a la otra.
+ *
+ *  Con tickers de una sola moneda (CEDEARs, índices del exterior, cripto,
+ *  dólares) el botón queda inerte: no hay otra vista a la que ir. */
 function InterruptorMoneda() {
   const { alternarMoneda } = usarMoneda()
   const { moneda, fija } = usarMonedaEfectiva()
 
   return (
-    <button
-      type="button"
-      className="interruptor-moneda"
-      onClick={alternarMoneda}
-      disabled={fija}
-      title={fija ? 'Este ticker cotiza en una sola moneda' : 'Cambiar moneda de visualización'}
-    >
-      <span className={moneda === 'ARS' ? 'moneda-activa' : ''}>ARS</span>
-      <span className="separador-moneda">/</span>
-      <span className={moneda === 'USD' ? 'moneda-activa' : ''}>USD</span>
-    </button>
+    <span className="moneda-en-regla">
+      <button
+        type="button"
+        className={`interruptor-moneda${fija ? ' fija' : ''}`}
+        onClick={fija ? undefined : alternarMoneda}
+        title={
+          fija
+            ? `Este ticker cotiza solo en ${moneda}`
+            : `Ver en ${moneda === 'ARS' ? 'dólares' : 'pesos'}`
+        }
+      >
+        {moneda}
+      </button>
+    </span>
   )
 }
 

@@ -19,6 +19,7 @@ import type {
   TasaVigente,
   TipoOperacion,
   LotesDeTicker,
+  OperacionesDeTicker,
   Split,
   SplitNuevo,
   Tenencias,
@@ -310,6 +311,14 @@ export function obtenerPrecioSugerido(
 export function obtenerLotes(ticker: string, moneda: Moneda): Promise<LotesDeTicker> {
   const parametros = new URLSearchParams({ ticker, moneda })
   return obtenerJson<LotesDeTicker>(`/api/cartera/lotes?${parametros}`)
+}
+
+export function obtenerOperacionesGrafico(
+  ticker: string,
+  moneda: Moneda,
+): Promise<OperacionesDeTicker> {
+  const parametros = new URLSearchParams({ ticker, moneda })
+  return obtenerJson<OperacionesDeTicker>(`/api/cartera/operaciones_grafico?${parametros}`)
 }
 
 export function obtenerSplits(ticker?: string): Promise<Split[]> {

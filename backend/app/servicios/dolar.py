@@ -215,6 +215,30 @@ def tasa_ccl_para_ts(
     return valores[posicion - 1] if posicion > 0 else None
 
 
+def precio_para_vista(
+    conexion: sqlite3.Connection, ticker: str, precio_ars: float, fecha: str, moneda: str
+) -> Optional[float]:
+    """Un precio en ARS llevado a la escala en que el gráfico dibuja ese ticker.
+
+    Lo usan las marcas de la cartera (PPC, operaciones): tienen que caer sobre
+    la serie que se ve, así que siguen la misma regla que `velas_para_vista`
+    —**el CCL, no el MEP con que se valúa la cartera**— o quedarían corridas.
+
+    Con ADR el gráfico en USD muestra el precio del certificado, que vale
+    `ratio` acciones locales: por eso la marca se multiplica por el ratio.
+    """
+    from app.config import ADR
+    from app.repositorios.tasas_dolar import obtener_tasa_en_fecha
+
+    if moneda != "USD":
+        return precio_ars
+    tasa = obtener_tasa_en_fecha(conexion, fecha, CCL)
+    if not tasa:
+        return None
+    ratio = ADR[ticker][1] if ticker in ADR else 1
+    return precio_ars * ratio / tasa
+
+
 def velas_para_vista(
     conexion: sqlite3.Connection,
     ticker: str,

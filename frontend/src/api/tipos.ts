@@ -57,6 +57,7 @@ export interface Tasa {
 
 export interface RespuestaDolar {
   ccl: Tasa | null
+  mep: Tasa | null
   oficial: Tasa | null
 }
 
@@ -224,6 +225,23 @@ export interface LoteAbierto {
   ts: number | null
   cantidad: number
   precio: number
+}
+
+// Una orden ejecutada, ubicada sobre el gráfico del papel (v7.2)
+export interface OperacionGrafico {
+  id: number
+  tipo: TipoOperacion
+  fecha: string
+  ts: number | null
+  cantidad: number
+  precio: number
+  nota: string
+}
+
+export interface OperacionesDeTicker {
+  ticker: string
+  moneda: Moneda
+  operaciones: OperacionGrafico[]
 }
 
 export interface LotesDeTicker {

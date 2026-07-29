@@ -26,11 +26,8 @@ from app.servicios.cartera.comisiones import (
     tasas,
 )
 from app.servicios.cartera.benchmarks import comparacion
-from app.servicios.cartera.posiciones import (
-    cantidades_en_cartera,
-    lotes_abiertos,
-    tenencias,
-)
+from app.servicios.cartera.marcas import lotes_abiertos, operaciones_de
+from app.servicios.cartera.posiciones import cantidades_en_cartera, tenencias
 from app.servicios.cartera.rendimiento import realizado
 from app.servicios.cartera.transacciones import enriquecer, fecha_valida, precio_sugerido
 from app.servicios.tickers_extra import universo_completo
@@ -169,6 +166,19 @@ def lotes_de_un_papel(
     if moneda not in ("ARS", "USD"):
         raise HTTPException(422, f"Moneda inválida: {moneda}")
     return lotes_abiertos(conexion, ticker.upper(), moneda)
+
+
+@router.get("/operaciones_grafico")
+def operaciones_para_el_grafico(
+    ticker: str, moneda: str = "ARS", conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    """Compras y ventas del papel para dibujarlas sobre el gráfico.
+
+    Incluye las operaciones de posiciones ya cerradas, que el PPC no muestra.
+    """
+    if moneda not in ("ARS", "USD"):
+        raise HTTPException(422, f"Moneda inválida: {moneda}")
+    return operaciones_de(conexion, ticker.upper(), moneda)
 
 
 @router.get("/en_cartera")
