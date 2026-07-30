@@ -26,6 +26,13 @@ from app.servicios.cartera.comisiones import (
     tasas,
 )
 from app.servicios.cartera.benchmarks import comparacion
+from app.servicios.cartera.captura import captura_del_recorrido
+from app.servicios.cartera.escenarios import (
+    escenarios_de,
+    pnl_con_fecha,
+    tabla_escenarios,
+    ventas_cerradas,
+)
 from app.servicios.cartera.marcas import lotes_abiertos, operaciones_de
 from app.servicios.cartera.posiciones import cantidades_en_cartera, tenencias
 from app.servicios.cartera.rendimiento import realizado
@@ -153,6 +160,47 @@ def rendimiento(
     if desde is not None and not fecha_valida(desde):
         raise HTTPException(422, f"Fecha inválida: {desde} (usar AAAA-MM-DD)")
     return comparacion(conexion, moneda, desde)
+
+
+@router.get("/ventas_cerradas")
+def listar_ventas_cerradas(conexion: sqlite3.Connection = Depends(conexion_api)):
+    """Ventas de la cartera, livianas: la pantalla elige cuál analizar."""
+    return ventas_cerradas(conexion)
+
+
+@router.get("/escenarios")
+def listar_escenarios(conexion: sqlite3.Connection = Depends(conexion_api)):
+    """Cada venta con sus escenarios: la vista completa, para revisar de una."""
+    return tabla_escenarios(conexion)
+
+
+@router.get("/escenarios/{id_venta}")
+def escenarios_de_una_venta(
+    id_venta: int, conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    datos = escenarios_de(conexion, id_venta)
+    if datos is None:
+        raise HTTPException(404, "No hay una venta con ese id")
+    return datos
+
+
+@router.get("/whatif")
+def whatif(
+    id_venta: int, fecha: str, conexion: sqlite3.Connection = Depends(conexion_api)
+):
+    """P&L de esa venta movida a otra fecha (lo que consulta el slider)."""
+    if not fecha_valida(fecha):
+        raise HTTPException(422, f"Fecha inválida: {fecha} (usar AAAA-MM-DD)")
+    datos = pnl_con_fecha(conexion, id_venta, fecha)
+    if datos is None:
+        raise HTTPException(404, "Venta inexistente o fecha fuera de la historia del papel")
+    return datos
+
+
+@router.get("/captura")
+def captura(conexion: sqlite3.Connection = Depends(conexion_api)):
+    """Cuánto del recorrido disponible capturó cada operación cerrada."""
+    return captura_del_recorrido(conexion)
 
 
 @router.get("/lotes")

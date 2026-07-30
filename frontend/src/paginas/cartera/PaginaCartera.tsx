@@ -3,6 +3,7 @@ import type { Transaccion } from '../../api/tipos'
 import LogoTicker from '../../componentes/LogoTicker'
 import ConfigComisiones from '../../componentes/cartera/ConfigComisiones'
 import PanelRendimiento from '../../componentes/cartera/PanelRendimiento'
+import PanelWhatIf from '../../componentes/cartera/PanelWhatIf'
 import PanelSplits from '../../componentes/cartera/PanelSplits'
 import TablaTenencias from '../../componentes/cartera/TablaTenencias'
 import FormularioOperacion from '../../componentes/cartera/FormularioOperacion'
@@ -24,7 +25,7 @@ function PaginaCartera() {
   const [formulario, setFormulario] = useState<'nueva' | Transaccion | null>(null)
   const [borrando, setBorrando] = useState<Transaccion | null>(null)
   const [ajustes, setAjustes] = useState(false)
-  const [vista, setVista] = useState<'tenencias' | 'rendimiento' | 'historial'>('tenencias')
+  const [vista, setVista] = useState<'tenencias' | 'rendimiento' | 'whatif' | 'historial'>('tenencias')
   const [splits, setSplits] = useState(false)
   // Cambia al registrar o borrar un split: fuerza recalcular las tenencias
   const [revisionSplits, setRevisionSplits] = useState(0)
@@ -68,6 +69,13 @@ function PaginaCartera() {
               </button>
               <button
                 type="button"
+                className={vista === 'whatif' ? 'pestana-cartera activa' : 'pestana-cartera'}
+                onClick={() => setVista('whatif')}
+              >
+                What-if
+              </button>
+              <button
+                type="button"
                 className={vista === 'historial' ? 'pestana-cartera activa' : 'pestana-cartera'}
                 onClick={() => setVista('historial')}
               >
@@ -107,6 +115,10 @@ function PaginaCartera() {
 
           {vista === 'rendimiento' && (
             <PanelRendimiento key={`${transacciones.length}-${revisionSplits}`} />
+          )}
+
+          {vista === 'whatif' && (
+            <PanelWhatIf key={`${transacciones.length}-${revisionSplits}`} />
           )}
 
           {vista === 'historial' && (
