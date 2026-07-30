@@ -237,3 +237,79 @@ dólares que se pusieron en ese momento, lo único comparable contra la serie de
 precios en dólares. Pasar el promedio en pesos por el CCL de hoy daría un número
 que nunca existió (hay un test que fija esa diferencia). Colores y tipo de línea
 se editan desde la pestaña **PPC** de la tuerca.
+
+## Análisis what-if (v7.3)
+
+Pestaña **What-if**. Sobre cada venta cerrada contesta la pregunta que queda
+dando vueltas: ¿convenía salir antes o después?
+
+`servicios/cartera/escenarios.py` mueve **solo la fecha de salida**: los papeles
+y las compras que consumió el FIFO quedan fijos y el precio pasa a ser el cierre
+de la rueda alternativa. Así la comparación aísla la decisión de cuándo vender,
+que es lo único que se está cuestionando. Los gastos de la venta hipotética se
+recalculan con las tasas vigentes (sin arancel de intradía: no hay contraparte
+del mismo día que la empareje), mientras el resultado real usa **la comisión que
+se pagó de verdad**.
+
+Ningún escenario puede caer antes de la primera compra consumida ni después de
+la última rueda con datos; los desplazamientos que se van de ese rango
+simplemente no aparecen.
+
+### Escenarios automáticos
+
+±1 semana, ±1 mes, ±3 meses, **en el máximo** y **mantener hasta hoy**, cada uno
+con la diferencia en pesos contra lo que se hizo. El mejor queda marcado con ★.
+
+### Captura del recorrido
+
+Cuánto se llevó cada venta del recorrido que el papel dio **mientras se lo
+tuvo** — desde el costo con gastos hasta el cierre más alto entre la compra y la
+venta:
+
+```
+captura = (precio de venta − costo unitario) / (máximo en la tenencia − costo unitario)
+```
+
+Salir en ese techo es 100%, salir al costo 0%, y por debajo de 0% se salió
+perdiendo sobre una posición que había estado en ganancia. Queda en `None`
+cuando el papel nunca superó el costo: no hubo recorrido que capturar.
+
+**No confundir con el escenario "en el máximo"**, que busca el mejor precio de
+toda la historia del papel, incluso posterior a la venta. La captura mide la
+decisión con lo que había disponible mientras la posición estaba abierta; el
+escenario muestra toda la oportunidad.
+
+### Slider de fecha alternativa
+
+Recorre las ruedas entre la primera compra y hoy mostrando el P&L en vivo y la
+diferencia contra lo hecho (`GET /api/cartera/whatif?id_venta=&fecha=`, con
+debounce de 120 ms). El botón ↺ vuelve a la venta real.
+
+### Cómo escala
+
+Una cartera de varios años puede tener cientos de ventas, y cada una cuesta ocho
+consultas de escenarios. Por eso la pantalla no las calcula todas:
+
+- **`GET /api/cartera/ventas_cerradas`** devuelve el listado liviano (papel,
+  fecha, cantidad, resultado) con **un solo recorrido FIFO por papel**;
+- **`GET /api/cartera/escenarios/{id}`** trae los escenarios de la venta elegida,
+  recién cuando se la selecciona.
+
+Medido con 300 compraventas y 6 años de historia:
+
+| | Tiempo | Payload |
+|---|---|---|
+| `ventas_cerradas` (lo que carga la pantalla) | 4 ms | 37 KB |
+| `captura` | 79 ms | 51 KB |
+| `escenarios/{id}` (una venta) | 4 ms | 1 KB |
+| `escenarios` (las 300 juntas) | 253 ms | 467 KB |
+
+La versión inicial tardaba **1.020 ms** en esa misma tabla porque volvía a
+recorrer el FIFO por cada escenario: `escenarios_de_venta` y `_alternativo`
+ahora trabajan sobre la venta ya resuelta.
+
+En pantalla el listado se filtra por papel y se muestra de a 20 con "mostrar
+más"; la fila elegida queda marcada y su detalle aparece abajo.
+
+Endpoints: `GET /api/cartera/ventas_cerradas`, `/escenarios`, `/escenarios/{id}`,
+`/whatif` y `/captura`.
