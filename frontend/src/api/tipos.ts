@@ -362,6 +362,75 @@ export interface Rendimiento {
   }
 }
 
+// --- What-if (v7.3) ---
+
+export interface ResultadoVenta {
+  fecha: string
+  precio: number
+  ingreso: number
+  costo: number
+  pnl: number
+  pnl_pct: number | null
+}
+
+export interface Escenario extends ResultadoVenta {
+  nombre: string
+  /** Pesos de diferencia contra lo que se hizo de verdad */
+  diferencia: number
+  /** La misma diferencia en puntos porcentuales sobre el costo */
+  diferencia_pct: number | null
+}
+
+// Fila del listado: liviana, sin los escenarios (se piden al elegir la venta)
+export interface VentaCerrada {
+  id: number
+  ticker: string
+  fecha: string
+  cantidad: number
+  desde: string
+  pnl: number
+  pnl_pct: number | null
+}
+
+export interface EscenariosDeVenta {
+  id: number
+  ticker: string
+  cantidad: number
+  /** Rango en que se puede mover la salida: de la compra a la última rueda */
+  desde: string
+  hasta: string | null
+  real: ResultadoVenta
+  escenarios: Escenario[]
+  mejor: Escenario | null
+}
+
+export interface WhatIf {
+  id: number
+  ticker: string
+  cantidad: number
+  real: ResultadoVenta
+  alternativo: ResultadoVenta
+  diferencia: number
+  diferencia_pct: number | null
+}
+
+export interface CapturaDeOperacion {
+  id: number
+  ticker: string
+  fecha: string
+  costo_unitario: number
+  precio_venta: number
+  maximo: number
+  maximo_fecha: string
+  captura_pct: number
+}
+
+export interface Captura {
+  operaciones: CapturaDeOperacion[]
+  promedio_pct: number | null
+  medidas: number
+}
+
 // Estructura del boleto: arancel + derechos de mercado, con IVA sobre ambos
 export interface Comisiones {
   arancel_pct: number

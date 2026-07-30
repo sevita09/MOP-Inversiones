@@ -14,8 +14,12 @@ import type {
   RiesgoBot,
   RespuestaSenales,
   Comisiones,
+  Captura,
+  EscenariosDeVenta,
+  VentaCerrada,
   Realizado,
   Rendimiento,
+  WhatIf,
   TasaVigente,
   TipoOperacion,
   LotesDeTicker,
@@ -349,6 +353,23 @@ export function obtenerRendimiento(moneda: Moneda, desde?: string): Promise<Rend
   const parametros = new URLSearchParams({ moneda })
   if (desde) parametros.set('desde', desde)
   return obtenerJson<Rendimiento>(`/api/cartera/rendimiento?${parametros}`)
+}
+
+export function obtenerVentasCerradas(): Promise<{ ventas: VentaCerrada[] }> {
+  return obtenerJson<{ ventas: VentaCerrada[] }>('/api/cartera/ventas_cerradas')
+}
+
+export function obtenerEscenariosDeVenta(idVenta: number): Promise<EscenariosDeVenta> {
+  return obtenerJson<EscenariosDeVenta>(`/api/cartera/escenarios/${idVenta}`)
+}
+
+export function obtenerCaptura(): Promise<Captura> {
+  return obtenerJson<Captura>('/api/cartera/captura')
+}
+
+export function obtenerWhatIf(idVenta: number, fecha: string): Promise<WhatIf> {
+  const parametros = new URLSearchParams({ id_venta: String(idVenta), fecha })
+  return obtenerJson<WhatIf>(`/api/cartera/whatif?${parametros}`)
 }
 
 export function obtenerPapelesEnCartera(): Promise<Record<string, number>> {
