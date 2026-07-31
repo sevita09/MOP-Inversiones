@@ -1,0 +1,73 @@
+.pagina-estacionalidad {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cabecera-estacionalidad {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cabecera-estacionalidad h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  color: #e6edf3;
+}
+
+.controles-estacionalidad {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.grupo-control {
+  display: flex;
+  gap: 4px;
+}
+
+.control-estacional {
+  padding: 4px 11px;
+  font-family: inherit;
+  font-size: 11px;
+  color: #8b949e;
+  background: none;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.control-estacional:hover {
+  color: #e6edf3;
+  border-color: #484f58;
+}
+
+.control-estacional.activo {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #fff;
+}
+
+.estacionalidad-cargando,
+.estacionalidad-vacia {
+  color: #8b949e;
+  font-size: 13px;
+  margin: 24px 0;
+}
+
+.nota-estacionalidad {
+  margin: 0;
+  font-size: 11px;
+  color: #6e7681;
+  line-height: 1.5;
+  max-width: 760px;
+}

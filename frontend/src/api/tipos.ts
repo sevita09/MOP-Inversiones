@@ -626,3 +626,26 @@ export interface RespuestaSenales {
   senales: Senal[]
   sin_ver: number
 }
+
+// --- Análisis transversal (v8) ---
+
+export interface ResumenEstacional {
+  promedio_pct: number | null
+  mediana_pct: number | null
+  positivos_pct: number | null
+  casos: number
+}
+
+export interface Estacionalidad {
+  ticker: string
+  moneda: Moneda
+  /** Qué mide cada celda: "retorno del mes" o "retorno promedio del día" */
+  detalle: string
+  columnas: string[]
+  anios: number[]
+  matriz: (number | null)[][]
+  totales_anio: (number | null)[]
+  resumen: ResumenEstacional[]
+}
+
+export type VistaEstacional = 'mes' | 'dia_semana'

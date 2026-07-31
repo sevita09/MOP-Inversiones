@@ -1,0 +1,91 @@
+.mapa-calor-contenedor {
+  overflow-x: auto;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 8px;
+  background: #0d1117;
+}
+
+/* `separate` con 2px de aire: las celdas se leen como piezas y no como una
+   mancha continua de color */
+.mapa-calor {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+}
+
+.mapa-calor th {
+  color: #8b949e;
+  font-weight: 500;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+
+.mapa-calor .etiqueta-fila {
+  text-align: right;
+  color: #c9d1d9;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  position: sticky;
+  left: 0;
+  background: #0d1117;
+  z-index: 1;
+}
+
+.mapa-calor .esquina {
+  position: sticky;
+  left: 0;
+  background: #0d1117;
+  z-index: 2;
+}
+
+/* El número lleva tinta de texto, no el color de la serie: el fondo ya dice el
+   signo, y así se lee igual sobre verde, sobre rojo y sobre el neutro */
+.mapa-calor td {
+  padding: 5px 6px;
+  text-align: center;
+  color: #e6edf3;
+  border-radius: 3px;
+  background: #161b22;
+  white-space: nowrap;
+  min-width: 46px;
+}
+
+.mapa-calor .columna-total {
+  border-left: 2px solid #0d1117;
+  color: #e6edf3;
+  font-weight: 600;
+  background: #1c2128;
+}
+
+/* En el total del año y en el resumen el color va en el número: son celdas sin
+   fondo de escala, así que el signo lo tiene que cargar la tinta */
+.mapa-calor .valor-positivo {
+  color: #3fb950;
+}
+
+.mapa-calor .valor-negativo {
+  color: #f85149;
+}
+
+/* Las estadísticas del pie, separadas del cuadro */
+.mapa-calor tfoot td {
+  background: none;
+  color: #8b949e;
+  font-weight: 600;
+  border-top: 1px solid #30363d;
+  border-radius: 0;
+}
+
+.mapa-calor tfoot th {
+  text-transform: none;
+  font-size: 10px;
+  color: #6e7681;
+  text-align: right;
+}
