@@ -187,6 +187,7 @@ def sincronizar_en_background() -> bool:
             sincronizar_mep,
         )
         from app.servicios.inflacion import sincronizar_inflacion
+        from app.servicios.retornos import recalcular_todo
         from app.servicios.bots.senales import evaluar_senales
         from app.servicios.reparador import reparar_todo
 
@@ -201,6 +202,8 @@ def sincronizar_en_background() -> bool:
                 resumen["mep"] = sincronizar_mep(conexion)
                 resumen["inflacion"] = sincronizar_inflacion(conexion)
                 resumen["dolar_oficial"] = sincronizar_dolar_oficial(conexion)
+                # Los retornos salen de las velas ya convertidas: van al final
+                resumen["retornos"] = recalcular_todo(conexion)["guardados"]
                 # Con los datos al día, los bots activos miran su última barra
                 resumen["senales"] = evaluar_senales(conexion)
                 _ultimo_resumen = resumen

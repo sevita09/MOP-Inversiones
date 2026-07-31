@@ -142,6 +142,24 @@ CREATE TABLE IF NOT EXISTS presets_riesgo (
     creado      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Retornos logarítmicos precalculados tras cada sync (v8.1). Son la base
+-- compartida de estacionalidad y correlaciones: se calculan una vez y se
+-- consultan cruzados por fecha, que es lo que necesitan las dos.
+-- Se guardan en las dos monedas porque un retorno en pesos y uno en dólares son
+-- preguntas distintas (y en ARS la inflación distorsiona la estacionalidad).
+CREATE TABLE IF NOT EXISTS retornos (
+    ticker       TEXT NOT NULL,
+    temporalidad TEXT NOT NULL,   -- D | S | M
+    moneda       TEXT NOT NULL,   -- ARS | USD
+    ts           INTEGER NOT NULL,
+    retorno      REAL NOT NULL,   -- ln(cierre / cierre anterior)
+    PRIMARY KEY (ticker, temporalidad, moneda, ts)
+);
+-- El índice que hace baratas las consultas cruzadas: todos los papeles de una
+-- temporalidad alineados por fecha, sin recorrer ticker por ticker.
+CREATE INDEX IF NOT EXISTS idx_retornos_fecha
+    ON retornos(temporalidad, moneda, ts);
+
 -- Inflación mensual (IPC nacional del INDEC, vía api.argentinadatos.com).
 -- `valor` es la variación porcentual de ese mes, no un índice.
 CREATE TABLE IF NOT EXISTS inflacion (
