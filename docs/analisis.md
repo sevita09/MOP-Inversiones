@@ -62,3 +62,52 @@ Medido sobre la base real (200 tickers × D/S/M × ARS/USD):
   índice `(temporalidad, moneda, ts)` está para esta consulta. Un papel que no
   operó ese día simplemente no aparece en esa fecha: quien consulta decide si
   descarta la fecha o la usa igual.
+
+## Estacionalidad (v8.2)
+
+Pestaña **Estacionalidad**: el cuadro años×meses del ticker activo, con el
+retorno de cada mes, el acumulado del año a la derecha y tres filas de resumen
+—promedio, mediana y % de períodos positivos— sobre toda la historia.
+`servicios/estacionalidad.py`.
+
+### El default es en dólares
+
+En pesos la inflación mete un piso positivo en todos los meses y el cuadro deja
+de decir nada: los doce quedan verdes. El contraste se ve en GGAL — en ARS once
+de doce meses promedian positivo; en USD aparecen febrero, agosto y septiembre
+claramente negativos.
+
+### Promediar encadenando, no sumando porcentajes
+
++50% y −50% en el mismo mes de dos años **no promedian 0%**: promedian −13,4%,
+que es lo que pasa de verdad si se encadenan. Las estadísticas se calculan sobre
+los retornos logarítmicos de v8.1 y recién al final se pasan a porcentaje, así
+que sale por construcción.
+
+### La vista por día de la semana no suma, promedia
+
+En el cuadro mensual cada celda es una observación. En el de días, un año tiene
+unas cincuenta ruedas de cada día: sumarlas mediría cuántos lunes hubo, no cómo
+son los lunes. La celda es el **promedio** de ese día en ese año, y la fila de
+resumen se calcula sobre **todas las ruedas**, no sobre los promedios anuales —
+si no, se tiraría la muestra real a la basura (`poblacion` en `_armar`).
+
+### El mapa de calor
+
+`componentes/comunes/MapaCalor.tsx`, pensado para reusarse en las correlaciones
+de v8.3. Escala **divergente** con el neutro del fondo en el cero: la intensidad
+dice cuánto y el tono para qué lado, sin ningún color en el medio.
+
+**El color no lleva el dato solo.** Verde y rojo tienen ΔE 2,2 en deuteranopía
+—para el daltonismo más común son el mismo color— contra 33,3 en visión normal.
+Se mantiene el verde/rojo porque es el idioma de toda la app, con la codificación
+secundaria que eso obliga: el número va escrito con su signo en cada celda, la
+intensidad varía con la magnitud y cada celda tiene tooltip. Si alguna vez hace
+falta una paleta segura para CVD, la alternativa estándar es rojo↔azul.
+
+En el total del año y en el resumen el color va **en el número**: son celdas sin
+fondo de escala. La fila de positivos se pinta contra el **50%**, no contra el
+cero: un mes con 40% de años positivos es malo aunque el número sea positivo
+(`centro` por fila en `FilaResumen`).
+
+Endpoint: `GET /api/analisis/estacionalidad?ticker=&moneda=&vista=mes|dia_semana`.
