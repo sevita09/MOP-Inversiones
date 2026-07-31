@@ -8,6 +8,7 @@ from app.db import inicializar_base
 from app.rutas import dir_recursos
 from app.routers import (
     actualizacion,
+    analisis,
     bots,
     cartera,
     categorias,
@@ -44,6 +45,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="MOP Inversiones", lifespan=lifespan)
 app.include_router(actualizacion.router)
+app.include_router(analisis.router)
 app.include_router(bots.router)
 app.include_router(cartera.router)
 app.include_router(categorias.router)

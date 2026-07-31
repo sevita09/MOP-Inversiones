@@ -16,7 +16,9 @@ import type {
   Comisiones,
   Captura,
   EscenariosDeVenta,
+  Estacionalidad,
   VentaCerrada,
+  VistaEstacional,
   Realizado,
   Rendimiento,
   WhatIf,
@@ -477,4 +479,15 @@ export function obtenerNivelesSwing(
 ): Promise<{ niveles: NivelSwing[] }> {
   const parametros = new URLSearchParams({ ticker, temporalidad, moneda })
   return obtenerJson<{ niveles: NivelSwing[] }>(`/api/niveles_swing?${parametros}`)
+}
+
+// --- Análisis transversal ---
+
+export function obtenerEstacionalidad(
+  ticker: string,
+  moneda: Moneda,
+  vista: VistaEstacional,
+): Promise<Estacionalidad> {
+  const parametros = new URLSearchParams({ ticker, moneda, vista })
+  return obtenerJson<Estacionalidad>(`/api/analisis/estacionalidad?${parametros}`)
 }

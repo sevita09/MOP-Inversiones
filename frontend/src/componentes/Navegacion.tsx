@@ -7,6 +7,7 @@ const SECCIONES = [
   { ruta: '/bots', etiqueta: 'Bots' },
   { ruta: '/senales', etiqueta: 'Señales' },
   { ruta: '/cartera', etiqueta: 'Cartera' },
+  { ruta: '/estacionalidad', etiqueta: 'Estacionalidad' },
   { ruta: '/datos', etiqueta: 'Datos' },
 ]
 
