@@ -1,0 +1,43 @@
+.dispersion {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dispersion svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #0d1117;
+}
+
+/* Los ejes son referencia, no dato: recesivos */
+.dispersion .eje {
+  stroke: #30363d;
+  stroke-width: 1;
+}
+
+/* Puntos translúcidos: donde se amontonan, el color se satura solo y muestra
+   dónde está la masa de las ruedas */
+.dispersion .punto {
+  fill: #388bfd;
+  fill-opacity: 0.35;
+}
+
+.dispersion .rotulo {
+  fill: #6e7681;
+  font-size: 10px;
+}
+
+.dispersion .rotulo.fin {
+  text-anchor: end;
+}
+
+.dispersion figcaption {
+  font-size: 10px;
+  color: #6e7681;
+  font-variant-numeric: tabular-nums;
+}

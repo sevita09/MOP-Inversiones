@@ -1,0 +1,194 @@
+.pagina-datos {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Portada: los análisis disponibles, por tipo de activo --- */
+
+.portada-datos {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.columna-datos {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+/* La renta fija todavía no existe: se distingue del lado que sí funciona */
+.columna-datos.renta-fija {
+  border-right: 1px solid #30363d;
+  background: #0b0f14;
+}
+
+.columna-datos h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #e6edf3;
+}
+
+.bajada-columna {
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: #6e7681;
+}
+
+/* Botones cuadrados en dos columnas */
+/* Rectangulares y anchos, centrados en la columna */
+.accesos-datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.acceso-analisis {
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  background: #161b22;
+  text-decoration: none;
+}
+
+.acceso-analisis:hover {
+  border-color: #388bfd;
+  background: #1c2128;
+}
+
+.icono-analisis svg {
+  width: 40px;
+  height: 40px;
+  display: block;
+  fill: #388bfd;
+  stroke: none;
+}
+
+/* Las piezas apagadas del ícono dan la idea de matriz sin recargarlo */
+.icono-analisis .tenue {
+  fill: #2b4a75;
+}
+
+.icono-analisis .trazo {
+  fill: none;
+  stroke: #388bfd;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.texto-acceso {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.texto-acceso strong {
+  font-size: 14px;
+  color: #e6edf3;
+}
+
+.texto-acceso span {
+  font-size: 11px;
+  color: #8b949e;
+  line-height: 1.35;
+}
+
+.proximamente {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.proximamente img {
+  width: 120px;
+  opacity: 0.18;
+}
+
+.proximamente span {
+  font-size: 13px;
+  color: #6e7681;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* --- Barra de la subsección --- */
+
+.barra-datos {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #30363d;
+  flex-shrink: 0;
+}
+
+.volver-datos {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6e7681;
+  text-decoration: none;
+  padding-right: 14px;
+  border-right: 1px solid #30363d;
+}
+
+.volver-datos:hover {
+  color: #e6edf3;
+}
+
+.subsecciones-datos {
+  display: flex;
+  gap: 4px;
+}
+
+.subseccion {
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  color: #8b949e;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.subseccion:hover {
+  color: #e6edf3;
+  background: #161b22;
+}
+
+.subseccion.activa {
+  color: #e6edf3;
+  background: #1c2128;
+  border-color: #30363d;
+}
+
+@media (max-width: 760px) {
+  .portada-datos {
+    grid-template-columns: 1fr;
+  }
+
+  .columna-datos.renta-fija {
+    border-right: none;
+    border-bottom: 1px solid #30363d;
+  }
+}

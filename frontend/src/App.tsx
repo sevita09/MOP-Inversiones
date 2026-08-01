@@ -9,7 +9,6 @@ import PaginaBots from './paginas/bots/PaginaBots'
 import PaginaBacktest from './paginas/backtest/PaginaBacktest'
 import PaginaSenales from './paginas/senales/PaginaSenales'
 import PaginaCartera from './paginas/cartera/PaginaCartera'
-import PaginaEstacionalidad from './paginas/analisis/PaginaEstacionalidad'
 import PaginaDatos from './paginas/PaginaDatos'
 import { usarVersion } from './hooks/usarVersion'
 
@@ -39,8 +38,8 @@ function App() {
             <Route path="/bots/:id/backtest" element={<PaginaBacktest />} />
             <Route path="/senales" element={<PaginaSenales />} />
             <Route path="/cartera" element={<PaginaCartera />} />
-            <Route path="/estacionalidad" element={<PaginaEstacionalidad />} />
             <Route path="/datos" element={<PaginaDatos />} />
+            <Route path="/datos/:seccion" element={<PaginaDatos />} />
           </Routes>
         </div>
         <Sidebar />
