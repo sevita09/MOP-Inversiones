@@ -170,5 +170,27 @@ def test_alineados_omite_al_papel_que_no_opero(conexion):
     assert set(matriz[_ts("2026-01-07")]) == {"GGAL"}
 
 
+def test_alineados_cruza_por_dia_no_por_hora(conexion):
+    """Cada mercado cierra a su hora: BYMA 03:00 UTC, NYSE 04:00.
+
+    Cruzando por ts exacto un papel local nunca encontraría pareja con un CEDEAR
+    ni con la serie de un ADR, y la correlación entre mercados daría vacío.
+    """
+    repo.guardar(
+        conexion,
+        [
+            {"ticker": "ALUA", "temporalidad": "D", "moneda": "USD",
+             "ts": _ts("2026-01-06") + 3 * 3600, "retorno": 0.01},
+            {"ticker": "AAPL", "temporalidad": "D", "moneda": "USD",
+             "ts": _ts("2026-01-06") + 4 * 3600, "retorno": 0.02},
+        ],
+    )
+
+    matriz = repo.alineados(conexion, ["ALUA", "AAPL"], "D", "USD")
+    assert len(matriz) == 1  # la misma rueda, no dos
+    fila = matriz[_ts("2026-01-06")]  # indexada a la medianoche del día
+    assert fila == {"ALUA": 0.01, "AAPL": 0.02}
+
+
 def test_alineados_sin_tickers_no_consulta(conexion):
     assert repo.alineados(conexion, [], "D", "ARS") == {}
