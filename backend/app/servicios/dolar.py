@@ -25,6 +25,7 @@ from app.servicios.descarga import descargar_velas
 ACCIONES_POR_ADR = 10
 
 TICKER_CCL = "DOLARCCL"
+TICKER_MEP = "DOLARMEP"
 TICKER_OFICIAL = "DOLAROF"
 
 
@@ -158,13 +159,22 @@ def _guardar_diaria_y_resampleos(
     return total
 
 
+def generar_velas_de_tasa(conexion: sqlite3.Connection, tipo: str, ticker: str) -> int:
+    """Crea velas sintéticas (D, S, M) desde una serie de tasas del dólar.
+
+    Con velas propias, cada dólar se puede graficar y —lo que importa acá—
+    correlacionar contra los papeles como uno más.
+    """
+    velas = [_tasa_a_vela(ticker, tasa["fecha"], tasa["valor"]) for tasa in obtener_tasas(conexion, tipo)]
+    return _guardar_diaria_y_resampleos(conexion, ticker, velas) if velas else 0
+
+
 def generar_velas_ccl(conexion: sqlite3.Connection) -> int:
-    """Crea velas sintéticas DOLARCCL (D, S, M) desde la serie de tasas CCL."""
-    velas = [
-        _tasa_a_vela(TICKER_CCL, tasa["fecha"], tasa["valor"])
-        for tasa in obtener_tasas(conexion, CCL)
-    ]
-    return _guardar_diaria_y_resampleos(conexion, TICKER_CCL, velas) if velas else 0
+    return generar_velas_de_tasa(conexion, CCL, TICKER_CCL)
+
+
+def generar_velas_mep(conexion: sqlite3.Connection) -> int:
+    return generar_velas_de_tasa(conexion, MEP, TICKER_MEP)
 
 
 def sincronizar_dolar_oficial(conexion: sqlite3.Connection) -> int:
