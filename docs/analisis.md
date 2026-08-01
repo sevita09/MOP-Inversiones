@@ -111,3 +111,68 @@ cero: un mes con 40% de años positivos es malo aunque el número sea positivo
 (`centro` por fila en `FilaResumen`).
 
 Endpoint: `GET /api/analisis/estacionalidad?ticker=&moneda=&vista=mes|dia_semana`.
+
+## Correlaciones y ratio (v8.3)
+
+`servicios/correlaciones.py`. Dos vistas dentro de **Datos → Renta variable**:
+la **matriz** entre varias series y el **ratio** de un par.
+
+### Sobre retornos, nunca sobre precios
+
+Dos series de precios con tendencia dan correlación altísima aunque no tengan
+nada que ver: las dos suben, y eso alcanza. Todo se calcula sobre los retornos
+logarítmicos de v8.1.
+
+**El toggle de moneda importa más acá que en ningún lado**: en pesos, todo papel
+argentino carga el mismo factor —la devaluación— y eso empuja las correlaciones,
+haciendo parecer diversificada una cartera de papeles que se mueven juntos.
+
+### El bug del cruce entre mercados
+
+Cada mercado cierra a su hora: una rueda de BYMA queda en 03:00 UTC y una de
+NYSE en 04:00. Cruzando por `ts` exacto, ALUA (sin ADR, horario local) **no
+correlacionaba con ningún papel en dólares**, porque los que tienen ADR usan la
+serie del certificado con horario de NYSE. `repositorios/retornos.alineados`
+cruza por **día calendario** y devuelve la medianoche UTC como ts.
+
+### Cuándo no hay respuesta
+
+- Menos de **30 ruedas en común**: la celda queda vacía. Dos meses de datos
+  pueden dar 0,9 por casualidad.
+- Una serie **constante** no correlaciona. En punto flotante su varianza da
+  ~1e-35 en vez de cero, así que hay un piso explícito (`VARIANZA_MINIMA`) —
+  sin él la fórmula devolvía un coeficiente inventado.
+
+### El período recorta; la ventana es un cuarto
+
+El período (1M…10Y) define el tramo que se mira, y la ventana móvil es un cuarto
+de ese tramo: con la ventana igual al período habría un solo punto. Debajo de 30
+datos la pantalla avisa que la muestra es chica.
+
+**La ventana se calienta con historia previa.** La serie se trae completa y
+recién después se recorta al período: si no, la línea arrancaba una ventana
+entera después del inicio —con 2 años y ventana de medio año, el primer punto
+caía seis meses tarde—.
+
+El cálculo usa **sumas corridas** (O(n) en vez de O(n×ventana)): con diez años y
+ventana de 630 tardaba casi un segundo, ahora todos los períodos responden en
+~240 ms. Hay un test que compara las sumas corridas contra Pearson calculado
+ventana por ventana, para que las dos implementaciones no se separen.
+
+### Las referencias
+
+Además de los papeles, se correlaciona contra los tres dólares (**CCL, MEP y
+oficial**, cada uno con velas sintéticas propias), el **MERVAL**, **S&P**,
+**Nasdaq**, **Bitcoin** y la **inflación**. Esta última entra a la tabla de
+retornos como serie propia (`INFLACION`), solo mensual: en ARS es la variación
+del mes y en USD esa variación **menos** lo que se movió el dólar, o sea cuánto
+subieron los precios medidos en dólares.
+
+Endpoints: `GET /api/analisis/correlaciones?tickers=&temporalidad=&moneda=&desde=`
+y `/correlacion_par?a=&b=&ventana=&desde=`.
+
+### Navegación
+
+`/datos` es la portada: dos columnas —renta fija (próximamente) y renta
+variable— con accesos a `/datos/estacionalidad`, `/datos/correlaciones` y
+`/datos/ratios`. La subsección vive en la URL para poder guardarla y volver.
