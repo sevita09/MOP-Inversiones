@@ -56,6 +56,9 @@ def ultimo_ts(
     return fila["ts"] if fila and fila["ts"] is not None else None
 
 
+UN_DIA = 86400
+
+
 def alineados(
     conexion: sqlite3.Connection,
     tickers: list[str],
@@ -68,6 +71,11 @@ def alineados(
     Es la forma que necesitan las correlaciones: en cada fecha, qué hizo cada
     papel. Las fechas donde un papel no operó simplemente no lo incluyen, así
     quien consume decide si descarta la fecha o la usa igual.
+
+    **El cruce es por día calendario, no por `ts` exacto.** Cada mercado cierra a
+    su hora: una rueda de BYMA queda en 03:00 UTC y una de NYSE en 04:00, así que
+    cruzar por `ts` haría que un papel local nunca encuentre pareja con un CEDEAR
+    ni con la serie de un ADR. El ts devuelto es la medianoche UTC de ese día.
     """
     if not tickers:
         return {}
@@ -82,7 +90,8 @@ def alineados(
 
     matriz: dict[int, dict[str, float]] = {}
     for fila in conexion.execute(consulta, parametros):
-        matriz.setdefault(fila["ts"], {})[fila["ticker"]] = fila["retorno"]
+        dia = fila["ts"] - fila["ts"] % UN_DIA
+        matriz.setdefault(dia, {})[fila["ticker"]] = fila["retorno"]
     return matriz
 
 

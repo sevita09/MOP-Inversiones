@@ -17,6 +17,8 @@ import type {
   Captura,
   EscenariosDeVenta,
   Estacionalidad,
+  CorrelacionPar,
+  MatrizCorrelacion,
   VentaCerrada,
   VistaEstacional,
   Realizado,
@@ -490,4 +492,38 @@ export function obtenerEstacionalidad(
 ): Promise<Estacionalidad> {
   const parametros = new URLSearchParams({ ticker, moneda, vista })
   return obtenerJson<Estacionalidad>(`/api/analisis/estacionalidad?${parametros}`)
+}
+
+export function obtenerCorrelaciones(
+  tickers: string[],
+  temporalidad: TemporalidadBot,
+  moneda: Moneda,
+  desde?: number,
+): Promise<MatrizCorrelacion> {
+  const parametros = new URLSearchParams({
+    tickers: tickers.join(','),
+    temporalidad,
+    moneda,
+  })
+  if (desde) parametros.set('desde', String(desde))
+  return obtenerJson<MatrizCorrelacion>(`/api/analisis/correlaciones?${parametros}`)
+}
+
+export function obtenerCorrelacionPar(
+  a: string,
+  b: string,
+  temporalidad: TemporalidadBot,
+  moneda: Moneda,
+  ventana: number,
+  desde?: number,
+): Promise<CorrelacionPar> {
+  const parametros = new URLSearchParams({
+    a,
+    b,
+    temporalidad,
+    moneda,
+    ventana: String(ventana),
+  })
+  if (desde) parametros.set('desde', String(desde))
+  return obtenerJson<CorrelacionPar>(`/api/analisis/correlacion_par?${parametros}`)
 }

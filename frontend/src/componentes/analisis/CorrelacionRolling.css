@@ -1,0 +1,34 @@
+.correlacion-rolling {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 320px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0d1117;
+}
+
+.leyenda-rolling {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.serie-rolling.movil {
+  color: #388bfd;
+  font-weight: 600;
+}
+
+.serie-rolling.total {
+  color: #8b949e;
+}
+
+/* El chart necesita una altura definida (min-height no alcanza) */
+.area-rolling {
+  height: 260px;
+  width: 100%;
+}

@@ -50,7 +50,7 @@ TICKER_MEP_BASE = "GGALDBA"
 SIMBOLO_MEP_BASE = "GGALD.BA"
 
 # Tickers sintéticos de dólar (se generan en v0.5)
-TICKERS_DOLAR = ["DOLARCCL", "DOLAROF"]
+TICKERS_DOLAR = ["DOLARCCL", "DOLARMEP", "DOLAROF"]
 
 # Acciones locales que además cotizan en el exterior como ADR.
 # byma -> (símbolo del ADR en Yahoo, acciones locales por cada ADR).

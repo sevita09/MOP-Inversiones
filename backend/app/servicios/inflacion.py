@@ -12,13 +12,16 @@ recorrido diario sería dibujar precisión que no existe.
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import urllib.request
 from bisect import bisect_right
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from app.repositorios import configuracion as repo_config
+
+TICKER = "INFLACION"
 
 URL_INFLACION = "https://api.argentinadatos.com/v1/finanzas/indices/inflacion"
 TIEMPO_LIMITE = 20
@@ -125,3 +128,42 @@ def indice_alineado(conexion: sqlite3.Connection, fechas: list) -> list:
         posicion = bisect_right(cortes, fecha)
         alineado.append(indices[posicion - 1] if posicion > 0 else None)
     return alineado
+
+
+def generar_retornos(conexion: sqlite3.Connection) -> int:
+    """Publica la inflación como una serie de retornos más, para correlacionar.
+
+    Va en la tabla `retornos` bajo el ticker `INFLACION`, temporalidad mensual —
+    la única que tiene sentido: el dato es mensual y cruzarlo contra ruedas
+    diarias no diría nada.
+
+    En **ARS** es la variación del mes. En **USD** es esa variación menos lo que
+    se movió el dólar: cuánto subieron los precios *medidos en dólares*, que es
+    la pregunta real de si algo se encareció o solo se devaluó el peso. Sale de
+    restar los logaritmos, que es la propiedad por la que se usan.
+    """
+    from app.repositorios import retornos as repo_retornos
+    from app.servicios.dolar import TICKER_MEP
+
+    dolar = {
+        r["ts"]: r["retorno"]
+        for r in repo_retornos.obtener(conexion, TICKER_MEP, "M", "ARS")
+    }
+
+    salida = []
+    for fila in conexion.execute("SELECT fecha, valor FROM inflacion ORDER BY fecha"):
+        mes = datetime.strptime(fila["fecha"], "%Y-%m-%d").replace(
+            day=1, tzinfo=timezone.utc
+        )
+        ts = int(mes.timestamp())
+        en_pesos = math.log(1 + fila["valor"] / 100)
+        salida.append(
+            {"ticker": TICKER, "temporalidad": "M", "moneda": "ARS", "ts": ts,
+             "retorno": round(en_pesos, 8)}
+        )
+        if ts in dolar:
+            salida.append(
+                {"ticker": TICKER, "temporalidad": "M", "moneda": "USD", "ts": ts,
+                 "retorno": round(en_pesos - dolar[ts], 8)}
+            )
+    return repo_retornos.guardar(conexion, salida)

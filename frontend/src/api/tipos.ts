@@ -649,3 +649,39 @@ export interface Estacionalidad {
 }
 
 export type VistaEstacional = 'mes' | 'dia_semana'
+
+export interface MatrizCorrelacion {
+  tickers: string[]
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  /** `null` cuando el par no llegó al mínimo de ruedas en común */
+  matriz: (number | null)[][]
+  /** Cuántas ruedas comparten cada par: el respaldo de cada número */
+  pares: number[][]
+  minimo: number
+}
+
+export interface PuntoRolling {
+  ts: number
+  correlacion: number
+}
+
+export interface PuntoDispersion {
+  ts: number
+  a: number
+  b: number
+}
+
+export interface CorrelacionPar {
+  a: string
+  b: string
+  temporalidad: TemporalidadBot
+  moneda: Moneda
+  ventana: number
+  puntos: PuntoRolling[]
+  correlacion_total: number | null
+  /** La de la ventana vigente: el último punto de la línea */
+  correlacion_ventana: number | null
+  pares: number
+  dispersion: PuntoDispersion[]
+}
