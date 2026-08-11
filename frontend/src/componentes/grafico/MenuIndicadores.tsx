@@ -4,6 +4,16 @@ import type { NombreOscilador } from './configOsciladores'
 import { aperturaOscilador, type AperturaConfig } from './config/estilosIndicadores'
 import './MenuIndicadores.css'
 
+/** Una onda de oscilador entre sus dos niveles de referencia: es exactamente lo
+ *  que el menú agrega bajo el precio (RSI con 30/70, estocástico con 20/80). */
+const ICONO = (
+  <svg viewBox="0 0 24 24" className="icono-indicadores" aria-hidden="true">
+    <line x1="2" y1="7" x2="22" y2="7" className="nivel" />
+    <line x1="2" y1="17" x2="22" y2="17" className="nivel" />
+    <path d="M2 15 C5 15, 5.5 5, 8.5 5 S12 18, 15 18 S19 8, 22 8" className="onda" />
+  </svg>
+)
+
 interface Props {
   activos: Set<NombreOscilador>
   alAlternar: (nombre: NombreOscilador, activo: boolean) => void
@@ -46,8 +56,13 @@ function MenuIndicadores({ activos, alAlternar, alConfigurar }: Props) {
         type="button"
         className={`boton-indicadores${activos.size > 0 ? ' activo' : ''}`}
         onClick={alternar}
+        title="Indicadores"
+        aria-label={
+          activos.size > 0 ? `Indicadores (${activos.size} activos)` : 'Indicadores'
+        }
       >
-        Indicadores{activos.size > 0 ? ` (${activos.size})` : ''}
+        {ICONO}
+        {activos.size > 0 && <span className="conteo-indicadores">{activos.size}</span>}
       </button>
       {abierto && (
         <div className="menu-indicadores-lista" style={posicion}>

@@ -3,14 +3,44 @@
 }
 
 .boton-indicadores {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 5px 8px;
-  font-size: 12px;
+  font-family: inherit;
+  font-size: 11px;
   font-weight: 500;
   color: #8b949e;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.icono-indicadores {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* Los niveles quedan siempre tenues: la onda es la que dice si está activo */
+.icono-indicadores .nivel {
+  stroke: #484f58;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2.5;
+  stroke-linecap: round;
+}
+
+.icono-indicadores .onda {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.conteo-indicadores {
+  font-variant-numeric: tabular-nums;
 }
 
 .boton-indicadores:hover {
