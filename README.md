@@ -25,6 +25,8 @@ Para publicar una versión (desarrollo): cerrar la versión con su tag `vX.Y.Z` 
 ./scripts/publicar_release.sh   # release en GitHub con el .dmg adjunto
 ```
 
+Los íconos del dock (`backend/mop.icns` y `backend/mop-dev.icns`) se generan desde `backend/mop-logo.png` con `./scripts/crear_iconos.py`.
+
 ## Modo desarrollo (web)
 
 ```bash
